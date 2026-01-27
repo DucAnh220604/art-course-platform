@@ -1,0 +1,44 @@
+export function ArtKidsLogo({ className = "w-10 h-10" }) {
+  return (
+    <svg
+      viewBox="0 0 48 48"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <circle cx="24" cy="24" r="22" fill="#38BDF8" />
+      <circle cx="24" cy="24" r="20" fill="#0EA5E9" />
+
+      <ellipse cx="24" cy="25" rx="14" ry="12" fill="#FEF3C7" />
+      <ellipse cx="24" cy="25" rx="12" ry="10" fill="#FDE68A" />
+
+      <ellipse cx="24" cy="29" rx="3" ry="2.5" fill="#0EA5E9" />
+
+      <circle cx="17" cy="22" r="3" fill="#EF4444" />
+      <circle cx="24" cy="19" r="3" fill="#F97316" />
+      <circle cx="31" cy="22" r="3" fill="#FBBF24" />
+      <circle cx="18" cy="28" r="2.5" fill="#22C55E" />
+      <circle cx="30" cy="28" r="2.5" fill="#8B5CF6" />
+
+      <rect
+        x="32"
+        y="10"
+        width="3"
+        height="12"
+        rx="1"
+        fill="#A16207"
+        transform="rotate(30 32 10)"
+      />
+      <ellipse
+        cx="36"
+        cy="8"
+        rx="2"
+        ry="4"
+        fill="#EC4899"
+        transform="rotate(30 36 8)"
+      />
+    </svg>
+  );
+}
+
+export default ArtKidsLogo;
