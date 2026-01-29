@@ -60,7 +60,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-background p-4 overflow-hidden relative">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 sm:p-6 lg:p-8 overflow-x-hidden relative">
       {/* Back Home Button */}
       <button
         onClick={() => navigate("/")}
@@ -71,31 +71,31 @@ export default function RegisterPage() {
       </button>
 
       {/* Decorative Background Elements */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-700" />
-      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-accent/20 rounded-full blur-3xl animate-pulse delay-500" />
+      <div className="absolute top-10 left-10 w-20 sm:w-32 h-20 sm:h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-10 right-10 w-24 sm:w-40 h-24 sm:h-40 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-700" />
+      <div className="absolute top-1/2 left-1/4 w-16 sm:w-24 h-16 sm:h-24 bg-accent/20 rounded-full blur-3xl animate-pulse delay-500" />
 
-      <Card className="w-full max-w-4xl overflow-hidden shadow-2xl border-none rounded-3xl bg-white/80 backdrop-blur-sm relative z-10 grid md:grid-cols-2">
+      <Card className="w-full max-w-sm sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden shadow-2xl border-none rounded-3xl bg-white/80 backdrop-blur-sm relative z-10 grid grid-cols-1 md:grid-cols-2">
         {/* Left Side - Form */}
-        <div className="p-5 md:p-6 flex flex-col justify-center relative">
+        <div className="p-5 md:p-8 lg:p-10 flex flex-col justify-center relative">
           <div
-            className="flex items-center gap-2 cursor-pointer mb-4"
+            className="flex items-center gap-2 lg:gap-3 cursor-pointer mb-4 lg:mb-6"
             onClick={() => navigate("/")}
           >
-            <ArtKidsLogo className="w-8 h-8" />
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-              ArtKid
+            <ArtKidsLogo className="w-8 h-8 lg:w-10 lg:h-10" />
+            <span className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              ArtKids
             </span>
           </div>
 
-          <div className="mb-3">
+          <div className="mb-3 lg:mb-5">
             <h1
-              className="text-xl md:text-2xl font-bold text-slate-800 mb-1"
+              className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800 mb-1 lg:mb-2"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
               Tạo tài khoản mới
             </h1>
-            <p className="text-slate-500 text-xs">
+            <p className="text-slate-500 text-xs lg:text-sm">
               Tham gia cùng chúng tớ để học vẽ thật vui!
             </p>
           </div>
@@ -108,20 +108,20 @@ export default function RegisterPage() {
             <Form {...registerForm}>
               <form
                 onSubmit={registerForm.handleSubmit(onRegister)}
-                className="space-y-2"
+                className="space-y-2 lg:space-y-4"
               >
                 <FormField
                   control={registerForm.control}
                   name="fullname"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-foreground/80 text-xs">
+                      <FormLabel className="font-bold text-foreground/80 text-xs lg:text-sm">
                         Họ và tên bé
                       </FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Nguyễn Văn A"
-                          className="h-9 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm"
+                          className="h-9 lg:h-11 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm lg:text-base"
                           {...field}
                         />
                       </FormControl>
@@ -134,15 +134,15 @@ export default function RegisterPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-foreground/80 text-xs">
+                      <FormLabel className="font-bold text-foreground/80 text-xs lg:text-sm">
                         Email phụ huynh
                       </FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                          <Mail className="absolute left-3 lg:left-4 top-2.5 lg:top-3 h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground" />
                           <Input
                             placeholder="phuhuynh@email.com"
-                            className="pl-9 h-9 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm"
+                            className="pl-9 lg:pl-11 h-9 lg:h-11 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm lg:text-base"
                             {...field}
                           />
                         </div>
@@ -151,19 +151,19 @@ export default function RegisterPage() {
                     </FormItem>
                   )}
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3 lg:gap-4">
                   <FormField
                     control={registerForm.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-foreground/80 text-xs">
+                        <FormLabel className="font-bold text-foreground/80 text-xs lg:text-sm">
                           Tên đăng nhập
                         </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="nghesi_nho"
-                            className="h-9 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm"
+                            className="h-9 lg:h-11 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm lg:text-base"
                             {...field}
                           />
                         </FormControl>
@@ -176,14 +176,14 @@ export default function RegisterPage() {
                     name="password"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="font-bold text-foreground/80 text-xs">
+                        <FormLabel className="font-bold text-foreground/80 text-xs lg:text-sm">
                           Mật khẩu
                         </FormLabel>
                         <FormControl>
                           <Input
                             type="password"
                             placeholder="••••••"
-                            className="h-9 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm"
+                            className="h-9 lg:h-11 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm lg:text-base"
                             {...field}
                           />
                         </FormControl>
@@ -197,14 +197,14 @@ export default function RegisterPage() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-foreground/80 text-xs">
+                      <FormLabel className="font-bold text-foreground/80 text-xs lg:text-sm lg:text-sm">
                         Nhập lại mật khẩu
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="password"
                           placeholder="••••••"
-                          className="h-9 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm"
+                          className="h-9 lg:h-11 rounded-lg bg-slate-50 border-slate-200 focus:border-secondary focus:ring-secondary/20 transition-all font-sans text-sm lg:text-base"
                           {...field}
                         />
                       </FormControl>
@@ -215,24 +215,24 @@ export default function RegisterPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-10 rounded-full text-base font-bold bg-orange-400 hover:bg-orange-500 text-white shadow-lg shadow-orange-400/25 hover:shadow-orange-400/40 transition-all active:scale-95 cursor-pointer mt-2"
+                  className="w-full h-10 lg:h-12 rounded-full text-base lg:text-lg font-bold bg-orange-400 hover:bg-orange-500 text-white shadow-lg shadow-orange-400/25 hover:shadow-orange-400/40 transition-all active:scale-95 cursor-pointer mt-2 lg:mt-4"
                 >
                   Đăng ký ngay
-                  <Star className="ml-2 w-4 h-4 fill-current" />
+                  <Star className="ml-2 w-4 h-4 lg:w-5 lg:h-5 fill-current" />
                 </Button>
               </form>
             </Form>
           </motion.div>
 
-          <div className="mt-3 text-center">
-            <div className="relative mb-3">
+          <div className="mt-3 lg:mt-5 text-center">
+            <div className="relative mb-3 lg:mb-4">
               <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-muted-foreground font-bold uppercase tracking-wider">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs lg:text-sm text-muted-foreground font-bold uppercase tracking-wider">
                 Hoặc
               </span>
             </div>
 
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 text-sm lg:text-base">
               Đã có tài khoản?{" "}
               <button
                 onClick={() => navigate("/login")}
@@ -256,8 +256,8 @@ export default function RegisterPage() {
             }}
           />
 
-          <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <div className="relative w-full aspect-[4/3] mb-4 group">
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 lg:p-10 text-center">
+            <div className="relative w-full max-w-md lg:max-w-lg aspect-[4/3] mb-4 lg:mb-6 group">
               {/* Background layers */}
               <div className="absolute inset-0 bg-orange-200/50 rounded-3xl transform rotate-3 scale-95 transition-transform group-hover:rotate-6 duration-500" />
               <div className="absolute inset-0 bg-pink-200/50 rounded-3xl transform -rotate-2 scale-95 transition-transform group-hover:-rotate-4 duration-500" />
@@ -275,14 +275,18 @@ export default function RegisterPage() {
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
-                className="absolute -top-2 -right-2 bg-white p-2 rounded-xl shadow-lg flex items-center gap-2"
+                className="absolute -top-2 -right-2 lg:-top-3 lg:-right-3 bg-white p-2 lg:p-3 rounded-xl shadow-lg flex items-center gap-2"
               >
-                <div className="bg-green-100 p-1.5 rounded-full">
-                  <Paintbrush className="w-4 h-4 text-green-600" />
+                <div className="bg-green-100 p-1.5 lg:p-2 rounded-full">
+                  <Paintbrush className="w-4 h-4 lg:w-5 lg:h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-500">Bài học</p>
-                  <p className="text-xs font-bold text-foreground">Sáng tạo</p>
+                  <p className="text-xs lg:text-sm font-bold text-gray-500">
+                    Bài học
+                  </p>
+                  <p className="text-xs lg:text-sm font-bold text-foreground">
+                    Sáng tạo
+                  </p>
                 </div>
               </motion.div>
 
@@ -294,25 +298,29 @@ export default function RegisterPage() {
                   ease: "easeInOut",
                   delay: 1,
                 }}
-                className="absolute -bottom-2 -left-2 bg-white p-2 rounded-xl shadow-lg flex items-center gap-2"
+                className="absolute -bottom-2 -left-2 lg:-bottom-3 lg:-left-3 bg-white p-2 lg:p-3 rounded-xl shadow-lg flex items-center gap-2"
               >
-                <div className="bg-yellow-100 p-1.5 rounded-full">
-                  <Star className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                <div className="bg-yellow-100 p-1.5 lg:p-2 rounded-full">
+                  <Star className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600 fill-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-500">Đánh giá</p>
-                  <p className="text-xs font-bold text-foreground">5.0/5.0</p>
+                  <p className="text-xs lg:text-sm font-bold text-gray-500">
+                    Đánh giá
+                  </p>
+                  <p className="text-xs lg:text-sm font-bold text-foreground">
+                    5.0/5.0
+                  </p>
                 </div>
               </motion.div>
             </div>
 
             <h2
-              className="text-lg font-bold text-slate-800 mb-1"
+              className="text-lg lg:text-xl font-bold text-slate-800 mb-1 lg:mb-2"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
               Bắt đầu hành trình sáng tạo
             </h2>
-            <p className="text-slate-500 text-xs max-w-xs mx-auto">
+            <p className="text-slate-500 text-xs lg:text-sm max-w-xs lg:max-w-sm mx-auto">
               Tham gia cộng đồng hàng ngàn bé yêu nghệ thuật!
             </p>
           </div>

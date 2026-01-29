@@ -53,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-background p-4 overflow-hidden relative">
+    <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 sm:p-6 lg:p-8 overflow-x-hidden relative">
       {/* Back Home Button */}
       <button
         onClick={() => navigate("/")}
@@ -64,31 +64,31 @@ export default function LoginPage() {
       </button>
 
       {/* Decorative Background Elements */}
-      <div className="absolute top-10 left-10 w-32 h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-10 right-10 w-40 h-40 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-700" />
-      <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-accent/20 rounded-full blur-3xl animate-pulse delay-500" />
+      <div className="absolute top-10 left-10 w-20 sm:w-32 h-20 sm:h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-10 right-10 w-24 sm:w-40 h-24 sm:h-40 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-700" />
+      <div className="absolute top-1/2 left-1/4 w-16 sm:w-24 h-16 sm:h-24 bg-accent/20 rounded-full blur-3xl animate-pulse delay-500" />
 
-      <Card className="w-full max-w-4xl overflow-hidden shadow-2xl border-none rounded-3xl bg-white/80 backdrop-blur-sm relative z-10 grid md:grid-cols-2">
+      <Card className="w-full max-w-sm sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden shadow-2xl border-none rounded-3xl bg-white/80 backdrop-blur-sm relative z-10 grid grid-cols-1 md:grid-cols-2">
         {/* Left Side - Form */}
-        <div className="p-6 md:p-8 flex flex-col justify-center relative">
+        <div className="p-6 md:p-10 lg:p-12 flex flex-col justify-center relative">
           <div
-            className="flex items-center gap-2 cursor-pointer mb-6"
+            className="flex items-center gap-2 lg:gap-3 cursor-pointer mb-6 lg:mb-8"
             onClick={() => navigate("/")}
           >
-            <ArtKidsLogo className="w-8 h-8" />
-            <span className="text-xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
-              ArtKid
+            <ArtKidsLogo className="w-8 h-8 lg:w-10 lg:h-10" />
+            <span className="text-xl lg:text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+              ArtKids
             </span>
           </div>
 
-          <div className="mb-4">
+          <div className="mb-4 lg:mb-6">
             <h1
-              className="text-2xl md:text-3xl font-bold text-slate-800 mb-1"
+              className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-1 lg:mb-2"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
               Chào mừng bé!
             </h1>
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 text-sm lg:text-base">
               Sẵn sàng sáng tạo những bức tranh đẹp chưa?
             </p>
           </div>
@@ -101,22 +101,22 @@ export default function LoginPage() {
             <Form {...loginForm}>
               <form
                 onSubmit={loginForm.handleSubmit(onLogin)}
-                className="space-y-4"
+                className="space-y-4 lg:space-y-6"
               >
                 <FormField
                   control={loginForm.control}
                   name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-foreground/80 text-sm">
+                      <FormLabel className="font-bold text-foreground/80 text-sm lg:text-base">
                         Tên đăng nhập
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
-                          <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <User className="absolute left-3 lg:left-4 top-2.5 lg:top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <Input
                             placeholder="nghesi_nho"
-                            className="pl-9 h-10 rounded-xl bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all font-sans text-sm"
+                            className="pl-9 lg:pl-11 h-10 lg:h-12 rounded-xl bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all font-sans text-sm lg:text-base"
                             {...field}
                           />
                         </div>
@@ -130,16 +130,16 @@ export default function LoginPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-bold text-foreground/80 text-sm">
+                      <FormLabel className="font-bold text-foreground/80 text-sm lg:text-base">
                         Mật khẩu
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
-                          <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <Lock className="absolute left-3 lg:left-4 top-2.5 lg:top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <Input
                             type="password"
                             placeholder="••••••••"
-                            className="pl-9 h-10 rounded-xl bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all font-sans text-sm"
+                            className="pl-9 lg:pl-11 h-10 lg:h-12 rounded-xl bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all font-sans text-sm lg:text-base"
                             {...field}
                           />
                         </div>
@@ -151,24 +151,24 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-10 rounded-full text-base font-bold bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all active:scale-95 cursor-pointer"
+                  className="w-full h-10 lg:h-12 rounded-full text-base lg:text-lg font-bold bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all active:scale-95 cursor-pointer"
                 >
                   Đăng nhập ngay
-                  <ArrowRight className="ml-2 w-4 h-4" />
+                  <ArrowRight className="ml-2 w-4 h-4 lg:w-5 lg:h-5" />
                 </Button>
               </form>
             </Form>
           </motion.div>
 
-          <div className="mt-4 text-center">
-            <div className="relative mb-4">
+          <div className="mt-4 lg:mt-6 text-center">
+            <div className="relative mb-4 lg:mb-6">
               <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs text-muted-foreground font-bold uppercase tracking-wider">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-xs lg:text-sm text-muted-foreground font-bold uppercase tracking-wider">
                 Hoặc
               </span>
             </div>
 
-            <p className="text-slate-500 text-sm">
+            <p className="text-slate-500 text-sm lg:text-base">
               Chưa có tài khoản?{" "}
               <button
                 onClick={() => navigate("/register")}
@@ -192,8 +192,8 @@ export default function LoginPage() {
             }}
           />
 
-          <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="relative w-full aspect-[4/3] mb-6 group">
+          <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 lg:p-10 text-center">
+            <div className="relative w-full max-w-md lg:max-w-lg aspect-[4/3] mb-6 lg:mb-8 group">
               {/* Background layers */}
               <div className="absolute inset-0 bg-sky-200/50 rounded-3xl transform rotate-3 scale-95 transition-transform group-hover:rotate-6 duration-500" />
               <div className="absolute inset-0 bg-green-200/50 rounded-3xl transform -rotate-2 scale-95 transition-transform group-hover:-rotate-4 duration-500" />
@@ -211,14 +211,18 @@ export default function LoginPage() {
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
-                className="absolute -top-2 -right-2 bg-white p-2 rounded-xl shadow-lg flex items-center gap-2"
+                className="absolute -top-2 -right-2 lg:-top-3 lg:-right-3 bg-white p-2 lg:p-3 rounded-xl shadow-lg flex items-center gap-2"
               >
-                <div className="bg-green-100 p-1.5 rounded-full">
-                  <Paintbrush className="w-4 h-4 text-green-600" />
+                <div className="bg-green-100 p-1.5 lg:p-2 rounded-full">
+                  <Paintbrush className="w-4 h-4 lg:w-5 lg:h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-500">Bài học</p>
-                  <p className="text-xs font-bold text-foreground">Sáng tạo</p>
+                  <p className="text-xs lg:text-sm font-bold text-gray-500">
+                    Bài học
+                  </p>
+                  <p className="text-xs lg:text-sm font-bold text-foreground">
+                    Sáng tạo
+                  </p>
                 </div>
               </motion.div>
 
@@ -230,25 +234,29 @@ export default function LoginPage() {
                   ease: "easeInOut",
                   delay: 1,
                 }}
-                className="absolute -bottom-2 -left-2 bg-white p-2 rounded-xl shadow-lg flex items-center gap-2"
+                className="absolute -bottom-2 -left-2 lg:-bottom-3 lg:-left-3 bg-white p-2 lg:p-3 rounded-xl shadow-lg flex items-center gap-2"
               >
-                <div className="bg-yellow-100 p-1.5 rounded-full">
-                  <Star className="w-4 h-4 text-yellow-600 fill-yellow-600" />
+                <div className="bg-yellow-100 p-1.5 lg:p-2 rounded-full">
+                  <Star className="w-4 h-4 lg:w-5 lg:h-5 text-yellow-600 fill-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-gray-500">Đánh giá</p>
-                  <p className="text-xs font-bold text-foreground">5.0/5.0</p>
+                  <p className="text-xs lg:text-sm font-bold text-gray-500">
+                    Đánh giá
+                  </p>
+                  <p className="text-xs lg:text-sm font-bold text-foreground">
+                    5.0/5.0
+                  </p>
                 </div>
               </motion.div>
             </div>
 
             <h2
-              className="text-xl font-bold text-slate-800 mb-2"
+              className="text-xl lg:text-2xl font-bold text-slate-800 mb-2 lg:mb-3"
               style={{ fontFamily: "'Quicksand', sans-serif" }}
             >
               Khơi dậy niềm đam mê nghệ thuật
             </h2>
-            <p className="text-slate-500 text-sm max-w-xs mx-auto">
+            <p className="text-slate-500 text-sm lg:text-base max-w-xs lg:max-w-sm mx-auto">
               Hàng ngàn bài học vẽ thú vị giúp bé phát triển tư duy sáng tạo.
             </p>
           </div>

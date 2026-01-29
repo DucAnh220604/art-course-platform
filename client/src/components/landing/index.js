@@ -1,0 +1,9 @@
+export { Header } from "./Header";
+export { HeroSection } from "./HeroSection";
+export { FeaturedCourses } from "./FeaturedCourses";
+export { CourseCard } from "./CourseCard";
+export { CourseBundles } from "./CourseBundles";
+export { BundleCard } from "./BundleCard";
+export { WhyChooseUs } from "./WhyChooseUs";
+export { Testimonials } from "./Testimonials";
+export { Footer } from "./Footer";
