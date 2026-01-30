@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import {
   Header,
   HeroSection,
@@ -10,7 +10,7 @@ import {
 } from "../components/landing";
 
 export function LandingPage() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
 
   // Handle course click - navigate to course detail page
   const handleCourseClick = (courseId) => {

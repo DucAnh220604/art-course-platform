@@ -1,4 +1,4 @@
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,10 +21,13 @@ import {
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+import authApi from "../api/authApi";
+import { useState } from "react";
+
 const registerSchema = z
   .object({
     fullname: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
-    username: z.string().min(3, "Tên đăng nhập phải có ít nhất 3 ký tự"),
+    username: z.string().optional(),
     email: z.string().email("Email không hợp lệ"),
     password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
     confirmPassword: z.string(),
@@ -35,28 +38,56 @@ const registerSchema = z
   });
 
 export default function RegisterPage() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const registerForm = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      fullname: "",
       username: "",
+      fullname: "",
       email: "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  const onRegister = (data) => {
-    console.log("Register data:", data);
+  const onRegister = async (data) => {
+    setIsLoading(true);
+    try {
+      await authApi.register({
+        fullname: data.fullname,
+        username: data.username,
+        email: data.email,
+        password: data.password,
+      });
 
-    toast.success("Đăng ký thành công!", {
-      description: "Chào mừng bạn mới gia nhập lớp học vẽ!",
-      duration: 3000,
-    });
+      toast.success("🎉 Chào mừng bé đến với ArtKids!", {
+        description: `${data.fullname || data.username} đã sẵn sàng tham gia lớp học vẽ!`,
+        duration: 2000,
+      });
 
-    setTimeout(() => navigate("/login"), 1000);
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (error) {
+      const serverMessage = error.response?.data?.message;
+      let friendlyMessage = "Có lỗi xảy ra, bé thử lại nhé!";
+
+      if (
+        serverMessage?.includes("Email này đã được sử dụng") ||
+        serverMessage?.includes("duplicate")
+      ) {
+        friendlyMessage =
+          "Email này đã có bạn khác dùng rồi. Bé thử email khác nhé!";
+      } else if (serverMessage?.includes("validation")) {
+        friendlyMessage = "Thông tin chưa đúng rồi. Bé kiểm tra lại nhé!";
+      }
+
+      toast.error("😢 Chưa đăng ký được rồi!", {
+        description: friendlyMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -217,8 +248,10 @@ export default function RegisterPage() {
                   type="submit"
                   className="w-full h-10 lg:h-12 rounded-full text-base lg:text-lg font-bold bg-orange-400 hover:bg-orange-500 text-white shadow-lg shadow-orange-400/25 hover:shadow-orange-400/40 transition-all active:scale-95 cursor-pointer mt-2 lg:mt-4"
                 >
-                  Đăng ký ngay
-                  <Star className="ml-2 w-4 h-4 lg:w-5 lg:h-5 fill-current" />
+                  {isLoading ? "Đang tạo tài khoản..." : "Đăng ký ngay"}
+                  {!isLoading && (
+                    <Star className="ml-2 w-4 h-4 lg:w-5 lg:h-5 fill-current" />
+                  )}{" "}
                 </Button>
               </form>
             </Form>
