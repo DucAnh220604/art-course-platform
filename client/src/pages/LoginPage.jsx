@@ -1,9 +1,10 @@
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import {
+  Mail,
   Paintbrush,
   User,
   Lock,
@@ -28,28 +29,54 @@ import {
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
+
 const loginSchema = z.object({
-  username: z.string().min(1, "Vui lòng nhập tên đăng nhập"),
+  email: z.string().email("Email không hợp lệ"),
   password: z.string().min(1, "Vui lòng nhập mật khẩu"),
 });
 
 export default function LoginPage() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
   const loginForm = useForm({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: "", password: "" },
+    defaultValues: { email: "", password: "" },
   });
 
-  const onLogin = (data) => {
-    console.log("Login data:", data);
+  const onLogin = async (data) => {
+    setIsLoading(true);
 
-    toast.success("Chào mừng bé quay lại!", {
-      description: "Đăng nhập thành công. Cùng vẽ tranh nào!",
-      duration: 3000,
-    });
+    try {
+      await login(data.email, data.password);
+      toast.success("🎨 Chào mừng bé quay lại!", {
+        description: "Đăng nhập thành công. Cùng vẽ tranh nào!",
+        duration: 2000,
+      });
 
-    setTimeout(() => navigate("/"), 1000);
+      navigate("/");
+    } catch (error) {
+      const serverMessage = error.response?.data?.message;
+      let friendlyMessage = "Có lỗi xảy ra, bé thử lại nhé!";
+
+      if (serverMessage?.includes("Email không tồn tại")) {
+        friendlyMessage =
+          "Email này chưa được đăng ký. Bé hãy tạo tài khoản mới nhé!";
+      } else if (serverMessage?.includes("Mật khẩu không chính xác")) {
+        friendlyMessage = "Mật khẩu không đúng rồi. Bé thử nhập lại nhé!";
+      } else if (serverMessage?.includes("Vui lòng nhập đủ")) {
+        friendlyMessage = "Bé cần điền đầy đủ email và mật khẩu nhé!";
+      }
+
+      toast.error("😢 Ôi, chưa vào được rồi!", {
+        description: friendlyMessage,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -105,17 +132,17 @@ export default function LoginPage() {
               >
                 <FormField
                   control={loginForm.control}
-                  name="username"
+                  name="email"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel className="font-bold text-foreground/80 text-sm lg:text-base">
-                        Tên đăng nhập
+                        Email
                       </FormLabel>
                       <FormControl>
                         <div className="relative group">
                           <User className="absolute left-3 lg:left-4 top-2.5 lg:top-3.5 h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <Input
-                            placeholder="nghesi_nho"
+                            placeholder="nghesi_nho@example.com"
                             className="pl-9 lg:pl-11 h-10 lg:h-12 rounded-xl bg-slate-50 border-slate-200 focus:border-primary focus:ring-primary/20 transition-all font-sans text-sm lg:text-base"
                             {...field}
                           />
@@ -153,8 +180,10 @@ export default function LoginPage() {
                   type="submit"
                   className="w-full h-10 lg:h-12 rounded-full text-base lg:text-lg font-bold bg-sky-500 hover:bg-sky-600 text-white shadow-lg shadow-sky-500/25 hover:shadow-sky-500/40 transition-all active:scale-95 cursor-pointer"
                 >
-                  Đăng nhập ngay
-                  <ArrowRight className="ml-2 w-4 h-4 lg:w-5 lg:h-5" />
+                  {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+                  {!isLoading && (
+                    <ArrowRight className="ml-2 w-4 h-4 lg:w-5 lg:h-5" />
+                  )}
                 </Button>
               </form>
             </Form>

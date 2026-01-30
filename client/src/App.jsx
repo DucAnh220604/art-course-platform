@@ -1,25 +1,39 @@
 import React from "react";
-import { Route, Switch } from "wouter";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import { LandingPage } from "./pages/LandingPage";
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
   return (
-    <>
-      <Switch>
-        <Route path="/login" component={LoginPage} />
-        <Route path="/register" component={RegisterPage} />
-        <Route path="/" component={LandingPage} />
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Public Route */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="*" element={<NotFoundPage />} />
 
-        <Route component={NotFoundPage} />
-      </Switch>
+          {/* Protected Route  */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <h1>Profile Page</h1>
+              </ProtectedRoute>
+            }
+          ></Route>
+        </Routes>
+      </Router>
 
       <Toaster position="top-right" richColors />
-    </>
+    </AuthProvider>
   );
 };
 
