@@ -48,9 +48,20 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await authApi.getMe();
+      if (response.data?.success) {
+        setUser(response.data.data.user);
+      }
+    } catch (error) {
+      console.log("Refresh user failed:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated, loading, login, logout }}
+      value={{ user, isAuthenticated, loading, login, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

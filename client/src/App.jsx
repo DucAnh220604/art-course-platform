@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProfilePage from "./pages/ProfilePage";
 import { LandingPage } from "./pages/LandingPage";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -25,7 +26,7 @@ const App = () => {
             path="/profile"
             element={
               <ProtectedRoute>
-                <h1>Profile Page</h1>
+                <ProfilePage />
               </ProtectedRoute>
             }
           ></Route>

@@ -20,6 +20,11 @@ const userSchema = new mongoose.Schema(
     },
     password: { type: String, required: true, select: false },
     avatar: { type: String, default: "default-avatar.png" },
+    phone: { type: String, trim: true },
+    birthday: { type: Date },
+    address: { type: String, trim: true },
+    parentName: { type: String, trim: true },
+    parentPhone: { type: String, trim: true },
 
     role: {
       type: String,

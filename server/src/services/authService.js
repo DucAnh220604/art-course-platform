@@ -53,8 +53,38 @@ const getUserById = async (userId) => {
   return user;
 };
 
+// const updateProfile = async (userId, updateData) => {
+//   const allowedFields = [
+//     "fullname",
+//     "phone",
+//     "birthday",
+//     "address",
+//     "parentName",
+//     "parentPhone",
+//   ];
+//   const filteredData = {};
+
+//   Object.keys(updateData).forEach((key) => {
+//     if (allowedFields.includes(key)) {
+//       filteredData[key] = updateData[key];
+//     }
+//   });
+
+//   const user = await User.findByIdAndUpdate(userId, filteredData, {
+//     new: true,
+//     runValidators: true,
+//   });
+
+//   if (!user) {
+//     throw new Error("Người dùng không tồn tại.");
+//   }
+
+//   return user;
+// };
+
 module.exports = {
   registerUser,
   loginUser,
   getUserById,
+  // updateProfile,
 };
