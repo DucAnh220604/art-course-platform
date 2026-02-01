@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { BundleCard } from "./BundleCard";
 
-// Mock data - sẽ được thay thế bằng API call
 const mockBundles = [
   {
     id: "bundle-1",
@@ -50,17 +49,9 @@ export function CourseBundles({ onBundleClick }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // Example: fetchBundles().then(data => setBundles(data))
     const fetchBundles = async () => {
       try {
         setLoading(true);
-        // Simulate API call
-        // const response = await fetch('/api/courses/bundles');
-        // const data = await response.json();
-        // setBundles(data);
-
-        // Using mock data for now
         setTimeout(() => {
           setBundles(mockBundles);
           setLoading(false);

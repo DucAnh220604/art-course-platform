@@ -15,6 +15,14 @@ const userApi = {
       },
     });
   },
+
+  requestInstructor: () => {
+    return axiosClient.post("/users/request-instructor");
+  },
+
+  getInstructorRequestStatus: () => {
+    return axiosClient.get("/users/instructor-request-status");
+  },
 };
 
 export default userApi;

@@ -7,6 +7,7 @@ import {
   Settings,
   BookOpen,
   ChevronDown,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -30,7 +31,6 @@ export function Header({ onNavigate }) {
     onNavigate("/");
   };
 
-  // Lấy chữ cái đầu của tên để hiển thị trong avatar
   const getInitials = (name) => {
     if (!name) return "U";
     return name
@@ -75,7 +75,6 @@ export function Header({ onNavigate }) {
           <div className="flex items-center gap-2 lg:gap-4">
             {isAuthenticated ? (
               <>
-                {/* Giỏ hàng */}
                 <Button
                   size="icon"
                   variant="outline"
@@ -84,7 +83,6 @@ export function Header({ onNavigate }) {
                   <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6 text-sky-600" />
                 </Button>
 
-                {/* User Dropdown Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -136,6 +134,23 @@ export function Header({ onNavigate }) {
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Cài đặt</span>
                     </DropdownMenuItem>
+                    {["admin", "staff", "instructor"].includes(user?.role) && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="cursor-pointer text-sky-600 focus:text-sky-600 focus:bg-sky-50"
+                          onClick={() => onNavigate("/dashboard")}
+                        >
+                          <LayoutDashboard className="mr-2 h-4 w-4" />
+                          <span>
+                            {user?.role === "admin" && "Admin Dashboard"}
+                            {user?.role === "staff" && "Staff Dashboard"}
+                            {user?.role === "instructor" &&
+                              "Instructor Dashboard"}
+                          </span>
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
@@ -149,7 +164,6 @@ export function Header({ onNavigate }) {
               </>
             ) : (
               <>
-                {/* Chưa đăng nhập - Hiển thị Login/Register */}
                 <Button
                   variant="outline"
                   className="rounded-full hidden sm:flex border-sky-300 text-sky-600 hover:bg-sky-50 h-9 lg:h-11 px-4 lg:px-6 text-sm lg:text-base"

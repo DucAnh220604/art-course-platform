@@ -81,7 +81,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background p-4 sm:p-6 lg:p-8 overflow-x-hidden relative">
-      {/* Back Home Button */}
       <button
         onClick={() => navigate("/")}
         className="absolute top-4 left-4 z-20 flex items-center gap-2 px-3 py-2 rounded-full bg-white/80 backdrop-blur-sm shadow-md hover:bg-white hover:shadow-lg transition-all text-slate-600 hover:text-slate-800 cursor-pointer"
@@ -90,13 +89,11 @@ export default function LoginPage() {
         <span className="text-sm font-medium">Trang chủ</span>
       </button>
 
-      {/* Decorative Background Elements */}
       <div className="absolute top-10 left-10 w-20 sm:w-32 h-20 sm:h-32 bg-primary/20 rounded-full blur-3xl animate-pulse" />
       <div className="absolute bottom-10 right-10 w-24 sm:w-40 h-24 sm:h-40 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-700" />
       <div className="absolute top-1/2 left-1/4 w-16 sm:w-24 h-16 sm:h-24 bg-accent/20 rounded-full blur-3xl animate-pulse delay-500" />
 
       <Card className="w-full max-w-sm sm:max-w-xl md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto overflow-hidden shadow-2xl border-none rounded-3xl bg-white/80 backdrop-blur-sm relative z-10 grid grid-cols-1 md:grid-cols-2">
-        {/* Left Side - Form */}
         <div className="p-6 md:p-10 lg:p-12 flex flex-col justify-center relative">
           <div
             className="flex items-center gap-2 lg:gap-3 cursor-pointer mb-6 lg:mb-8"
@@ -209,9 +206,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right Side - Visual */}
         <div className="hidden md:flex flex-col relative bg-gradient-to-br from-slate-50 to-slate-100 overflow-hidden">
-          {/* Dotted pattern background */}
           <div
             className="absolute inset-0 z-0 opacity-30"
             style={{
@@ -223,16 +218,13 @@ export default function LoginPage() {
 
           <div className="relative z-10 flex-1 flex flex-col items-center justify-center p-6 lg:p-10 text-center">
             <div className="relative w-full max-w-md lg:max-w-lg aspect-[4/3] mb-6 lg:mb-8 group">
-              {/* Background layers */}
               <div className="absolute inset-0 bg-sky-200/50 rounded-3xl transform rotate-3 scale-95 transition-transform group-hover:rotate-6 duration-500" />
               <div className="absolute inset-0 bg-green-200/50 rounded-3xl transform -rotate-2 scale-95 transition-transform group-hover:-rotate-4 duration-500" />
 
-              {/* Main illustration container */}
               <div className="relative w-full h-full rounded-3xl shadow-xl overflow-hidden transform transition-transform group-hover:scale-[1.02] duration-500">
                 <ChildrenArtIllustration className="w-full h-full" />
               </div>
 
-              {/* Floating badges */}
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{
