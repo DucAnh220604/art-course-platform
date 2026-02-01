@@ -6,12 +6,10 @@ import { ArtKidsLogo } from "@/components/icons/ArtKidsLogo";
 export default function NotFoundPage() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white p-4 relative overflow-hidden">
-      {/* Background decorations */}
       <div className="absolute top-20 left-10 w-20 h-20 bg-pink-200/50 rounded-full blur-2xl" />
       <div className="absolute bottom-20 right-10 w-32 h-32 bg-yellow-200/50 rounded-full blur-2xl" />
       <div className="absolute top-1/3 right-1/4 w-16 h-16 bg-green-200/50 rounded-full blur-2xl" />
 
-      {/* Floating paint splashes */}
       <motion.div
         animate={{ y: [0, -15, 0], rotate: [0, 10, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -44,7 +42,6 @@ export default function NotFoundPage() {
         ⭐
       </motion.div>
 
-      {/* Logo */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -54,7 +51,6 @@ export default function NotFoundPage() {
         <span className="font-bold text-3xl text-sky-500">ArtKids</span>
       </motion.div>
 
-      {/* 404 Number with art theme */}
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
@@ -62,7 +58,6 @@ export default function NotFoundPage() {
         className="relative mb-6"
       >
         <svg viewBox="0 0 300 120" className="w-72 md:w-96 h-auto">
-          {/* 4 */}
           <text
             x="20"
             y="100"
@@ -73,7 +68,6 @@ export default function NotFoundPage() {
           >
             4
           </text>
-          {/* 0 - as palette */}
           <ellipse
             cx="150"
             cy="60"
@@ -89,7 +83,6 @@ export default function NotFoundPage() {
           <circle cx="175" cy="40" r="10" fill="#22C55E" />
           <circle cx="130" cy="70" r="8" fill="#8B5CF6" />
           <circle cx="170" cy="70" r="8" fill="#EC4899" />
-          {/* 4 */}
           <text
             x="200"
             y="100"
@@ -102,7 +95,6 @@ export default function NotFoundPage() {
           </text>
         </svg>
 
-        {/* Sparkle effects */}
         <motion.div
           animate={{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
@@ -119,7 +111,6 @@ export default function NotFoundPage() {
         </motion.div>
       </motion.div>
 
-      {/* Message */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -138,7 +129,6 @@ export default function NotFoundPage() {
         </p>
       </motion.div>
 
-      {/* Illustration - Lost paintbrush */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -146,15 +136,11 @@ export default function NotFoundPage() {
         className="mb-8"
       >
         <svg viewBox="0 0 200 100" className="w-48 h-auto">
-          {/* Confused paintbrush character */}
           <g transform="translate(60, 10)">
-            {/* Brush handle */}
             <rect x="35" y="20" width="12" height="50" fill="#A16207" rx="3" />
             <rect x="33" y="18" width="16" height="8" fill="#78350F" rx="2" />
-            {/* Brush tip */}
             <ellipse cx="41" cy="78" rx="10" ry="15" fill="#EC4899" />
             <ellipse cx="41" cy="75" rx="7" ry="10" fill="#F472B6" />
-            {/* Face on handle */}
             <circle cx="38" cy="38" r="2" fill="#1F2937" />
             <circle cx="44" cy="38" r="2" fill="#1F2937" />
             <path
@@ -164,7 +150,6 @@ export default function NotFoundPage() {
               fill="none"
               strokeLinecap="round"
             />
-            {/* Question marks */}
             <text x="55" y="25" fontSize="16" fill="#94A3B8">
               ?
             </text>
@@ -172,7 +157,6 @@ export default function NotFoundPage() {
               ?
             </text>
           </g>
-          {/* Map with X */}
           <g transform="translate(120, 40)">
             <rect
               x="0"
@@ -215,7 +199,6 @@ export default function NotFoundPage() {
         </svg>
       </motion.div>
 
-      {/* Action buttons */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -241,7 +224,6 @@ export default function NotFoundPage() {
         </Button>
       </motion.div>
 
-      {/* Footer hint */}
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

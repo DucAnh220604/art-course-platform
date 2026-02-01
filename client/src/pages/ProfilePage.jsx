@@ -4,7 +4,16 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Camera, Save, X, Pencil } from "lucide-react";
+import {
+  Camera,
+  Save,
+  X,
+  Pencil,
+  GraduationCap,
+  Clock,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/context/AuthContext";
@@ -39,8 +48,9 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isRequestingInstructor, setIsRequestingInstructor] = useState(false);
+  const [instructorRequestStatus, setInstructorRequestStatus] = useState(null);
 
-  // Format date for input
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -59,7 +69,6 @@ export default function ProfilePage() {
     },
   });
 
-  // Update form when user data changes
   useEffect(() => {
     if (user) {
       form.reset({
@@ -70,6 +79,7 @@ export default function ProfilePage() {
         parentName: user.parentName || "",
         parentPhone: user.parentPhone || "",
       });
+      setInstructorRequestStatus(user.instructorRequestStatus || "none");
     }
   }, [user, form]);
 
@@ -107,7 +117,6 @@ export default function ProfilePage() {
   };
 
   const handleAvatarUpload = async (file) => {
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File quá lớn!", {
         description: "Vui lòng chọn ảnh có kích thước nhỏ hơn 5MB.",
@@ -121,7 +130,6 @@ export default function ProfilePage() {
       toast.success("Cập nhật ảnh đại diện thành công!", {
         description: "Ảnh đại diện của bạn đã được thay đổi.",
       });
-      // Refresh user data to show new avatar
       if (refreshUser) {
         await refreshUser();
       } else {
@@ -172,6 +180,125 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
+  const handleRequestInstructor = async () => {
+    setIsRequestingInstructor(true);
+    try {
+      await userApi.requestInstructor();
+      toast.success("Gửi yêu cầu thành công!", {
+        description:
+          "Yêu cầu trở thành giảng viên của bạn đã được gửi. Vui lòng chờ xét duyệt.",
+      });
+      setInstructorRequestStatus("pending");
+      if (refreshUser) {
+        await refreshUser();
+      }
+    } catch (error) {
+      toast.error("Có lỗi xảy ra!", {
+        description: error.response?.data?.message || "Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsRequestingInstructor(false);
+    }
+  };
+
+  const getInstructorRequestUI = () => {
+    if (user?.role !== "customer") return null;
+
+    switch (instructorRequestStatus) {
+      case "pending":
+        return (
+          <div className="bg-amber-50/50 border border-amber-200 rounded-3xl p-5 sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+                <Clock className="w-6 h-6 text-amber-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-amber-800 mb-1">
+                  Đang chờ xét duyệt
+                </h3>
+                <p className="text-amber-700 text-sm">
+                  Yêu cầu trở thành giảng viên của bạn đang được xem xét. Chúng
+                  tôi sẽ thông báo kết quả trong thời gian sớm nhất.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case "approved":
+        return (
+          <div className="bg-green-50/50 border border-green-200 rounded-3xl p-5 sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <CheckCircle className="w-6 h-6 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-green-800 mb-1">
+                  Yêu cầu đã được duyệt!
+                </h3>
+                <p className="text-green-700 text-sm">
+                  Chúc mừng! Bạn đã trở thành giảng viên. Vui lòng đăng nhập lại
+                  để sử dụng các tính năng mới.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case "rejected":
+        return (
+          <div className="bg-red-50/50 border border-red-200 rounded-3xl p-5 sm:p-6">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <XCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-red-800 mb-1">
+                  Yêu cầu bị từ chối
+                </h3>
+                <p className="text-red-700 text-sm mb-3">
+                  Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.
+                  Bạn có thể gửi lại yêu cầu sau.
+                </p>
+                <Button
+                  onClick={handleRequestInstructor}
+                  disabled={isRequestingInstructor}
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6"
+                >
+                  {isRequestingInstructor ? "Đang gửi..." : "Gửi lại yêu cầu"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-purple-50/50 border border-purple-200 rounded-3xl p-5 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <GraduationCap className="w-6 h-6 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-bold text-purple-800 mb-1">
+                  Trở thành Giảng viên
+                </h3>
+                <p className="text-purple-700 text-sm">
+                  Bạn muốn chia sẻ kiến thức? Hãy đăng ký trở thành giảng viên
+                  và tạo các khóa học của riêng bạn.
+                </p>
+              </div>
+              <Button
+                onClick={handleRequestInstructor}
+                disabled={isRequestingInstructor}
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 shadow-lg shadow-purple-500/25 w-full sm:w-auto"
+              >
+                <GraduationCap className="w-4 h-4 mr-2" />
+                {isRequestingInstructor ? "Đang gửi..." : "Đăng ký ngay"}
+              </Button>
+            </div>
+          </div>
+        );
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-white">
@@ -186,10 +313,8 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50/80 via-slate-50 to-white">
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        {/* Header */}
         <Header onNavigate={navigate} />
 
-        {/* Main Content */}
         <main className="py-8 lg:py-12">
           <div className="max-w-3xl mx-auto">
             <motion.div
@@ -198,7 +323,6 @@ export default function ProfilePage() {
               transition={{ delay: 0.1 }}
             >
               <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
-                {/* Avatar Section */}
                 <div className="px-6 sm:px-8 pt-8 pb-6">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5">
                     <div className="relative">
@@ -246,7 +370,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Content */}
                 <div className="px-6 sm:px-8 pb-8">
                   {isEditing ? (
                     <Form {...form}>
@@ -254,7 +377,6 @@ export default function ProfilePage() {
                         onSubmit={form.handleSubmit(onSubmit)}
                         className="space-y-6"
                       >
-                        {/* Thông tin cá nhân */}
                         <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
                           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                             <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm">
@@ -342,7 +464,6 @@ export default function ProfilePage() {
                           </div>
                         </div>
 
-                        {/* Thông tin phụ huynh */}
                         <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
                           <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
                             <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm">
@@ -392,7 +513,6 @@ export default function ProfilePage() {
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
                         <div className="flex gap-3 pt-2">
                           <Button
                             type="button"
@@ -416,12 +536,8 @@ export default function ProfilePage() {
                     </Form>
                   ) : (
                     <div className="space-y-6">
-                      {/* Thông tin cá nhân */}
                       <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
                         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                          {/* <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm">
-                            👤
-                          </span> */}
                           Thông tin cá nhân
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -440,12 +556,8 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      {/* Thông tin phụ huynh */}
                       <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
                         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                          {/* <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm">
-                            👨‍👩‍👧
-                          </span> */}
                           Thông tin phụ huynh
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -459,6 +571,8 @@ export default function ProfilePage() {
                           />
                         </div>
                       </div>
+
+                      {getInstructorRequestUI()}
                     </div>
                   )}
                 </div>
@@ -467,14 +581,12 @@ export default function ProfilePage() {
           </div>
         </main>
 
-        {/* Footer */}
         <Footer />
       </div>
     </div>
   );
 }
 
-// Info Item Component
 function InfoItem({ label, value, className = "" }) {
   return (
     <div className={`bg-white rounded-xl p-4 ${className}`}>

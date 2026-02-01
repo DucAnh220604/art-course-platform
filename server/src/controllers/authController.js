@@ -59,17 +59,3 @@ exports.getMe = async (req, res) => {
     res.status(404).json({ success: false, message: error.message });
   }
 };
-
-// exports.updateProfile = async (req, res) => {
-//   try {
-//     const user = await authService.updateProfile(req.user._id, req.body);
-
-//     res.status(200).json({
-//       success: true,
-//       message: "Cập nhật thông tin thành công!",
-//       data: { user },
-//     });
-//   } catch (error) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };

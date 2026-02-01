@@ -6,7 +6,6 @@ export function ChildrenArtIllustration({ className = "w-full h-full" }) {
       xmlns="http://www.w3.org/2000/svg"
       className={className}
     >
-      {/* Background */}
       <rect width="400" height="300" fill="#D1FAE5" rx="24" />
 
       <circle cx="340" cy="50" r="30" fill="#FBBF24" />

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { CourseCard } from "./CourseCard";
 
-// Mock data - sẽ được thay thế bằng API call
 const mockCourses = [
   {
     id: "1",
@@ -107,17 +106,9 @@ export function FeaturedCourses({ onCourseClick }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // TODO: Replace with actual API call
-    // Example: fetchCourses().then(data => setCourses(data))
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        // Simulate API call
-        // const response = await fetch('/api/courses/featured');
-        // const data = await response.json();
-        // setCourses(data);
-
-        // Using mock data for now
         setTimeout(() => {
           setCourses(mockCourses);
           setLoading(false);
