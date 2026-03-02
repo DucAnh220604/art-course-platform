@@ -22,6 +22,10 @@ router.get(
   userController.getInstructorRequestStatus,
 );
 
+// Đăng ký / kiểm tra tham gia khóa học
+router.post("/enroll/:courseId", protect, userController.enrollCourse);
+router.get("/enroll/:courseId/check", protect, userController.checkEnrollment);
+
 router.use(protect, restrictTo("admin", "staff"));
 
 router.get("/stats", userController.getUserStats);

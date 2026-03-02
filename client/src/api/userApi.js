@@ -23,6 +23,14 @@ const userApi = {
   getInstructorRequestStatus: () => {
     return axiosClient.get("/users/instructor-request-status");
   },
+
+  enrollCourse: (courseId) => {
+    return axiosClient.post(`/users/enroll/${courseId}`);
+  },
+
+  checkEnrollment: (courseId) => {
+    return axiosClient.get(`/users/enroll/${courseId}/check`);
+  },
 };
 
 export default userApi;

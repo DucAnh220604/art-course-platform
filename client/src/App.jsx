@@ -11,6 +11,8 @@ import { Dashboard } from "./pages/Dashboard";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
+import { CoursesPage } from "./pages/CoursesPage";
+import { CourseDetailPage } from "./pages/CourseDetailPage";
 
 const App = () => {
   return (
@@ -30,6 +32,9 @@ const App = () => {
               </ProtectedRoute>
             }
           ></Route>
+
+          <Route path="/courses" element={<CoursesPage />} />
+          <Route path="/course/:slug" element={<CourseDetailPage />} />
 
           <Route
             path="/dashboard"

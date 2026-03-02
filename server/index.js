@@ -11,6 +11,7 @@ const userRoutes = require("./src/routes/userRoutes");
 const courseRoutes = require("./src/routes/courseRoutes");
 const sectionRoutes = require("./src/routes/sectionRouter");
 const lessonRoutes = require("./src/routes/lessonRouter");
+const reviewRoutes = require("./src/routes/reviewRoutes");
 
 connectDB();
 
@@ -25,6 +26,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/sections", sectionRoutes);
 app.use("/api/lessons", lessonRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");
