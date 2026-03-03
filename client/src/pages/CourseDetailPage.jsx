@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Star,
@@ -24,11 +24,49 @@ export function CourseDetailPage() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, refreshUser } = useAuth();
+
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
   const [expandedSection, setExpandedSection] = useState(null);
+
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
+
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+
+  // Chuyển YouTube video ID hoặc URL thành embed URL
+  const getEmbedUrl = (videoUrl) => {
+    if (!videoUrl) return null;
+    if (videoUrl.startsWith("http")) {
+      // Đã là full URL, thay /watch?v= bằng /embed/
+      try {
+        const url = new URL(videoUrl);
+        if (url.hostname.includes("youtube.com") && url.searchParams.get("v")) {
+          return `https://www.youtube.com/embed/${url.searchParams.get("v")}`;
+        }
+        if (url.hostname === "youtu.be") {
+          return `https://www.youtube.com/embed${url.pathname}`;
+        }
+        return videoUrl;
+      } catch {
+        return videoUrl;
+      }
+    }
+    // Chỉ là video ID
+    return `https://www.youtube.com/embed/${videoUrl}`;
+  };
+
+  const handleSelectLesson = (lesson) => {
+    if (isEnrolled || lesson.isTrial) {
+      setSelectedLesson(lesson);
+      setIsPlayingPreview(true);
+    } else {
+      toast.error("Bạn cần đăng ký khóa học!", {
+        description: "Đăng ký để xem toàn bộ bài học nhé! 🔐",
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchCourseDetail = async () => {
@@ -37,7 +75,6 @@ export function CourseDetailPage() {
         const response = await courseApi.getCourseBySlug(slug);
         setCourse(response.data);
 
-        // Mở sẵn chương đầu tiên
         if (response.data.sections?.length > 0) {
           setExpandedSection(response.data.sections[0]._id);
         }
@@ -54,7 +91,6 @@ export function CourseDetailPage() {
     if (slug) fetchCourseDetail();
   }, [slug, navigate]);
 
-  // Kiểm tra đã đăng ký chưa sau khi có course + user
   useEffect(() => {
     if (!course || !isAuthenticated) return;
     const enrolled = user?.enrolledCourses?.some(
@@ -66,7 +102,6 @@ export function CourseDetailPage() {
       setIsEnrolled(true);
       return;
     }
-    // Double-check với API nếu enrolledCourses không được populate đầy đủ
     userApi
       .checkEnrollment(course._id)
       .then((res) => setIsEnrolled(res.data.isEnrolled))
@@ -85,7 +120,7 @@ export function CourseDetailPage() {
       setEnrolling(true);
       await userApi.enrollCourse(course._id);
       setIsEnrolled(true);
-      await refreshUser(); // Cập nhật lại user trong context
+      await refreshUser();
       toast.success("Đăng ký thành công! 🎉", {
         description: `Chúc bé học vui với "${course.title}"! 🎨`,
       });
@@ -116,6 +151,16 @@ export function CourseDetailPage() {
     course.price === 0 ? "MIỄN PHÍ" : `${course.price?.toLocaleString()}đ`;
   const rating = course.averageRating || 0;
 
+  // URL video đang phát: lesson đang chọn, hoặc video đầu tiên dùng thử
+  const firstTrialLesson = course.sections
+    ?.flatMap((s) => s.lessonsId || [])
+    .find((l) => l.isTrial);
+  const currentVideoUrl = selectedLesson
+    ? getEmbedUrl(selectedLesson.videoUrl)
+    : firstTrialLesson
+      ? getEmbedUrl(firstTrialLesson.videoUrl)
+      : null;
+
   return (
     <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
@@ -126,7 +171,7 @@ export function CourseDetailPage() {
         <div className="flex flex-col lg:flex-row gap-10 items-start">
           {/* CỘT TRÁI: Nội dung chính */}
           <div className="w-full lg:w-2/3 space-y-10">
-            {/* 1. Tiêu đề & Giới thiệu */}
+            {/* 1. Tiêu đề & Giới thiệu ngắn */}
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-200 border-none px-4 py-1 rounded-full font-bold">
@@ -147,25 +192,66 @@ export function CourseDetailPage() {
               </p>
             </div>
 
-            {/* Thông tin Giảng viên */}
-            <div className="flex items-center gap-4 p-6 bg-white rounded-[32px] shadow-sm border border-slate-100">
-              <Avatar className="w-16 h-16 border-4 border-sky-50 shadow-sm">
-                <AvatarImage src={course.instructor?.avatar} />
-                <AvatarFallback className="bg-sky-100 text-sky-600 text-xl font-bold">
-                  {course.instructor?.fullname?.charAt(0) || "G"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-1">
-                  Giảng viên hướng dẫn
-                </p>
-                <p className="text-xl font-bold text-slate-800">
-                  {course.instructor?.fullname || "ArtKids Instructor"}
-                </p>
-              </div>
+            {/* 2. VIDEO GIỚI THIỆU / BÀI HỌC */}
+            <div className="rounded-[40px] overflow-hidden shadow-xl border-4 border-slate-100 bg-black aspect-video relative">
+              {!isPlayingPreview || !currentVideoUrl ? (
+                <>
+                  <img
+                    src={course.thumbnail}
+                    alt={course.title}
+                    className="w-full h-full object-cover opacity-80"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Button
+                      size="lg"
+                      className="rounded-full bg-white/90 hover:bg-white text-sky-600 w-24 h-24 hover:scale-110 transition-transform shadow-2xl"
+                      onClick={() => {
+                        if (currentVideoUrl) setIsPlayingPreview(true);
+                        else
+                          toast.info("Khóa học chưa có video giới thiệu! 🎬");
+                      }}
+                    >
+                      <PlayCircle className="w-14 h-14 ml-2" />
+                    </Button>
+                  </div>
+                  {course.price === 0 && (
+                    <div className="absolute top-6 left-6 bg-yellow-400 text-yellow-900 px-6 py-2 rounded-full font-bold shadow-lg shadow-yellow-400/30 tracking-wide">
+                      🎁 MIỄN PHÍ HOÀN TOÀN
+                    </div>
+                  )}
+                  {selectedLesson && (
+                    <div className="absolute bottom-6 left-0 right-0 text-center">
+                      <span className="bg-black/60 text-white px-4 py-2 rounded-full text-sm">
+                        {selectedLesson.title}
+                      </span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <iframe
+                    key={currentVideoUrl}
+                    className="w-full h-full"
+                    src={`${currentVideoUrl}?autoplay=1`}
+                    title={selectedLesson?.title || course.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
+                  <button
+                    onClick={() => {
+                      setIsPlayingPreview(false);
+                      setSelectedLesson(null);
+                    }}
+                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full px-3 py-1 text-sm transition-colors"
+                  >
+                    ✕ Đóng
+                  </button>
+                </>
+              )}
             </div>
 
-            {/* 2. Lộ trình học (Curriculum) */}
+            {/* 3. LỘ TRÌNH HỌC (Curriculum) */}
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                 <BookOpen className="text-sky-500 w-6 h-6" /> Nội dung khóa học
@@ -210,24 +296,59 @@ export function CourseDetailPage() {
                       {/* Danh sách bài học */}
                       {expandedSection === section._id && (
                         <div className="pl-16 pr-5 py-4 space-y-3">
-                          {section.lessonsId?.map((lesson) => (
-                            <div
-                              key={lesson._id}
-                              className="flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border border-slate-100 group hover:border-sky-200 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Video className="w-5 h-5 text-sky-400" />
-                                <span className="font-medium text-slate-700 group-hover:text-sky-600 transition-colors">
-                                  {lesson.title}
-                                </span>
+                          {section.lessonsId?.map((lesson) => {
+                            const canWatch = isEnrolled || lesson.isTrial;
+                            const isActive = selectedLesson?._id === lesson._id;
+                            return (
+                              <div
+                                key={lesson._id}
+                                onClick={() => handleSelectLesson(lesson)}
+                                className={`flex items-center justify-between p-4 bg-white rounded-2xl shadow-sm border transition-colors cursor-pointer ${
+                                  isActive
+                                    ? "border-sky-400 bg-sky-50"
+                                    : canWatch
+                                      ? "border-slate-100 hover:border-sky-200"
+                                      : "border-slate-100 opacity-60 cursor-not-allowed"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  {isActive ? (
+                                    <PlayCircle className="w-5 h-5 text-sky-500" />
+                                  ) : canWatch ? (
+                                    <Video className="w-5 h-5 text-sky-400" />
+                                  ) : (
+                                    <Video className="w-5 h-5 text-slate-300" />
+                                  )}
+                                  <span
+                                    className={`font-medium transition-colors ${
+                                      isActive
+                                        ? "text-sky-600"
+                                        : canWatch
+                                          ? "text-slate-700 hover:text-sky-600"
+                                          : "text-slate-400"
+                                    }`}
+                                  >
+                                    {lesson.title}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {lesson.isTrial && (
+                                    <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none">
+                                      Học thử
+                                    </Badge>
+                                  )}
+                                  {!canWatch && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-slate-400 border-slate-200"
+                                    >
+                                      🔒
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
-                              {lesson.isTrial && (
-                                <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none cursor-pointer">
-                                  Học thử
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -240,27 +361,45 @@ export function CourseDetailPage() {
               </div>
             </div>
 
-            {/* 3. TÍCH HỢP REVIEW SECTION Ở ĐÂY */}
+            {/* 4. THÔNG TIN GIẢNG VIÊN (Dời xuống đây) */}
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                <Users className="text-sky-500 w-6 h-6" /> Về giảng viên
+              </h2>
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-8 bg-white rounded-[32px] shadow-sm border border-slate-100">
+                <Avatar className="w-24 h-24 border-4 border-sky-50 shadow-sm shrink-0">
+                  <AvatarImage src={course.instructor?.avatar} />
+                  <AvatarFallback className="bg-sky-100 text-sky-600 text-2xl font-bold">
+                    {course.instructor?.fullname?.charAt(0) || "G"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="text-center sm:text-left">
+                  <h3 className="text-2xl font-bold text-slate-800 mb-1">
+                    {course.instructor?.fullname || "ArtKids Instructor"}
+                  </h3>
+                  <p className="text-sm font-bold text-sky-600 uppercase tracking-widest mb-4">
+                    Giảng viên chuyên nghiệp
+                  </p>
+                  <p className="text-slate-600 leading-relaxed">
+                    {course.instructor?.instructorInfo?.bio ||
+                      "Giảng viên tại ArtKids luôn tận tâm và nhiệt huyết, giúp các bé khơi nguồn sáng tạo và phát triển tài năng nghệ thuật qua từng bài học."}
+                  </p>
+                  {course.instructor?.email && (
+                    <p className="text-sm text-slate-400 mt-2">
+                      📧 {course.instructor.email}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 5. REVIEW SECTION */}
             <ReviewSection courseId={course._id} />
           </div>
 
           {/* CỘT PHẢI: Khung thanh toán (Sticky Sidebar) */}
           <div className="w-full lg:w-1/3 shrink-0">
             <div className="bg-white rounded-[40px] p-6 shadow-xl shadow-slate-200/50 border border-slate-100 sticky top-24">
-              {/* Ảnh bìa */}
-              <div className="relative aspect-[16/10] rounded-3xl overflow-hidden mb-8 shadow-inner">
-                <img
-                  src={course.thumbnail}
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/20 group cursor-pointer hover:bg-black/40 transition-colors">
-                  <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <PlayCircle className="w-8 h-8 text-sky-500 ml-1" />
-                  </div>
-                </div>
-              </div>
-
               {/* Giá và Đăng ký */}
               <div className="text-center mb-8">
                 <p className="text-4xl font-black text-sky-600 mb-2">
