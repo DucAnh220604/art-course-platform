@@ -1,55 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { CourseCard } from "@/components/courses/CourseCard"; // Dẫn đúng đường dẫn của bạn
-
-const mockCourses = [
-  {
-    id: "1",
-    slug: "watercolor-basics",
-    title: "Làm quen với Màu nước cho Bé",
-    thumbnail:
-      "https://images.unsplash.com/photo-1578961140619-896df05b1fd2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    instructor: {
-      name: "Cô Emma Wilson",
-      avatar:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    },
-    averageRating: 4.8,
-    price: 299000,
-    totalStudents: 1250,
-    isBestseller: true,
-  },
-  {
-    id: "2",
-    slug: "drawing-animals",
-    title: "Vẽ Động vật từng bước một",
-    thumbnail:
-      "https://images.unsplash.com/photo-1765547586679-b16ee179e653?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    instructor: {
-      name: "Thầy John Smith",
-      avatar:
-        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-    },
-    averageRating: 4.9,
-    price: 349000,
-    totalStudents: 2100,
-    isBestseller: true,
-  },
-  {
-    id: "3",
-    slug: "creative-painting",
-    title: "Cuộc phiêu lưu Sáng tạo với Cọ vẽ",
-    thumbnail:
-      "https://images.unsplash.com/photo-1696527014256-4755b3ac0b4a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=400",
-    instructor: {
-      name: "Cô Sarah Lee",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    },
-    averageRating: 4.7,
-    price: 0, // Khóa học miễn phí
-    totalStudents: 890,
-  },
-];
+import { CourseCard } from "@/components/courses/CourseCard";
+import courseApi from "@/api/courseApi";
 
 export function FeaturedCourses({ onCourseClick }) {
   const [courses, setCourses] = useState([]);
@@ -57,12 +8,25 @@ export function FeaturedCourses({ onCourseClick }) {
 
   useEffect(() => {
     const fetchCourses = async () => {
-      // Giả lập load API nhanh
-      setTimeout(() => {
-        setCourses(mockCourses);
+      try {
+        setLoading(true);
+        const response = await courseApi.getAllCourses();
+
+        // Lọc khóa học published và sắp xếp theo mới nhất, lấy 3 khóa đầu
+        const publishedCourses = (response.data.courses || [])
+          .filter((course) => course.status === "published")
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 3);
+
+        setCourses(publishedCourses);
+      } catch (error) {
+        console.error("Error fetching featured courses:", error);
+        setCourses([]);
+      } finally {
         setLoading(false);
-      }, 500);
+      }
     };
+
     fetchCourses();
   }, []);
 
@@ -73,7 +37,7 @@ export function FeaturedCourses({ onCourseClick }) {
           Khóa học <span className="text-sky-500">Nổi bật</span> 🌟
         </h2>
         <p className="text-lg text-slate-500">
-          Khám phá những khóa học được các họa sĩ nhí yêu thích nhất
+          Khám phá những khóa học mới nhất dành cho các họa sĩ nhí
         </p>
       </div>
 
@@ -90,10 +54,9 @@ export function FeaturedCourses({ onCourseClick }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
           {courses.map((course) => (
             <CourseCard
-              key={course.id}
+              key={course._id}
               course={course}
-              // Gọi callback để chuyển trang, dùng slug hoặc id tùy hệ thống của bạn
-              onClick={() => onCourseClick(course.slug || course.id)}
+              onClick={() => onCourseClick(course.slug || course._id)}
             />
           ))}
         </div>
