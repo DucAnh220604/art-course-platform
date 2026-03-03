@@ -1,6 +1,7 @@
 export { Header } from "./Header";
 export { HeroSection } from "./HeroSection";
 export { FeaturedCourses } from "./FeaturedCourses";
+export { FeaturedCombos } from "./FeaturedCombos";
 export { CourseCard } from "./CourseCard";
 export { CourseBundles } from "./CourseBundles";
 export { BundleCard } from "./BundleCard";

@@ -4,3 +4,4 @@ export { PlaceholderTab } from "./PlaceholderTab";
 export { InstructorRequests } from "./InstructorRequests";
 export { DashboardOverview } from "./DashboardOverview";
 export { AdminCourseManagement } from "./CourseManagement";
+export { AdminComboManagement } from "./AdminComboManagement";

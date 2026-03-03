@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Search, Filter } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Search, Filter, BookOpen, Package } from "lucide-react";
 import { Header, Footer } from "@/components/landing";
 import { CourseCard } from "@/components/courses/CourseCard";
+import { ComboCard } from "@/components/combos/ComboCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -13,38 +15,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import courseApi from "@/api/courseApi";
+import comboApi from "@/api/comboApi";
 import { toast } from "sonner";
 
 export function CoursesPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [courses, setCourses] = useState([]);
+  const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [level, setLevel] = useState("all");
+  const [type, setType] = useState(searchParams.get("type") || "all"); // all, courses, combos
 
-  const fetchCourses = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       const params = {
         search: search || undefined,
         category: category !== "all" ? category : undefined,
         level: level !== "all" ? level : undefined,
-        status: "published", // Truyền thêm param để BE hỗ trợ lọc (nếu có)
+        status: "published",
       };
-      const response = await courseApi.getAllCourses(params);
 
-      // Lọc chắc chắn ở Frontend: CHỈ lấy khóa học "published"
-      const publishedCourses = (response.data.courses || []).filter(
+      // Fetch courses và combos song song
+      const [coursesResponse, combosResponse] = await Promise.all([
+        type !== "combos"
+          ? courseApi.getAllCourses(params)
+          : Promise.resolve({ data: { courses: [] } }),
+        type !== "courses"
+          ? comboApi.getAllCombos(params)
+          : Promise.resolve({ data: { combos: [] } }),
+      ]);
+
+      const publishedCourses = (coursesResponse.data.courses || []).filter(
         (course) => course.status === "published",
+      );
+      const publishedCombos = (combosResponse.data.combos || []).filter(
+        (combo) => combo.status === "published",
       );
 
       setCourses(publishedCourses);
+      setCombos(publishedCombos);
 
-      if (search && publishedCourses.length > 0) {
+      if (
+        search &&
+        (publishedCourses.length > 0 || publishedCombos.length > 0)
+      ) {
         toast.info("Tìm thấy rồi nè!", {
-          description: `Có ${publishedCourses.length} khóa học phù hợp với bé đó! ✨`,
+          description: `Có ${publishedCourses.length + publishedCombos.length} kết quả phù hợp với bé đó! ✨`,
         });
       }
     } catch (error) {
@@ -59,10 +81,32 @@ export function CoursesPage() {
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      fetchCourses();
+      fetchData();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [search, category, level]);
+  }, [search, category, level, type]);
+
+  // Update URL params when type changes
+  useEffect(() => {
+    if (type !== "all") {
+      setSearchParams({ type });
+    } else {
+      setSearchParams({});
+    }
+  }, [type, setSearchParams]);
+
+  const handleTypeChange = (newType) => {
+    setType(newType);
+  };
+
+  const getDisplayItems = () => {
+    if (type === "courses") return courses;
+    if (type === "combos") return combos;
+    // "all" - gộp cả hai
+    return [...courses, ...combos];
+  };
+
+  const displayItems = getDisplayItems();
 
   return (
     <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
@@ -78,14 +122,38 @@ export function CoursesPage() {
             🎨
           </h1>
           <p className="text-slate-500 text-lg font-medium mt-2">
-            Tìm thấy cảm hứng sáng tạo qua các khóa học chất lượng cao dành cho
+            Tìm thấy cảm hứng sáng tạo qua các khóa học và combo ưu đãi dành cho
             bé.
           </p>
         </div>
 
-        {/* LAYOUT MỚI: CHIA CỘT 2.5 / 7.5 */}
+        {/* Tabs để filter type */}
+        <div className="mb-8">
+          <Tabs
+            value={type}
+            onValueChange={handleTypeChange}
+            className="w-full"
+          >
+            <TabsList className="grid w-full max-w-md grid-cols-3 h-12">
+              <TabsTrigger value="all" className="flex items-center gap-2">
+                <Filter className="w-4 h-4" />
+                Tất cả
+              </TabsTrigger>
+              <TabsTrigger value="courses" className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                Khóa học
+              </TabsTrigger>
+              <TabsTrigger value="combos" className="flex items-center gap-2">
+                <Package className="w-4 h-4" />
+                Combo
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        {/* LAYOUT: CHIA CỘT 2.5 / 7.5 */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* CỘT TRÁI (SIDEBAR): Chiếm 25% trên Desktop */}
+          {/* CỘT TRÁI (SIDEBAR) */}
           <aside className="w-full lg:w-1/4 shrink-0 bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col gap-6 sticky top-24">
             <div className="flex items-center gap-2 border-b border-slate-50 pb-4">
               <Filter className="w-5 h-5 text-sky-500" />
@@ -102,7 +170,7 @@ export function CoursesPage() {
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <Input
-                  placeholder="Tên khóa học..."
+                  placeholder="Tên khóa học hoặc combo..."
                   className="pl-10 rounded-2xl h-12 border-slate-200 bg-slate-50 focus-visible:ring-sky-500"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -152,16 +220,16 @@ export function CoursesPage() {
                 setSearch("");
                 setCategory("all");
                 setLevel("all");
+                setType("all");
               }}
             >
               Xóa bộ lọc
             </Button>
           </aside>
 
-          {/* CỘT PHẢI (MAIN CONTENT): Chiếm 75% trên Desktop */}
+          {/* CỘT PHẢI (MAIN CONTENT) */}
           <div className="w-full lg:w-3/4">
             {loading ? (
-              // Khoảng cách (gap) và kích thước lưới được tinh chỉnh để card nhỏ lại
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <div
@@ -170,25 +238,48 @@ export function CoursesPage() {
                   />
                 ))}
               </div>
-            ) : courses.length > 0 ? (
+            ) : displayItems.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course) => (
-                  <CourseCard
-                    key={course._id}
-                    course={course}
-                    onClick={() => navigate(`/course/${course.slug}`)}
-                  />
-                ))}
+                {displayItems.map((item) => {
+                  // Kiểm tra xem item có phải là combo không (có field courses)
+                  const isCombo = item.courses && Array.isArray(item.courses);
+
+                  return isCombo ? (
+                    <ComboCard
+                      key={item._id}
+                      combo={item}
+                      onComboClick={(slug) => navigate(`/combos/${slug}`)}
+                    />
+                  ) : (
+                    <CourseCard
+                      key={item._id}
+                      course={item}
+                      onClick={() => navigate(`/course/${item.slug}`)}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-24 bg-white rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-                <div className="text-7xl mb-6 grayscale opacity-50">🎨</div>
+                <div className="text-7xl mb-6 grayscale opacity-50">
+                  {type === "combos" ? "📦" : type === "courses" ? "📚" : "🎨"}
+                </div>
                 <h3 className="text-2xl font-bold text-slate-800">
-                  Không có khóa học nào
+                  {type === "combos"
+                    ? "Không có combo nào"
+                    : type === "courses"
+                      ? "Không có khóa học nào"
+                      : "Không có kết quả"}
                 </h3>
                 <p className="text-slate-500 mt-2 text-base max-w-sm">
-                  Hiện tại không có khóa học nào đang được hiển thị. Bé hãy thử
-                  thay đổi bộ lọc bên trái xem sao nhé!
+                  Hiện tại không có{" "}
+                  {type === "combos"
+                    ? "combo"
+                    : type === "courses"
+                      ? "khóa học"
+                      : "kết quả"}{" "}
+                  nào đang được hiển thị. Bé hãy thử thay đổi bộ lọc bên trái
+                  xem sao nhé!
                 </p>
               </div>
             )}
