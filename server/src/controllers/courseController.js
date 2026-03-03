@@ -26,13 +26,16 @@ const courseController = {
   },
   getCourseBySlug: async (req, res) => {
     try {
-      const course = await Course.findOne({ slug: req.params.slug }).populate({
-        path: "sections",
-        populate: {
-          path: "lessonsId",
-          select: "title duration isTrial type videoUrl thumbnail description",
-        },
-      });
+      const course = await Course.findOne({ slug: req.params.slug })
+        .populate("instructor", "fullname avatar instructorInfo email")
+        .populate({
+          path: "sections",
+          populate: {
+            path: "lessonsId",
+            select:
+              "title duration isTrial type videoUrl thumbnail description",
+          },
+        });
       if (!course) {
         return res.status(404).json({ message: "Course not found" });
       }
