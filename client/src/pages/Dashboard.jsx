@@ -20,7 +20,9 @@ import {
   UserManagement,
   PlaceholderTab,
   InstructorRequests,
+  AdminCourseManagement,
 } from "@/components/admin";
+import { CourseManagement } from "@/components/instructor/CourseManagement";
 
 const getNavigationByRole = (role) => {
   switch (role) {
@@ -93,21 +95,9 @@ export function Dashboard() {
       case "instructor-requests":
         return <InstructorRequests />;
       case "courses":
-        return (
-          <PlaceholderTab
-            title="Quản lý Khóa học"
-            description="Duyệt và quản lý các khóa học"
-            message="Chức năng quản lý khóa học đang được phát triển..."
-          />
-        );
+        return <AdminCourseManagement />;
       case "my-courses":
-        return (
-          <PlaceholderTab
-            title="Khóa học của tôi"
-            description="Quản lý các khóa học bạn đã tạo"
-            message="Chức năng quản lý khóa học đang được phát triển..."
-          />
-        );
+        return <CourseManagement />;
       case "posts":
         return (
           <PlaceholderTab
