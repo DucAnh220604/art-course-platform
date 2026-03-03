@@ -26,6 +26,14 @@ router.get(
 router.post("/enroll/:courseId", protect, userController.enrollCourse);
 router.get("/enroll/:courseId/check", protect, userController.checkEnrollment);
 
+// Đăng ký / kiểm tra tham gia combo
+router.post("/enroll-combo/:comboId", protect, userController.enrollCombo);
+router.get(
+  "/enroll-combo/:comboId/check",
+  protect,
+  userController.checkComboEnrollment,
+);
+
 router.use(protect, restrictTo("admin", "staff"));
 
 router.get("/stats", userController.getUserStats);

@@ -1,6 +1,7 @@
 const userService = require("../services/userService");
 const User = require("../models/User");
 const Course = require("../models/Course");
+const Combo = require("../models/Combo");
 
 exports.updateProfile = async (req, res) => {
   try {
@@ -264,6 +265,99 @@ exports.checkEnrollment = async (req, res) => {
       (e) => e.course.toString() === courseId.toString(),
     );
     res.json({ success: true, isEnrolled });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Đăng ký tham gia combo (sẽ enroll vào tất cả các khóa học trong combo)
+exports.enrollCombo = async (req, res) => {
+  try {
+    const comboId = req.params.comboId;
+    const userId = req.user._id;
+
+    // Kiểm tra combo tồn tại và đã được publish
+    const combo = await Combo.findById(comboId).populate("courses");
+    if (!combo) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy combo!" });
+    }
+    if (combo.status !== "published") {
+      return res
+        .status(400)
+        .json({ success: false, message: "Combo chưa được phát hành!" });
+    }
+
+    const user = await User.findById(userId);
+
+    // Enroll vào từng khóa học trong combo
+    let enrolledCount = 0;
+    let alreadyEnrolledCourses = [];
+
+    for (const course of combo.courses) {
+      const alreadyEnrolled = user.enrolledCourses.some(
+        (e) => e.course.toString() === course._id.toString(),
+      );
+
+      if (!alreadyEnrolled) {
+        // Thêm vào enrolledCourses
+        user.enrolledCourses.push({ course: course._id });
+        // Tăng totalStudents của khóa học
+        await Course.findByIdAndUpdate(course._id, {
+          $inc: { totalStudents: 1 },
+        });
+        enrolledCount++;
+      } else {
+        alreadyEnrolledCourses.push(course.title);
+      }
+    }
+
+    await user.save();
+
+    // Tăng totalStudents của combo
+    await Combo.findByIdAndUpdate(comboId, { $inc: { totalStudents: 1 } });
+
+    let message = `Đăng ký combo thành công! Bạn đã tham gia ${enrolledCount} khóa học. 🎉`;
+    if (alreadyEnrolledCourses.length > 0) {
+      message += ` (Bạn đã đăng ký trước: ${alreadyEnrolledCourses.join(", ")})`;
+    }
+
+    res.status(200).json({
+      success: true,
+      message,
+      data: {
+        enrolledCount,
+        alreadyEnrolledCourses,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Kiểm tra user đã đăng ký combo chưa
+exports.checkComboEnrollment = async (req, res) => {
+  try {
+    const comboId = req.params.comboId;
+    const combo = await Combo.findById(comboId);
+
+    if (!combo) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy combo!" });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Kiểm tra xem user đã enroll tất cả các khóa học trong combo chưa
+    const allEnrolled = combo.courses.every((courseId) =>
+      user.enrolledCourses.some(
+        (e) => e.course.toString() === courseId.toString(),
+      ),
+    );
+
+    res.json({ success: true, isEnrolled: allEnrolled });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

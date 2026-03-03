@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 import { CoursesPage } from "./pages/CoursesPage";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
+import { ComboDetailPage } from "./pages/ComboDetailPage";
 
 const App = () => {
   return (
@@ -35,6 +36,8 @@ const App = () => {
 
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/course/:slug" element={<CourseDetailPage />} />
+
+          <Route path="/combos/:slug" element={<ComboDetailPage />} />
 
           <Route
             path="/dashboard"

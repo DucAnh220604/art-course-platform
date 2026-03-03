@@ -10,6 +10,7 @@ import {
   UserCheck,
   ShoppingBag,
   Home,
+  Package,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -22,7 +23,9 @@ import {
   InstructorRequests,
   AdminCourseManagement,
 } from "@/components/admin";
+import { AdminComboManagement } from "@/components/admin/AdminComboManagement";
 import { CourseManagement } from "@/components/instructor/CourseManagement";
+import { ComboManagement } from "@/components/instructor/ComboManagement";
 
 const getNavigationByRole = (role) => {
   switch (role) {
@@ -36,6 +39,7 @@ const getNavigationByRole = (role) => {
           icon: UserCheck,
         },
         { id: "courses", label: "Quản lý Khóa học", icon: BookOpen },
+        { id: "combos", label: "Quản lý Combo", icon: Package },
         { id: "posts", label: "Quản lý Bài viết", icon: FileText },
         { id: "payments", label: "Giao dịch", icon: CreditCard },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
@@ -56,6 +60,7 @@ const getNavigationByRole = (role) => {
       return [
         { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { id: "my-courses", label: "Khóa học của tôi", icon: BookOpen },
+        { id: "my-combos", label: "Combo của tôi", icon: Package },
         { id: "orders", label: "Lịch sử đơn hàng", icon: ShoppingBag },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
       ];
@@ -96,8 +101,12 @@ export function Dashboard() {
         return <InstructorRequests />;
       case "courses":
         return <AdminCourseManagement />;
+      case "combos":
+        return <AdminComboManagement />;
       case "my-courses":
         return <CourseManagement />;
+      case "my-combos":
+        return <ComboManagement />;
       case "posts":
         return (
           <PlaceholderTab
