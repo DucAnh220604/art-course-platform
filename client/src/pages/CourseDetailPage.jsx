@@ -19,6 +19,7 @@ import userApi from "@/api/userApi";
 import { toast } from "sonner";
 import { ReviewSection } from "@/components/courses/ReviewSection";
 import { useAuth } from "@/context/AuthContext";
+import paymentApi from "@/api/paymentApi";
 
 export function CourseDetailPage() {
   const { slug } = useParams();
@@ -116,14 +117,30 @@ export function CourseDetailPage() {
       navigate("/login");
       return;
     }
+
     try {
       setEnrolling(true);
-      await userApi.enrollCourse(course._id);
-      setIsEnrolled(true);
-      await refreshUser();
-      toast.success("Đăng ký thành công! 🎉", {
-        description: `Chúc bé học vui với "${course.title}"! 🎨`,
+
+      const res = await paymentApi.createPayment({
+        itemType: "course",
+        itemId: course._id,
       });
+
+      const data = res.data;
+
+      if (data.flow === "free") {
+        setIsEnrolled(true);
+        await refreshUser();
+        toast.success(data.message || "Đăng ký thành công!");
+        return;
+      }
+
+      if (data.flow === "vnpay" && data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+        return;
+      }
+
+      toast.error("Không tạo được phiên thanh toán.");
     } catch (error) {
       toast.error("Không đăng ký được!", {
         description: error?.response?.data?.message || "Bé thử lại sau nhé! ❌",
