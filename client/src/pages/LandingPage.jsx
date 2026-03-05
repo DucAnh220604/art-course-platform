@@ -3,6 +3,7 @@ import {
   Header,
   HeroSection,
   FeaturedCourses,
+  FeaturedCombos,
   CourseBundles,
   WhyChooseUs,
   Testimonials,
@@ -14,6 +15,10 @@ export function LandingPage() {
 
   const handleCourseClick = (courseId) => {
     navigate(`/course/${courseId}`);
+  };
+
+  const handleComboClick = (comboSlug) => {
+    navigate(`/combos/${comboSlug}`);
   };
 
   const handleBundleClick = (bundleId) => {
@@ -28,6 +33,8 @@ export function LandingPage() {
         <HeroSection />
 
         <FeaturedCourses onCourseClick={handleCourseClick} />
+
+        <FeaturedCombos onComboClick={handleComboClick} />
 
         <CourseBundles onBundleClick={handleBundleClick} />
 

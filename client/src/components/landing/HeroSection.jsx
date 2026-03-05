@@ -1,7 +1,9 @@
 import { PlayCircle, Award } from "lucide-react";
 import { Button } from "../ui/button";
+import { useNavigate } from "react-router-dom";
 
 export function HeroSection() {
+  const navigate = useNavigate();
   return (
     <section className="py-8 sm:py-12 lg:py-16">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
@@ -26,6 +28,7 @@ export function HeroSection() {
             <Button
               size="lg"
               variant="outline"
+              onClick={() => navigate("/courses")}
               className="rounded-full text-sm sm:text-base lg:text-lg px-4 sm:px-6 lg:px-8 border-sky-300 text-sky-600 hover:bg-sky-50"
             >
               Browse Courses

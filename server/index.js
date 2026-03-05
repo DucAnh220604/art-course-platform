@@ -8,6 +8,11 @@ const connectDB = require("./src/config/db");
 
 const authRoutes = require("./src/routes/authRoutes");
 const userRoutes = require("./src/routes/userRoutes");
+const courseRoutes = require("./src/routes/courseRoutes");
+const comboRoutes = require("./src/routes/comboRoutes");
+const sectionRoutes = require("./src/routes/sectionRouter");
+const lessonRoutes = require("./src/routes/lessonRouter");
+const reviewRoutes = require("./src/routes/reviewRoutes");
 
 connectDB();
 
@@ -19,6 +24,11 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/courses", courseRoutes);
+app.use("/api/combos", comboRoutes);
+app.use("/api/sections", sectionRoutes);
+app.use("/api/lessons", lessonRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");
