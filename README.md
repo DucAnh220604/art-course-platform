@@ -21,10 +21,10 @@ VNP_HASH_SECRET=SV5BUKNGH1A9AALP0I6IGK9L0G6FTG7L
 VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 
 VNP_RETURN_URL=https://creola-lignivorous-seriously.ngrok-free.dev/api/payments/vnpay-return 
-=> thay dòng [in đậm](https://creola-lignivorous-seriously.ngrok-free.dev) bằng dòng đã copy trên bước 4
+=> thay dòng "https://creola-lignivorous-seriously.ngrok-free.dev" bằng dòng đã copy trên bước 4
 
 VNP_IPN_URL=https://creola-lignivorous-seriously.ngrok-free.dev/api/payments/vnpay-ipn 
-=> thay dòng [in đậm](https://creola-lignivorous-seriously.ngrok-free.dev) bằng dòng đã copy trên bước 4
+=> thay dòng "https://creola-lignivorous-seriously.ngrok-free.dev" bằng dòng đã copy trên bước 4
 
 CLIENT_URL=http://localhost:5173
 
