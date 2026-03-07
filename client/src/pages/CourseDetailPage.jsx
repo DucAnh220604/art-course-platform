@@ -421,7 +421,7 @@ export function CourseDetailPage() {
                   }`}
                 >
                   {isEnrolled
-                    ? "✅ Đã đăng ký"
+                    ? "Đã đăng ký"
                     : enrolling
                       ? "Đang đăng ký..."
                       : "Đăng ký học ngay"}
