@@ -13,6 +13,7 @@ const comboRoutes = require("./src/routes/comboRoutes");
 const sectionRoutes = require("./src/routes/sectionRouter");
 const lessonRoutes = require("./src/routes/lessonRouter");
 const reviewRoutes = require("./src/routes/reviewRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
 
 connectDB();
 
@@ -29,6 +30,7 @@ app.use("/api/combos", comboRoutes);
 app.use("/api/sections", sectionRoutes);
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

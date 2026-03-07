@@ -17,6 +17,7 @@ import comboApi from "@/api/comboApi";
 import userApi from "@/api/userApi";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import paymentApi from "@/api/paymentApi";
 
 export function ComboDetailPage() {
   const { slug } = useParams();
@@ -47,7 +48,6 @@ export function ComboDetailPage() {
     if (slug) fetchComboDetail();
   }, [slug, navigate]);
 
-  // Kiểm tra đã đăng ký combo chưa
   useEffect(() => {
     if (!combo || !isAuthenticated) return;
 
@@ -57,7 +57,6 @@ export function ComboDetailPage() {
       .catch(() => {});
   }, [combo, isAuthenticated, user]);
 
-  // Auto-rotate ảnh combo mỗi 3 giây
   useEffect(() => {
     if (!combo?.courses || combo.courses.length <= 1) return;
 
@@ -81,12 +80,27 @@ export function ComboDetailPage() {
 
     try {
       setEnrolling(true);
-      const response = await userApi.enrollCombo(combo._id);
-      setIsEnrolled(true);
-      await refreshUser();
-      toast.success("Đăng ký combo thành công! 🎉", {
-        description: response.data.message,
+
+      const res = await paymentApi.createPayment({
+        itemType: "combo",
+        itemId: combo._id,
       });
+
+      const data = res.data;
+
+      if (data.flow === "free") {
+        await refreshUser();
+        setIsEnrolled(true);
+        toast.success(data.message || "Đăng ký combo thành công!");
+        return;
+      }
+
+      if (data.flow === "vnpay" && data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+        return;
+      }
+
+      toast.error("Không tạo được phiên thanh toán.");
     } catch (error) {
       toast.error("Không đăng ký được!", {
         description: error?.response?.data?.message || "Bé thử lại sau nhé! ❌",
