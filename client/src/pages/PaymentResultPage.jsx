@@ -24,6 +24,8 @@ export default function PaymentResultPage() {
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("pending");
   const [message, setMessage] = useState("");
+  const [itemType, setItemType] = useState(null);
+  const [itemSlug, setItemSlug] = useState(null);
 
   const txnRef = searchParams.get("txnRef");
 
@@ -38,16 +40,20 @@ export default function PaymentResultPage() {
 
       try {
         let finalStatus = "pending";
+        let lastData = null;
 
         for (let i = 0; i < 6; i += 1) {
           const res = await paymentApi.getPaymentStatus(txnRef);
-          const s = res.data?.data?.status || "pending";
+          lastData = res.data?.data;
+          const s = lastData?.status || "pending";
           finalStatus = s;
           if (s !== "pending") break;
           await new Promise((r) => setTimeout(r, 1500));
         }
 
         setStatus(finalStatus);
+        if (lastData?.itemType) setItemType(lastData.itemType);
+        if (lastData?.itemSlug) setItemSlug(lastData.itemSlug);
 
         if (finalStatus === "paid") {
           await refreshUser();
@@ -72,7 +78,6 @@ export default function PaymentResultPage() {
     };
 
     run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [txnRef, refreshUser]);
 
   const ui = useMemo(() => {
@@ -106,6 +111,12 @@ export default function PaymentResultPage() {
       icon: <CircleX className="w-16 h-16 text-rose-500" />,
     };
   }, [loading, status]);
+
+  const getItemUrl = () => {
+    if (!itemSlug) return "/courses";
+    if (itemType === "combo") return `/combos/${itemSlug}`;
+    return `/course/${itemSlug}`;
+  };
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white p-4 relative overflow-hidden">
@@ -167,11 +178,11 @@ export default function PaymentResultPage() {
             <>
               <div className="flex mx-auto gap-8">
                 <Button
-                  onClick={() => navigate("/courses")}
+                  onClick={() => navigate(getItemUrl())}
                   className="h-12 px-6 rounded-full text-base font-bold bg-sky-500 hover:bg-sky-600 text-white"
                 >
                   <BookOpen className="w-5 h-5 mr-2" />
-                  Đi đến khóa học
+                  {itemType === "combo" ? "Đi đến combo" : "Đi đến khóa học"}
                 </Button>
                 <Button
                   variant="outline"

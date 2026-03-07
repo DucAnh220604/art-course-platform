@@ -1,18 +1,18 @@
-***Thanh toán khóa học bằng Sandbox VNPay***
+**_Thanh toán khóa học bằng Sandbox VNPay_**
 
 **Cần có ngrok: Dùng để tạo tunnel cho VNPay gọi IPN về máy cá nhân.**
 
 1. Tải ngrok: **ngrok.com**
    <img width="1267" height="829" alt="image" src="https://github.com/user-attachments/assets/d741d50e-c602-4dc3-a488-f896941eaef4" />
 
-3. Mở terminal (CMD, PowerShell hoặc Git Bash) tại thư mục chứa file ngrok và chạy lệnh (chỉ cần chạy 1 lần đầu tiên): **ngrok config add-authtoken <MÃ_TOKEN_CỦA_BẠN>** (Mã Token lấy được trong trang ngrok.com sau khi đăng nhập)
+2. Mở terminal (CMD, PowerShell hoặc Git Bash) tại thư mục chứa file ngrok và chạy lệnh (chỉ cần chạy 1 lần đầu tiên): **ngrok config add-authtoken <MÃ_TOKEN_CỦA_BẠN>** (Mã Token lấy được trong trang ngrok.com sau khi đăng nhập)
    <img width="1449" height="210" alt="image" src="https://github.com/user-attachments/assets/8c24e878-74df-456a-8085-1fab2038b731" />
 
-4. Chạy lệnh: **ngrok http 5000**
+3. Chạy lệnh: **ngrok http 5000**
    (5000 là port của nodejs)
-5. Sau khi chạy sẽ được đống thông tin. Chú ý dòng: **Forwarding** https://creola-lignivorous-seriously.ngrok-free.dev -> http://localhost:5000. Copy dòng **https://creola-lignivorous-seriously.ngrok-free.dev**
+4. Sau khi chạy sẽ được đống thông tin. Chú ý dòng: **Forwarding** https://creola-lignivorous-seriously.ngrok-free.dev -> http://localhost:5000. Copy dòng **https://creola-lignivorous-seriously.ngrok-free.dev**
 
- **File .env ở server thêm vào:**
+**File .env ở server thêm vào:**
 VNP_TMN_CODE=QSGQ1EJ5
 
 VNP_HASH_SECRET=SV5BUKNGH1A9AALP0I6IGK9L0G6FTG7L
@@ -27,12 +27,14 @@ CLIENT_URL=http://localhost:5173
 
 **Tài khoản VNPay**
 
-Ngân hàng:	**NCB**
+**Chọn phần "Thẻ nội địa và tài khoản ngân hàng"**
 
-Số thẻ:	**9704198526191432198**
+Ngân hàng: **NCB**
 
-Tên chủ thẻ:	**NGUYEN VAN A**
+Số thẻ: **9704198526191432198**
 
-Ngày phát hành:	**07/15**
+Tên chủ thẻ: **NGUYEN VAN A**
 
-Mật khẩu OTP:	**123456**
+Ngày phát hành: **07/15**
+
+Mật khẩu OTP: **123456**

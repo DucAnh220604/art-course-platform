@@ -292,6 +292,15 @@ exports.getPaymentStatus = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy giao dịch." });
     }
 
+    let itemSlug = null;
+    if (payment.itemType === "course") {
+      const course = await Course.findById(payment.itemId).select("slug");
+      itemSlug = course?.slug || null;
+    } else if (payment.itemType === "combo") {
+      const combo = await Combo.findById(payment.itemId).select("slug");
+      itemSlug = combo?.slug || null;
+    }
+
     return res.json({
       success: true,
       data: {
@@ -299,6 +308,7 @@ exports.getPaymentStatus = async (req, res) => {
         status: payment.status,
         itemType: payment.itemType,
         itemId: payment.itemId,
+        itemSlug,
         amount: payment.amount,
         paidAt: payment.paidAt,
       },
