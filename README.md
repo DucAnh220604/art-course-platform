@@ -13,6 +13,7 @@
 5. Sau khi chạy sẽ được đống thông tin. Chú ý dòng: **Forwarding** https://creola-lignivorous-seriously.ngrok-free.dev -> http://localhost:5000. Copy dòng **https://creola-lignivorous-seriously.ngrok-free.dev**
 
  **File .env ở server thêm vào:**
+ 
 VNP_TMN_CODE=QSGQ1EJ5
 
 VNP_HASH_SECRET=SV5BUKNGH1A9AALP0I6IGK9L0G6FTG7L
