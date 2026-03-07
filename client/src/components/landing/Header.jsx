@@ -4,7 +4,6 @@ import {
   ShoppingCart,
   User,
   LogOut,
-  Settings,
   BookOpen,
   ChevronDown,
   LayoutDashboard,
@@ -75,14 +74,6 @@ export function Header({ onNavigate }) {
           <div className="flex items-center gap-2 lg:gap-4">
             {isAuthenticated ? (
               <>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="rounded-full w-9 h-9 lg:w-11 lg:h-11 border-sky-200 hover:bg-sky-50"
-                >
-                  <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6 text-sky-600" />
-                </Button>
-
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -127,13 +118,6 @@ export function Header({ onNavigate }) {
                       <BookOpen className="mr-2 h-4 w-4" />
                       <span>Khóa học của tôi</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="cursor-pointer"
-                      onClick={() => onNavigate("/settings")}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Cài đặt</span>
-                    </DropdownMenuItem>
                     {["admin", "staff", "instructor"].includes(user?.role) && (
                       <>
                         <DropdownMenuSeparator />
@@ -176,13 +160,6 @@ export function Header({ onNavigate }) {
                   onClick={() => onNavigate("/register")}
                 >
                   Đăng ký
-                </Button>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="rounded-full w-9 h-9 lg:w-11 lg:h-11"
-                >
-                  <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6" />
                 </Button>
               </>
             )}
