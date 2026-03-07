@@ -13,15 +13,20 @@
 4. Sau khi chạy sẽ được đống thông tin. Chú ý dòng: **Forwarding** https://creola-lignivorous-seriously.ngrok-free.dev -> http://localhost:5000. Copy dòng **https://creola-lignivorous-seriously.ngrok-free.dev**
 
 **File .env ở server thêm vào:**
+
 VNP_TMN_CODE=QSGQ1EJ5
 
 VNP_HASH_SECRET=SV5BUKNGH1A9AALP0I6IGK9L0G6FTG7L
 
 VNP_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
 
-VNP_RETURN_URL=**https://creola-lignivorous-seriously.ngrok-free.dev**/api/payments/vnpay-return => thay dòng in đậm bằng dòng đã copy trên bước 4
+VNP_RETURN_URL=https://creola-lignivorous-seriously.ngrok-free.dev/api/payments/vnpay-return
 
-VNP_IPN_URL=**https://creola-lignivorous-seriously.ngrok-free.dev**/api/payments/vnpay-ipn => thay dòng in đậm bằng dòng đã copy trên bước 4
+=> thay dòng "https://creola-lignivorous-seriously.ngrok-free.dev" bằng dòng đã copy trên bước 4
+
+VNP_IPN_URL=https://creola-lignivorous-seriously.ngrok-free.dev/api/payments/vnpay-ipn
+
+=> thay dòng "https://creola-lignivorous-seriously.ngrok-free.dev" bằng dòng đã copy trên bước 4
 
 CLIENT_URL=http://localhost:5173
 
