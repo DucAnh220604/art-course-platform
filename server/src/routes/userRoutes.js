@@ -34,6 +34,8 @@ router.get(
   userController.checkComboEnrollment,
 );
 
+router.get("/enrolled-courses", protect, userController.getEnrolledCourses);
+
 router.use(protect, restrictTo("admin", "staff"));
 
 router.get("/stats", userController.getUserStats);

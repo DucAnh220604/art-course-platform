@@ -15,11 +15,16 @@ import { CoursesPage } from "./pages/CoursesPage";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { ComboDetailPage } from "./pages/ComboDetailPage";
 import PaymentResultPage from "./pages/PaymentResultPage";
+import { CartPage } from "./pages/CartPage";
+import { WishlistPage } from "./pages/WishlistPage";
+import { MyCoursesPage } from "./pages/MyCoursesPage";
+import ScrollToTop from "./components/ScrollToTop";
 
 const App = () => {
   return (
     <AuthProvider>
       <Router>
+        <ScrollToTop />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -41,6 +46,31 @@ const App = () => {
           <Route path="/combos/:slug" element={<ComboDetailPage />} />
 
           <Route path="/payment-result" element={<PaymentResultPage />} />
+
+          <Route
+            path="/cart"
+            element={
+              <ProtectedRoute>
+                <CartPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <WishlistPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-courses"
+            element={
+              <ProtectedRoute>
+                <MyCoursesPage />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/dashboard"
