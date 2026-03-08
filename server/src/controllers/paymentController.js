@@ -3,6 +3,7 @@ const dayjs = require("dayjs");
 const Payment = require("../models/Payment");
 const Course = require("../models/Course");
 const Combo = require("../models/Combo");
+const User = require("../models/User");
 const {
   grantCourseAccess,
   grantComboAccess,
@@ -171,6 +172,30 @@ exports.createPayment = async (req, res) => {
   }
 };
 
+const grantPaymentAccess = async (payment) => {
+  if (payment.itemType === "cart") {
+    // Parse cart items from orderInfo: "cart:userId:course:id1,combo:id2,..."
+    const parts = payment.orderInfo.split(":");
+    // Format: cart:userId:course:id1,combo:id2,...
+    const itemsStr = payment.orderInfo.replace(/^cart:[^:]+:/, "");
+    const items = itemsStr.split(",");
+    for (const item of items) {
+      const [type, id] = item.split(":");
+      if (type === "course") {
+        await grantCourseAccess(payment.user, id);
+      } else if (type === "combo") {
+        await grantComboAccess(payment.user, id);
+      }
+    }
+    // Clear cart after successful payment
+    await User.findByIdAndUpdate(payment.user, { $set: { cart: [] } });
+  } else if (payment.itemType === "course") {
+    await grantCourseAccess(payment.user, payment.itemId);
+  } else {
+    await grantComboAccess(payment.user, payment.itemId);
+  }
+};
+
 exports.vnpayReturn = async (req, res) => {
   try {
     const isValid = verifyVnpay(req.query);
@@ -192,11 +217,7 @@ exports.vnpayReturn = async (req, res) => {
 
       // Fallback xử lý thành công ngay tại return nếu IPN chưa tới
       if (responseCode === "00" && payment.status === "pending") {
-        if (payment.itemType === "course") {
-          await grantCourseAccess(payment.user, payment.itemId);
-        } else {
-          await grantComboAccess(payment.user, payment.itemId);
-        }
+        await grantPaymentAccess(payment);
 
         payment.status = "paid";
         payment.paidAt = new Date();
@@ -253,11 +274,7 @@ exports.vnpayIpn = async (req, res) => {
     }
 
     if (responseCode === "00") {
-      if (payment.itemType === "course") {
-        await grantCourseAccess(payment.user, payment.itemId);
-      } else {
-        await grantComboAccess(payment.user, payment.itemId);
-      }
+      await grantPaymentAccess(payment);
 
       payment.status = "paid";
       payment.paidAt = new Date();
@@ -312,6 +329,104 @@ exports.getPaymentStatus = async (req, res) => {
         amount: payment.amount,
         paidAt: payment.paidAt,
       },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.checkoutCart = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).populate("cart.product");
+
+    if (!user.cart || user.cart.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Giỏ hàng trống." });
+    }
+
+    // Calculate total and validate all items
+    let totalAmount = 0;
+    const items = [];
+    const freeItems = [];
+
+    for (const cartItem of user.cart) {
+      if (!cartItem.product) continue;
+
+      const product = cartItem.product;
+      const price = product.price || 0;
+
+      if (price <= 0) {
+        freeItems.push(cartItem);
+      } else {
+        totalAmount += price;
+        items.push(cartItem);
+      }
+    }
+
+    // Enroll free items immediately
+    for (const item of freeItems) {
+      if (item.productModel === "Course") {
+        await grantCourseAccess(userId, item.product._id);
+      } else {
+        await grantComboAccess(userId, item.product._id);
+      }
+    }
+
+    // If everything is free
+    if (items.length === 0) {
+      user.cart = [];
+      await user.save();
+      return res.json({
+        success: true,
+        flow: "free",
+        message: "Đăng ký thành công tất cả khóa học miễn phí!",
+      });
+    }
+
+    // Create a single payment for all paid items
+    const txnRef = generateTxnRef();
+    const itemIds = items.map(
+      (i) => `${i.productModel.toLowerCase()}:${i.product._id}`
+    );
+    const orderInfo = `cart:${userId}:${itemIds.join(",")}`;
+
+    await Payment.create({
+      user: userId,
+      itemType: "cart",
+      itemId: items[0].product._id, // primary item for reference
+      amount: totalAmount,
+      txnRef,
+      orderInfo,
+      status: "pending",
+      provider: "vnpay",
+    });
+
+    const paymentUrl = buildPaymentUrl({
+      amount: totalAmount,
+      txnRef,
+      orderInfo: `Thanh toan gio hang ArtKids - ${items.length} san pham`,
+      ipAddr: getClientIp(req),
+    });
+
+    // Remove free items from cart, keep paid items until payment succeeds
+    user.cart = user.cart.filter((item) =>
+      freeItems.every(
+        (f) =>
+          !(
+            f.product._id.toString() === item.product.toString() &&
+            f.productModel === item.productModel
+          )
+      )
+    );
+    await user.save();
+
+    return res.json({
+      success: true,
+      flow: "vnpay",
+      txnRef,
+      paymentUrl,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

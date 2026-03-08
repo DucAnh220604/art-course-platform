@@ -9,6 +9,8 @@ import {
   ShieldCheck,
   Video,
   ChevronDown,
+  ShoppingCart,
+  Heart,
 } from "lucide-react";
 import { Header, Footer } from "@/components/landing";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,8 @@ import { toast } from "sonner";
 import { ReviewSection } from "@/components/courses/ReviewSection";
 import { useAuth } from "@/context/AuthContext";
 import paymentApi from "@/api/paymentApi";
+import cartApi from "@/api/cartApi";
+import wishlistApi from "@/api/wishlistApi";
 
 export function CourseDetailPage() {
   const { slug } = useParams();
@@ -35,6 +39,7 @@ export function CourseDetailPage() {
 
   const [selectedLesson, setSelectedLesson] = useState(null);
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   // Chuyển YouTube video ID hoặc URL thành embed URL
   const getEmbedUrl = (videoUrl) => {
@@ -108,6 +113,21 @@ export function CourseDetailPage() {
       .then((res) => setIsEnrolled(res.data.isEnrolled))
       .catch(() => {});
   }, [course, isAuthenticated, user]);
+
+  useEffect(() => {
+    if (!course || !isAuthenticated) return;
+    wishlistApi
+      .getWishlist()
+      .then((res) => {
+        const items = res.data.data || [];
+        const found = items.some(
+          (item) =>
+            item.product?._id === course._id && item.productModel === "Course"
+        );
+        setIsInWishlist(found);
+      })
+      .catch(() => {});
+  }, [course, isAuthenticated]);
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
@@ -428,21 +448,75 @@ export function CourseDetailPage() {
                   </p>
                 )}
 
-                <Button
-                  onClick={handleEnroll}
-                  disabled={isEnrolled || enrolling}
-                  className={`w-full mt-6 h-14 text-lg rounded-full font-bold shadow-lg transition-all hover:-translate-y-1 ${
-                    isEnrolled
-                      ? "bg-green-500 hover:bg-green-500 text-white cursor-default"
-                      : "bg-slate-900 hover:bg-sky-500 text-white"
-                  }`}
-                >
-                  {isEnrolled
-                    ? "✅ Đã đăng ký"
-                    : enrolling
-                      ? "Đang đăng ký..."
-                      : "Đăng ký học ngay"}
-                </Button>
+                {isEnrolled ? (
+                  <Button
+                    disabled
+                    className="w-full mt-6 h-14 text-lg rounded-full font-bold bg-green-500 hover:bg-green-500 text-white cursor-default"
+                  >
+                    ✅ Đã đăng ký
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          toast.error("Vui lòng đăng nhập!");
+                          navigate("/login");
+                          return;
+                        }
+                        try {
+                          await cartApi.addToCart(course._id, "Course");
+                          toast.success("Đã thêm vào giỏ hàng!");
+                        } catch (e) {
+                          toast.error(e?.response?.data?.message || "Không thêm được vào giỏ hàng.");
+                        }
+                      }}
+                      className="w-full mt-6 h-14 text-lg rounded-full font-bold shadow-lg transition-all hover:-translate-y-1 bg-slate-900 hover:bg-sky-500 text-white"
+                    >
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Thêm vào giỏ hàng
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          toast.error("Vui lòng đăng nhập!");
+                          navigate("/login");
+                          return;
+                        }
+                        try {
+                          if (isInWishlist) {
+                            await wishlistApi.removeFromWishlist(course._id, "Course");
+                            setIsInWishlist(false);
+                            toast.success("Đã xóa khỏi danh sách yêu thích.");
+                          } else {
+                            await wishlistApi.addToWishlist(course._id, "Course");
+                            setIsInWishlist(true);
+                            toast.success("Đã thêm vào danh sách yêu thích!");
+                          }
+                        } catch (e) {
+                          toast.error(e?.response?.data?.message || "Không thực hiện được.");
+                        }
+                      }}
+                      className={`w-full mt-3 h-12 rounded-full font-bold border-2 transition-all ${
+                        isInWishlist
+                          ? "border-rose-400 bg-rose-50 text-rose-600"
+                          : "border-rose-200 text-rose-500 hover:bg-rose-50"
+                      }`}
+                    >
+                      <Heart className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`} />
+                      {isInWishlist ? "Đã yêu thích" : "Yêu thích"}
+                    </Button>
+                    <Button
+                      onClick={handleEnroll}
+                      disabled={enrolling}
+                      variant="outline"
+                      className="w-full mt-3 h-12 rounded-full font-bold border-2 border-sky-200 text-sky-600 hover:bg-sky-50"
+                    >
+                      {enrolling ? "Đang xử lý..." : "Mua ngay"}
+                    </Button>
+                  </>
+                )}
                 <p className="text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
                   <ShieldCheck className="w-4 h-4" /> Cam kết hoàn tiền trong 7
                   ngày

@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const paymentSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    itemType: { type: String, enum: ["course", "combo"], required: true },
+    itemType: { type: String, enum: ["course", "combo", "cart"], required: true },
     itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
     amount: { type: Number, required: true, min: 0 },
     txnRef: { type: String, required: true, unique: true },
