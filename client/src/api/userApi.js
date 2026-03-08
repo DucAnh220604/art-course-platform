@@ -39,6 +39,10 @@ const userApi = {
   checkComboEnrollment: (comboId) => {
     return axiosClient.get(`/users/enroll-combo/${comboId}/check`);
   },
+
+  getEnrolledCourses: () => {
+    return axiosClient.get("/users/enrolled-courses");
+  },
 };
 
 export default userApi;

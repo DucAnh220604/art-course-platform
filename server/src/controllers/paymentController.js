@@ -388,7 +388,7 @@ exports.checkoutCart = async (req, res) => {
     // Create a single payment for all paid items
     const txnRef = generateTxnRef();
     const itemIds = items.map(
-      (i) => `${i.productModel.toLowerCase()}:${i.product._id}`
+      (i) => `${i.productModel.toLowerCase()}:${i.product._id}`,
     );
     const orderInfo = `cart:${userId}:${itemIds.join(",")}`;
 
@@ -417,8 +417,8 @@ exports.checkoutCart = async (req, res) => {
           !(
             f.product._id.toString() === item.product.toString() &&
             f.productModel === item.productModel
-          )
-      )
+          ),
+      ),
     );
     await user.save();
 
@@ -430,5 +430,51 @@ exports.checkoutCart = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getMyPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find({
+      user: req.user._id,
+      status: { $ne: "pending" },
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Populate item info cho từng payment
+    for (const payment of payments) {
+      if (payment.itemType === "course") {
+        const course = await Course.findById(payment.itemId).select(
+          "title slug thumbnail",
+        );
+        payment.item = course;
+      } else if (payment.itemType === "combo") {
+        const combo = await Combo.findById(payment.itemId).select(
+          "title slug thumbnail",
+        );
+        payment.item = combo;
+      } else {
+        // cart — parse orderInfo để lấy danh sách items
+        const itemsStr = payment.orderInfo.replace(/^cart:[^:]+:/, "");
+        const entries = itemsStr.split(",");
+        const cartItems = [];
+        for (const entry of entries) {
+          const [type, id] = entry.split(":");
+          if (type === "course") {
+            const c = await Course.findById(id).select("title slug thumbnail");
+            if (c) cartItems.push({ ...c.toObject(), productModel: "Course" });
+          } else if (type === "combo") {
+            const cb = await Combo.findById(id).select("title slug thumbnail");
+            if (cb) cartItems.push({ ...cb.toObject(), productModel: "Combo" });
+          }
+        }
+        payment.cartItems = cartItems;
+      }
+    }
+
+    res.json({ success: true, data: payments });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };

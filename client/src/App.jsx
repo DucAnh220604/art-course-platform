@@ -17,6 +17,7 @@ import { ComboDetailPage } from "./pages/ComboDetailPage";
 import PaymentResultPage from "./pages/PaymentResultPage";
 import { CartPage } from "./pages/CartPage";
 import { WishlistPage } from "./pages/WishlistPage";
+import { MyCoursesPage } from "./pages/MyCoursesPage";
 import ScrollToTop from "./components/ScrollToTop";
 
 const App = () => {
@@ -59,6 +60,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <WishlistPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-courses"
+            element={
+              <ProtectedRoute>
+                <MyCoursesPage />
               </ProtectedRoute>
             }
           />

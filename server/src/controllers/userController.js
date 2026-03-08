@@ -362,3 +362,26 @@ exports.checkComboEnrollment = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Lấy danh sách khóa học đã đăng ký
+exports.getEnrolledCourses = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: "enrolledCourses.course",
+      populate: { path: "instructor", select: "fullname avatar" },
+    });
+
+    const enrolledCourses = user.enrolledCourses.map((item) => ({
+      course: item.course,
+      enrolledAt: item.enrolledAt,
+      progress: item.progress,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: enrolledCourses,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
