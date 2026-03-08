@@ -116,6 +116,20 @@ exports.createPayment = async (req, res) => {
       title = item.title;
     }
 
+    // Kiểm tra đã đăng ký chưa
+    const buyer = await User.findById(userId);
+    if (itemType === "course") {
+      const alreadyEnrolled = buyer.enrolledCourses.some(
+        (e) => e.course.toString() === itemId.toString(),
+      );
+      if (alreadyEnrolled) {
+        return res.status(400).json({
+          success: false,
+          message: "Bạn đã đăng ký khóa học này rồi!",
+        });
+      }
+    }
+
     // Miễn phí: enroll trực tiếp, không qua VNPay
     if (amount <= 0) {
       if (itemType === "course") {
@@ -191,8 +205,16 @@ const grantPaymentAccess = async (payment) => {
     await User.findByIdAndUpdate(payment.user, { $set: { cart: [] } });
   } else if (payment.itemType === "course") {
     await grantCourseAccess(payment.user, payment.itemId);
+    // Xóa khóa học này khỏi cart nếu có
+    await User.findByIdAndUpdate(payment.user, {
+      $pull: { cart: { product: payment.itemId, productModel: "Course" } },
+    });
   } else {
     await grantComboAccess(payment.user, payment.itemId);
+    // Xóa combo này khỏi cart nếu có
+    await User.findByIdAndUpdate(payment.user, {
+      $pull: { cart: { product: payment.itemId, productModel: "Combo" } },
+    });
   }
 };
 
@@ -343,18 +365,31 @@ exports.checkoutCart = async (req, res) => {
     if (!user.cart || user.cart.length === 0) {
       return res
         .status(400)
-        .json({ success: false, message: "Giỏ hàng trống." });
+        .json({ success: false, message: "Đơn hàng đã được thanh toán." });
     }
 
     // Calculate total and validate all items
     let totalAmount = 0;
     const items = [];
     const freeItems = [];
+    const alreadyEnrolledItems = [];
 
     for (const cartItem of user.cart) {
       if (!cartItem.product) continue;
 
       const product = cartItem.product;
+
+      // Kiểm tra đã enrolled chưa (chỉ áp dụng cho Course)
+      if (cartItem.productModel === "Course") {
+        const enrolled = user.enrolledCourses.some(
+          (e) => e.course.toString() === product._id.toString(),
+        );
+        if (enrolled) {
+          alreadyEnrolledItems.push(cartItem);
+          continue;
+        }
+      }
+
       const price = product.price || 0;
 
       if (price <= 0) {
@@ -363,6 +398,20 @@ exports.checkoutCart = async (req, res) => {
         totalAmount += price;
         items.push(cartItem);
       }
+    }
+
+    // Xóa các item đã enrolled khỏi cart
+    if (alreadyEnrolledItems.length > 0) {
+      for (const item of alreadyEnrolledItems) {
+        user.cart = user.cart.filter(
+          (c) =>
+            !(
+              c.product._id.toString() === item.product._id.toString() &&
+              c.productModel === item.productModel
+            ),
+        );
+      }
+      await user.save();
     }
 
     // Enroll free items immediately
