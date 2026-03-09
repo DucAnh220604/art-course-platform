@@ -16,8 +16,23 @@ const userApi = {
     });
   },
 
-  requestInstructor: () => {
-    return axiosClient.post("/users/request-instructor");
+  requestInstructor: (data) => {
+    const formData = new FormData();
+    formData.append("fullName", data.fullName);
+    formData.append("phone", data.phone);
+    formData.append("email", data.email);
+    formData.append("experience", data.experience);
+    formData.append("specialization", data.specialization);
+    formData.append("introduction", data.introduction || "");
+    if (data.cvImage) {
+      formData.append("cvImage", data.cvImage);
+    }
+
+    return axiosClient.post("/users/request-instructor", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   getInstructorRequestStatus: () => {

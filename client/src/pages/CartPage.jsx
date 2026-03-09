@@ -131,12 +131,12 @@ export function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
       </div>
 
-      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center gap-3 mb-8">
           <ShoppingCart className="w-8 h-8 text-sky-500" />
           <h1 className="text-3xl font-bold text-slate-800">Giỏ hàng</h1>
@@ -324,11 +324,7 @@ export function CartPage() {
         )}
       </main>
 
-      <div className="w-full bg-white mt-12">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <Footer />
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }

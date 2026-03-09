@@ -27,8 +27,11 @@ const adminApi = {
     return axiosClient.get("/users/instructor-requests", { params });
   },
 
-  handleInstructorRequest: (userId, action) => {
-    return axiosClient.patch(`/users/${userId}/instructor-request`, { action });
+  handleInstructorRequest: (userId, action, rejectionReason = "") => {
+    return axiosClient.patch(`/users/${userId}/instructor-request`, {
+      action,
+      rejectionReason,
+    });
   },
 };
 

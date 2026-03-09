@@ -8,6 +8,13 @@ import {
   Eye,
   CheckCircle,
   XCircle,
+  Phone,
+  Mail,
+  Briefcase,
+  BookOpen,
+  FileImage,
+  ExternalLink,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +28,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -45,6 +54,23 @@ import {
 import { toast } from "sonner";
 import adminApi from "@/api/adminApi";
 
+// Get the base server URL (without /api)
+const getServerBaseUrl = () => {
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  return apiUrl.replace(/\/api$/, "");
+};
+
+// Helper function to get full CV file URL
+const getCvFileUrl = (cvImage) => {
+  if (!cvImage) return null;
+  // If it's already a full URL (Cloudinary or other), return as-is
+  if (cvImage.startsWith("http://") || cvImage.startsWith("https://")) {
+    return cvImage;
+  }
+  // If it's a relative path, prepend server base URL
+  return `${getServerBaseUrl()}${cvImage}`;
+};
+
 export function InstructorRequests() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,6 +89,28 @@ export function InstructorRequests() {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Helper function to download file with custom filename
+  const handleDownloadFile = async (url, fileName) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Download error:", error);
+      // Fallback to opening in new tab
+      window.open(url, "_blank");
+    }
+  };
 
   const fetchRequests = useCallback(async () => {
     try {
@@ -108,14 +156,17 @@ export function InstructorRequests() {
   const handleReject = (request) => {
     setSelectedRequest(request);
     setConfirmAction("reject");
+    setRejectionReason("");
     setConfirmDialogOpen(true);
   };
 
   const handleConfirmAction = async () => {
+    setIsProcessing(true);
     try {
       const response = await adminApi.handleInstructorRequest(
         selectedRequest._id,
         confirmAction,
+        confirmAction === "reject" ? rejectionReason : "",
       );
       if (response.data.success) {
         toast.success(
@@ -124,10 +175,13 @@ export function InstructorRequests() {
             : "Đã từ chối yêu cầu!",
         );
         setConfirmDialogOpen(false);
+        setRejectionReason("");
         fetchRequests();
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Có lỗi xảy ra");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -358,14 +412,17 @@ export function InstructorRequests() {
       </Card>
 
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Chi tiết yêu cầu</DialogTitle>
+            <DialogTitle className="text-xl">
+              Chi tiết yêu cầu đăng ký Giảng viên
+            </DialogTitle>
           </DialogHeader>
           {viewingRequest && (
-            <div className="space-y-4 py-4">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+            <div className="space-y-6 py-4">
+              {/* User Info */}
+              <div className="flex items-center gap-4 pb-4 border-b">
+                <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                   {viewingRequest.avatar &&
                   viewingRequest.avatar !== "default-avatar.png" ? (
                     <img
@@ -374,33 +431,262 @@ export function InstructorRequests() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-gray-600 text-xl font-medium">
+                    <span className="text-gray-600 text-2xl font-medium">
                       {viewingRequest.fullname?.charAt(0)?.toUpperCase() || "U"}
                     </span>
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-lg">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-xl">
                     {viewingRequest.fullname}
                   </h3>
-                  <p className="text-gray-500">{viewingRequest.email}</p>
+                  <p className="text-gray-500">@{viewingRequest.username}</p>
+                  <div className="mt-2">
+                    {getStatusBadge(viewingRequest.instructorRequestStatus)}
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Trạng thái:</span>
-                  {getStatusBadge(viewingRequest.instructorRequestStatus)}
-                </div>
-                {viewingRequest.instructorInfo?.bio && (
+
+              {/* Request Data */}
+              {viewingRequest.instructorRequestData && (
+                <>
+                  <div className="bg-sky-50 rounded-xl p-4">
+                    <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-sky-500" />
+                      Thông tin liên hệ
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-slate-500">Họ tên:</span>
+                        <p className="font-medium">
+                          {viewingRequest.instructorRequestData.fullName ||
+                            "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Số điện thoại:</span>
+                        <p className="font-medium">
+                          {viewingRequest.instructorRequestData.phone || "N/A"}
+                        </p>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <span className="text-slate-500">Email:</span>
+                        <p className="font-medium">
+                          {viewingRequest.instructorRequestData.email || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-purple-50 rounded-xl p-4">
+                    <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                      <Briefcase className="w-4 h-4 text-purple-500" />
+                      Thông tin chuyên môn
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-slate-500">Kinh nghiệm:</span>
+                        <p className="font-medium">
+                          {viewingRequest.instructorRequestData.experience ||
+                            "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">Chuyên môn:</span>
+                        <p className="font-medium">
+                          {viewingRequest.instructorRequestData
+                            .specialization || "N/A"}
+                        </p>
+                      </div>
+                      {viewingRequest.instructorRequestData.introduction && (
+                        <div className="sm:col-span-2">
+                          <span className="text-slate-500">
+                            Giới thiệu bản thân:
+                          </span>
+                          <p className="font-medium mt-1 whitespace-pre-wrap">
+                            {viewingRequest.instructorRequestData.introduction}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CV File */}
+                  {viewingRequest.instructorRequestData.cvImage && (
+                    <div className="bg-amber-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                        <FileImage className="w-4 h-4 text-amber-500" />
+                        CV / Hồ sơ
+                      </h4>
+                      <div className="relative group">
+                        {viewingRequest.instructorRequestData.cvFileType ===
+                          "pdf" ||
+                        viewingRequest.instructorRequestData.cvImage
+                          .toLowerCase()
+                          .includes(".pdf") ||
+                        viewingRequest.instructorRequestData.cvImage.includes(
+                          "/raw/",
+                        ) ? (
+                          <div className="flex items-center justify-center p-8 bg-amber-100/50 rounded-lg border border-amber-200">
+                            <div className="text-center">
+                              <FileImage className="w-16 h-16 text-red-500 mx-auto mb-3" />
+                              <p className="text-slate-700 font-medium">
+                                {viewingRequest.instructorRequestData
+                                  .cvFileName || "File PDF"}
+                              </p>
+                              <div className="flex items-center justify-center gap-2 mt-3">
+                                <a
+                                  href={getCvFileUrl(
+                                    viewingRequest.instructorRequestData
+                                      .cvImage,
+                                  )}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  Xem PDF
+                                </a>
+                                <button
+                                  onClick={() =>
+                                    handleDownloadFile(
+                                      getCvFileUrl(viewingRequest.instructorRequestData.cvImage),
+                                      viewingRequest.instructorRequestData
+                                        .cvFileName || "CV.pdf",
+                                    )
+                                  }
+                                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                                >
+                                  <Download className="w-4 h-4" />
+                                  Tải về
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <img
+                              src={getCvFileUrl(viewingRequest.instructorRequestData.cvImage)}
+                              alt="CV"
+                              className="w-full max-h-[400px] object-contain rounded-lg border border-amber-200"
+                            />
+                            {viewingRequest.instructorRequestData
+                              .cvFileName && (
+                              <p className="text-center text-sm text-slate-600 mt-2">
+                                {
+                                  viewingRequest.instructorRequestData
+                                    .cvFileName
+                                }
+                              </p>
+                            )}
+                            <div className="absolute top-2 right-2 flex gap-2">
+                              <a
+                                href={getCvFileUrl(viewingRequest.instructorRequestData.cvImage)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                                title="Xem ảnh"
+                              >
+                                <ExternalLink className="w-4 h-4 text-gray-600" />
+                              </a>
+                              <button
+                                onClick={() =>
+                                  handleDownloadFile(
+                                    getCvFileUrl(viewingRequest.instructorRequestData.cvImage),
+                                    viewingRequest.instructorRequestData
+                                      .cvFileName || "CV.jpg",
+                                  )
+                                }
+                                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                                title="Tải về"
+                              >
+                                <Download className="w-4 h-4 text-gray-600" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Request Timeline */}
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-gray-500" />
+                      Thời gian
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <span className="text-slate-500">
+                          Ngày gửi yêu cầu:
+                        </span>
+                        <p className="font-medium">
+                          {formatDate(
+                            viewingRequest.instructorRequestData.requestedAt,
+                          )}
+                        </p>
+                      </div>
+                      {viewingRequest.instructorRequestData.reviewedAt && (
+                        <div>
+                          <span className="text-slate-500">Ngày xử lý:</span>
+                          <p className="font-medium">
+                            {formatDate(
+                              viewingRequest.instructorRequestData.reviewedAt,
+                            )}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {viewingRequest.instructorRequestData.rejectionReason && (
+                      <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+                        <span className="text-red-600 text-sm font-medium">
+                          Lý do từ chối:
+                        </span>
+                        <p className="text-red-700 mt-1">
+                          {viewingRequest.instructorRequestData.rejectionReason}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {/* Legacy Info (fallback if no instructorRequestData) */}
+              {!viewingRequest.instructorRequestData &&
+                viewingRequest.instructorInfo?.bio && (
                   <div>
                     <span className="text-gray-500">Giới thiệu:</span>
                     <p className="mt-1">{viewingRequest.instructorInfo.bio}</p>
                   </div>
                 )}
-              </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            {viewingRequest?.instructorRequestStatus === "pending" && (
+              <>
+                <Button
+                  variant="outline"
+                  className="text-red-600 border-red-200 hover:bg-red-50"
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    handleReject(viewingRequest);
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Từ chối
+                </Button>
+                <Button
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => {
+                    setViewDialogOpen(false);
+                    handleApprove(viewingRequest);
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Duyệt yêu cầu
+                </Button>
+              </>
+            )}
             <Button variant="outline" onClick={() => setViewDialogOpen(false)}>
               Đóng
             </Button>
@@ -422,18 +708,47 @@ export function InstructorRequests() {
               {selectedRequest?.fullname}"?
             </DialogDescription>
           </DialogHeader>
+          {confirmAction === "reject" && (
+            <div className="py-4">
+              <Label htmlFor="rejectionReason" className="text-sm font-medium">
+                Lý do từ chối <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="rejectionReason"
+                placeholder="Nhập lý do từ chối yêu cầu..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                className="mt-2"
+                rows={3}
+              />
+            </div>
+          )}
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmDialogOpen(false)}
+              disabled={isProcessing}
             >
               Hủy
             </Button>
             <Button
               variant={confirmAction === "approve" ? "default" : "destructive"}
               onClick={handleConfirmAction}
+              disabled={
+                isProcessing ||
+                (confirmAction === "reject" && !rejectionReason.trim())
+              }
             >
-              {confirmAction === "approve" ? "Duyệt" : "Từ chối"}
+              {isProcessing ? (
+                <span className="flex items-center gap-2">
+                  <span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  Đang xử lý...
+                </span>
+              ) : confirmAction === "approve" ? (
+                "Duyệt"
+              ) : (
+                "Từ chối"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

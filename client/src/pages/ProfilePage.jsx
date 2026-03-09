@@ -30,6 +30,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Header, Footer } from "@/components/landing";
+import { InstructorRequestForm } from "@/components/instructor/InstructorRequestForm";
 
 import userApi from "@/api/userApi";
 
@@ -50,6 +51,7 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isRequestingInstructor, setIsRequestingInstructor] = useState(false);
   const [instructorRequestStatus, setInstructorRequestStatus] = useState(null);
+  const [showInstructorForm, setShowInstructorForm] = useState(false);
 
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
@@ -180,24 +182,14 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  const handleRequestInstructor = async () => {
-    setIsRequestingInstructor(true);
-    try {
-      await userApi.requestInstructor();
-      toast.success("Gửi yêu cầu thành công!", {
-        description:
-          "Yêu cầu trở thành giảng viên của bạn đã được gửi. Vui lòng chờ xét duyệt.",
-      });
-      setInstructorRequestStatus("pending");
-      if (refreshUser) {
-        await refreshUser();
-      }
-    } catch (error) {
-      toast.error("Có lỗi xảy ra!", {
-        description: error.response?.data?.message || "Vui lòng thử lại sau.",
-      });
-    } finally {
-      setIsRequestingInstructor(false);
+  const handleRequestInstructor = () => {
+    setShowInstructorForm(true);
+  };
+
+  const handleInstructorRequestSuccess = async () => {
+    setInstructorRequestStatus("pending");
+    if (refreshUser) {
+      await refreshUser();
     }
   };
 
@@ -254,16 +246,20 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-bold text-red-800 mb-1">
                   Yêu cầu bị từ chối
                 </h3>
-                <p className="text-red-700 text-sm mb-3">
+                <p className="text-red-700 text-sm mb-2">
                   Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.
-                  Bạn có thể gửi lại yêu cầu sau.
                 </p>
+                {user?.instructorRequestData?.rejectionReason && (
+                  <div className="bg-red-100/50 border border-red-200 rounded-xl p-3 mb-3">
+                    <p className="text-red-800 text-sm font-medium mb-1">Lý do từ chối:</p>
+                    <p className="text-red-700 text-sm">{user.instructorRequestData.rejectionReason}</p>
+                  </div>
+                )}
                 <Button
                   onClick={handleRequestInstructor}
-                  disabled={isRequestingInstructor}
                   className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6"
                 >
-                  {isRequestingInstructor ? "Đang gửi..." : "Gửi lại yêu cầu"}
+                  Gửi lại yêu cầu
                 </Button>
               </div>
             </div>
@@ -287,11 +283,10 @@ export default function ProfilePage() {
               </div>
               <Button
                 onClick={handleRequestInstructor}
-                disabled={isRequestingInstructor}
                 className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 shadow-lg shadow-purple-500/25 w-full sm:w-auto"
               >
                 <GraduationCap className="w-4 h-4 mr-2" />
-                {isRequestingInstructor ? "Đang gửi..." : "Đăng ký ngay"}
+                Đăng ký ngay
               </Button>
             </div>
           </div>
@@ -311,23 +306,24 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50/80 via-slate-50 to-white">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50/80 via-slate-50 to-white">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
+      </div>
 
-        <main className="py-8 lg:py-12">
-          <div className="max-w-3xl mx-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
-                <div className="px-6 sm:px-8 pt-8 pb-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                    <div className="relative">
-                      <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-sky-100 shadow-lg">
-                        <AvatarImage src={user?.avatar} alt={user?.fullname} />
+      <main className="flex-1 py-8 lg:py-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
+              <div className="px-6 sm:px-8 pt-8 pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="relative">
+                    <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-sky-100 shadow-lg">
+                      <AvatarImage src={user?.avatar} alt={user?.fullname} />
                         <AvatarFallback className="bg-gradient-to-br from-sky-400 to-cyan-400 text-white text-3xl sm:text-4xl font-bold">
                           {getInitials(user?.fullname || user?.username)}
                         </AvatarFallback>
@@ -581,8 +577,19 @@ export default function ProfilePage() {
           </div>
         </main>
 
-        <Footer />
-      </div>
+      <Footer />
+
+      {/* Instructor Request Form Dialog */}
+      <InstructorRequestForm
+        open={showInstructorForm}
+        onOpenChange={setShowInstructorForm}
+        onSuccess={handleInstructorRequestSuccess}
+        defaultValues={{
+          fullName: user?.fullname || "",
+          phone: user?.phone || "",
+          email: user?.email || "",
+        }}
+      />
     </div>
   );
 }
