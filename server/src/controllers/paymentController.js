@@ -527,3 +527,149 @@ exports.getMyPayments = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.getInstructorOrders = async (req, res) => {
+  try {
+    const instructorId = req.user._id;
+
+    // Lấy tất cả courses và combos của instructor
+    const myCourses = await Course.find({ instructor: instructorId }).select(
+      "_id",
+    );
+    const myCombos = await Combo.find({ instructor: instructorId }).select(
+      "_id",
+    );
+
+    const courseIds = myCourses.map((c) => c._id);
+    const comboIds = myCombos.map((c) => c._id);
+
+    // Tìm tất cả payments đã paid cho các items của instructor
+    const payments = await Payment.find({
+      $or: [
+        { itemType: "course", itemId: { $in: courseIds }, status: "paid" },
+        { itemType: "combo", itemId: { $in: comboIds }, status: "paid" },
+      ],
+    })
+      .populate("user", "username fullname email avatar") // Thông tin người mua
+      .sort({ paidAt: -1 })
+      .lean();
+
+    // Populate thông tin course/combo
+    for (const payment of payments) {
+      if (payment.itemType === "course") {
+        const course = await Course.findById(payment.itemId).select(
+          "title slug thumbnail",
+        );
+        payment.item = course;
+      } else if (payment.itemType === "combo") {
+        const combo = await Combo.findById(payment.itemId).select(
+          "title slug thumbnail",
+        );
+        payment.item = combo;
+      }
+    }
+
+    // Tính tổng doanh thu
+    const totalRevenue = payments.reduce((sum, p) => sum + p.amount, 0);
+    const totalOrders = payments.length;
+
+    res.json({
+      success: true,
+      data: {
+        orders: payments,
+        summary: {
+          totalRevenue,
+          totalOrders,
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// GET ALL PAYMENTS (ADMIN)
+exports.getAllPayments = async (req, res) => {
+  try {
+    const { status, itemType, search, page = 1, limit = 20 } = req.query;
+
+    // Build filter
+    const filter = {};
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+    if (itemType && itemType !== "all") {
+      filter.itemType = itemType;
+    }
+    if (search) {
+      filter.$or = [
+        { txnRef: { $regex: search, $options: "i" } },
+        { orderInfo: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    // Get payments
+    const payments = await Payment.find(filter)
+      .populate("user", "username fullname email avatar")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    // Populate item info
+    for (const payment of payments) {
+      if (payment.itemType === "course") {
+        const course = await Course.findById(payment.itemId)
+          .select("title slug thumbnail instructor")
+          .populate("instructor", "username fullname");
+        payment.item = course;
+      } else if (payment.itemType === "combo") {
+        const combo = await Combo.findById(payment.itemId)
+          .select("title slug thumbnail instructor")
+          .populate("instructor", "username fullname");
+        payment.item = combo;
+      } else if (payment.itemType === "cart") {
+        // Parse cart items from orderInfo
+        payment.item = { title: "Giỏ hàng", type: "cart" };
+      }
+    }
+
+    // Get total count for pagination
+    const totalPayments = await Payment.countDocuments(filter);
+
+    // Calculate summary statistics
+    const allPayments = await Payment.find({ status: "paid" });
+    const totalRevenue = allPayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalOrders = allPayments.length;
+
+    // Group by status
+    const statusCount = await Payment.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } },
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        payments,
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalPayments / limit),
+          totalItems: totalPayments,
+          itemsPerPage: parseInt(limit),
+        },
+        summary: {
+          totalRevenue,
+          totalOrders,
+          statusCount: statusCount.reduce((acc, item) => {
+            acc[item._id] = item.count;
+            return acc;
+          }, {}),
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
