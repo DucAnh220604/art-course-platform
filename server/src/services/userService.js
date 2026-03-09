@@ -55,6 +55,7 @@ const getAllUsers = async (queryParams) => {
   } = queryParams;
 
   const query = {};
+  query.role = { $ne: "admin" };
 
   if (search) {
     query.$or = [
@@ -64,12 +65,8 @@ const getAllUsers = async (queryParams) => {
     ];
   }
 
-  if (role && role !== "all") {
+  if (role && role !== "all" && role !== "admin") {
     query.role = role;
-  }
-
-  if (isActive !== "" && isActive !== "all") {
-    query.isActive = isActive === "true";
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);

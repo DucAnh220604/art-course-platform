@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { Home } from "lucide-react";
+import { Home, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ArtKidsLogo } from "@/components/icons/ArtKidsLogo";
+import { useAuth } from "@/context/AuthContext";
 
 export function DashboardSidebar({
   activeTab,
@@ -12,6 +13,18 @@ export function DashboardSidebar({
   title = "Dashboard",
 }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+
+  const handleButtonClick = () => {
+    if (isAdminOrStaff) {
+      logout();
+      navigate("/login");
+    } else {
+      navigate("/");
+    }
+  };
 
   const getRoleLabel = () => {
     switch (userRole) {
@@ -59,12 +72,21 @@ export function DashboardSidebar({
 
         <div className="mt-8 pt-8 border-t">
           <Button
-            variant="outline"
+            variant={isAdminOrStaff ? "destructive" : "outline"}
             className="w-full rounded-lg"
-            onClick={() => navigate("/")}
+            onClick={handleButtonClick}
           >
-            <Home className="w-4 h-4 mr-2" />
-            Về trang chủ
+            {isAdminOrStaff ? (
+              <>
+                <LogOut className="w-4 h-4 mr-2" />
+                Đăng xuất
+              </>
+            ) : (
+              <>
+                <Home className="w-4 h-4 mr-2" />
+                Về trang chủ
+              </>
+            )}
           </Button>
         </div>
       </div>

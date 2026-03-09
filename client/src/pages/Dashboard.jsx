@@ -11,6 +11,7 @@ import {
   ShoppingBag,
   Home,
   Package,
+  LogOut,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -83,13 +84,24 @@ const getRoleTitle = (role) => {
 };
 
 export function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
 
   const userRole = user?.role || "customer";
   const navigationItems = getNavigationByRole(userRole);
   const { title, subtitle } = getRoleTitle(userRole);
+
+  const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+
+  const handleButtonClick = () => {
+    if (isAdminOrStaff) {
+      logout();
+      navigate("/login");
+    } else {
+      navigate("/");
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -175,12 +187,21 @@ export function Dashboard() {
 
           <div className="mt-8 pt-8 border-t">
             <Button
-              variant="outline"
+              variant={isAdminOrStaff ? "destructive" : "outline"}
               className="w-full rounded-lg"
-              onClick={() => navigate("/")}
+              onClick={handleButtonClick}
             >
-              <Home className="w-4 h-4 mr-2" />
-              Về trang chủ
+              {isAdminOrStaff ? (
+                <>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Đăng xuất
+                </>
+              ) : (
+                <>
+                  <Home className="w-4 h-4 mr-2" />
+                  Về trang chủ
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -192,8 +213,16 @@ export function Dashboard() {
             <ArtKidsLogo className="w-8 h-8" />
             <span className="font-bold text-gray-900">{title}</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-            <Home className="w-4 h-4" />
+          <Button
+            variant={isAdminOrStaff ? "destructive" : "ghost"}
+            size="sm"
+            onClick={handleButtonClick}
+          >
+            {isAdminOrStaff ? (
+              <LogOut className="w-4 h-4" />
+            ) : (
+              <Home className="w-4 h-4" />
+            )}
           </Button>
         </div>
         <div className="flex gap-2 mt-3 overflow-x-auto pb-2">

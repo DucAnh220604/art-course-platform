@@ -1,4 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 import {
   Header,
   HeroSection,
@@ -9,9 +11,11 @@ import {
   Testimonials,
   Footer,
 } from "../components/landing";
+import { AboutPage } from "./AboutPage";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, loading, user } = useAuth();
 
   const handleCourseClick = (courseId) => {
     navigate(`/course/${courseId}`);
@@ -25,8 +29,34 @@ export function LandingPage() {
     navigate(`/bundle/${bundleId}`);
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // Chưa đăng nhập: hiển thị trang giới thiệu
+  if (!isAuthenticated) {
+    return <AboutPage />;
+  }
+
+  // Admin hoặc Staff: redirect đến Dashboard
+  if (user?.role === "admin" || user?.role === "staff") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // User thường hoặc Instructor: hiển thị trang chủ
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-amber-50 to-white overflow-x-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-gradient-to-b from-sky-50 via-amber-50 to-white overflow-x-hidden"
+    >
       <Header onNavigate={navigate} />
 
       <main className="overflow-x-hidden">
@@ -42,6 +72,6 @@ export function LandingPage() {
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { Button } from "@/components/ui/button";
 import courseApi from "@/api/courseApi";
@@ -37,7 +38,13 @@ export function FeaturedCourses({ onCourseClick }) {
   return (
     <section className="py-16 lg:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
           <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-slate-800">
             Khóa học <span className="text-sky-500">Nổi bật</span>
           </h2>
@@ -52,7 +59,7 @@ export function FeaturedCourses({ onCourseClick }) {
             Xem tất cả khóa học
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
-        </div>
+        </motion.div>
 
         {loading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -65,13 +72,20 @@ export function FeaturedCourses({ onCourseClick }) {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {courses.map((course) => (
-              <CourseCard
+            {courses.map((course, index) => (
+              <motion.div
                 key={course._id}
-                course={course}
-                onClick={() => onCourseClick(course.slug || course._id)}
-                compact
-              />
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <CourseCard
+                  course={course}
+                  onClick={() => onCourseClick(course.slug || course._id)}
+                  compact
+                />
+              </motion.div>
             ))}
           </div>
         )}

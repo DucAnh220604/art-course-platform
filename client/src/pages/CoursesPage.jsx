@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Search,
   Filter,
@@ -150,7 +151,13 @@ export function CoursesPage() {
   const displayItems = getDisplayItems();
 
   return (
-    <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-slate-50/50 overflow-x-hidden"
+    >
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
       </div>
@@ -392,6 +399,6 @@ export function CoursesPage() {
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 }
