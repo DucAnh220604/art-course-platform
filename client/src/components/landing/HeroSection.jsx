@@ -15,8 +15,8 @@ export function HeroSection() {
               </span>
             </h1>
             <p className="text-lg text-gray-600">
-              Hàng nghìn họa sĩ nhí đang học vẽ, tô màu và sáng tạo
-              những tác phẩm tuyệt vời cùng các giảng viên chuyên nghiệp!
+              Hàng nghìn họa sĩ nhí đang học vẽ, tô màu và sáng tạo những tác
+              phẩm tuyệt vời cùng các giảng viên chuyên nghiệp!
             </p>
             <div className="flex flex-wrap gap-4 justify-center md:justify-start">
               <Button

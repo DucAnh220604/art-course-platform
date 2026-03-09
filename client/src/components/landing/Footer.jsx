@@ -20,9 +20,7 @@ export function Footer() {
           </div>
 
           <div className="text-center sm:text-left">
-            <h4 className="font-semibold mb-4 text-base">
-              Liên kết nhanh
-            </h4>
+            <h4 className="font-semibold mb-4 text-base">Liên kết nhanh</h4>
             <ul className="space-y-3 text-gray-400 text-sm">
               <li className="hover:text-white cursor-pointer transition-colors">
                 Về chúng tôi
@@ -40,9 +38,7 @@ export function Footer() {
           </div>
 
           <div className="text-center sm:text-left">
-            <h4 className="font-semibold mb-4 text-base">
-              Hỗ trợ
-            </h4>
+            <h4 className="font-semibold mb-4 text-base">Hỗ trợ</h4>
             <ul className="space-y-3 text-gray-400 text-sm">
               <li className="hover:text-white cursor-pointer transition-colors">
                 Trung tâm trợ giúp
@@ -60,9 +56,7 @@ export function Footer() {
           </div>
 
           <div className="text-center sm:text-left">
-            <h4 className="font-semibold mb-4 text-base">
-              Bản tin
-            </h4>
+            <h4 className="font-semibold mb-4 text-base">Bản tin</h4>
             <p className="text-gray-400 mb-4 text-sm">
               Nhận thông tin về khóa học mới!
             </p>

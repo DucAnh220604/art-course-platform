@@ -23,7 +23,7 @@ export function ContactPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.email || !formData.message) {
       toast.error("Vui lòng điền đầy đủ thông tin!");
       return;
@@ -31,11 +31,11 @@ export function ContactPage() {
 
     setIsSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    
+
     toast.success("Gửi tin nhắn thành công!", {
       description: "Chúng tôi sẽ phản hồi trong 24 giờ.",
     });
-    
+
     setFormData({ name: "", email: "", message: "" });
     setIsSubmitting(false);
   };
@@ -84,7 +84,8 @@ export function ContactPage() {
                 Hãy kết nối với chúng tôi
               </h1>
               <p className="text-lg text-slate-500">
-                Bạn có câu hỏi hoặc cần hỗ trợ? Chúng tôi luôn sẵn sàng lắng nghe.
+                Bạn có câu hỏi hoặc cần hỗ trợ? Chúng tôi luôn sẵn sàng lắng
+                nghe.
               </p>
             </motion.div>
 
@@ -101,7 +102,8 @@ export function ContactPage() {
                     Thông tin liên hệ
                   </h2>
                   <p className="text-slate-500 mb-8">
-                    Hãy liên hệ với chúng tôi qua các kênh dưới đây hoặc gửi tin nhắn trực tiếp.
+                    Hãy liên hệ với chúng tôi qua các kênh dưới đây hoặc gửi tin
+                    nhắn trực tiếp.
                   </p>
                 </div>
 
@@ -114,12 +116,20 @@ export function ContactPage() {
                       transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
                       className="flex items-start gap-4"
                     >
-                      <div className={`w-12 h-12 rounded-2xl bg-${item.color}-50 flex items-center justify-center shrink-0`}>
-                        <item.icon className={`w-5 h-5 text-${item.color}-500`} />
+                      <div
+                        className={`w-12 h-12 rounded-2xl bg-${item.color}-50 flex items-center justify-center shrink-0`}
+                      >
+                        <item.icon
+                          className={`w-5 h-5 text-${item.color}-500`}
+                        />
                       </div>
                       <div>
-                        <p className="text-sm text-slate-400 mb-1">{item.label}</p>
-                        <p className="font-medium text-slate-900">{item.value}</p>
+                        <p className="text-sm text-slate-400 mb-1">
+                          {item.label}
+                        </p>
+                        <p className="font-medium text-slate-900">
+                          {item.value}
+                        </p>
                       </div>
                     </motion.div>
                   ))}

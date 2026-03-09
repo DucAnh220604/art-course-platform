@@ -5,7 +5,14 @@ const comboController = {
   // Lấy tất cả combos (có filter, search, pagination)
   getAllCombos: async (req, res) => {
     try {
-      const { search, page = 1, limit = 10, status } = req.query;
+      const {
+        search,
+        page = 1,
+        limit = 10,
+        status,
+        sort = "createdAt",
+        order = "desc",
+      } = req.query;
       const query = {};
 
       // Filter theo status (admin/instructor muốn xem draft/pending)
@@ -14,12 +21,16 @@ const comboController = {
       // Search theo text
       if (search) query.$text = { $search: search };
 
+      // Build sort object
+      const sortOrder = order === "asc" ? 1 : -1;
+      const sortOptions = { [sort]: sortOrder };
+
       const combos = await Combo.find(query)
         .populate("instructor", "fullname username avatar")
         .populate("courses", "title thumbnail price category")
         .skip((page - 1) * limit)
-        .limit(parseInt(limit * 1))
-        .sort({ createdAt: -1 });
+        .limit(parseInt(limit))
+        .sort(sortOptions);
 
       const total = await Combo.countDocuments(query);
 

@@ -32,8 +32,9 @@ export function AboutPage() {
                   <span className="text-sky-500"> sáng tạo</span>
                 </h1>
                 <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                  ArtKids là nền tảng học vẽ trực tuyến hàng đầu dành cho trẻ em Việt Nam. 
-                  Chúng tôi tin rằng nghệ thuật là ngôn ngữ của tâm hồn.
+                  ArtKids là nền tảng học vẽ trực tuyến hàng đầu dành cho trẻ em
+                  Việt Nam. Chúng tôi tin rằng nghệ thuật là ngôn ngữ của tâm
+                  hồn.
                 </p>
                 <Button
                   size="lg"
@@ -142,19 +143,21 @@ export function AboutPage() {
                   Nuôi dưỡng tài năng nghệ thuật
                 </h2>
                 <p className="text-lg text-slate-500 leading-relaxed mb-6">
-                  Chúng tôi mong muốn mang đến cho mỗi trẻ em cơ hội được học vẽ 
-                  một cách vui vẻ và sáng tạo, giúp các bé tự tin thể hiện bản thân 
-                  qua nghệ thuật.
+                  Chúng tôi mong muốn mang đến cho mỗi trẻ em cơ hội được học vẽ
+                  một cách vui vẻ và sáng tạo, giúp các bé tự tin thể hiện bản
+                  thân qua nghệ thuật.
                 </p>
                 <div className="space-y-4">
-                  {["Học theo tốc độ riêng", "Giảng viên tận tâm", "Chứng chỉ hoàn thành"].map(
-                    (item, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-sky-500 rounded-full" />
-                        <span className="text-slate-700">{item}</span>
-                      </div>
-                    )
-                  )}
+                  {[
+                    "Học theo tốc độ riêng",
+                    "Giảng viên tận tâm",
+                    "Chứng chỉ hoàn thành",
+                  ].map((item, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-sky-500 rounded-full" />
+                      <span className="text-slate-700">{item}</span>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             </div>

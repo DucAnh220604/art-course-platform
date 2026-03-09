@@ -14,15 +14,15 @@ export function FeaturedCourses({ onCourseClick }) {
     const fetchCourses = async () => {
       try {
         setLoading(true);
-        const response = await courseApi.getAllCourses();
+        // Lấy 4 khóa học phổ biến nhất (theo số học viên)
+        const response = await courseApi.getAllCourses({
+          status: "published",
+          sort: "totalStudents",
+          order: "desc",
+          limit: 4,
+        });
 
-        // Lọc khóa học published và sắp xếp theo mới nhất, lấy 3 khóa đầu
-        const publishedCourses = (response.data.courses || [])
-          .filter((course) => course.status === "published")
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 3);
-
-        setCourses(publishedCourses);
+        setCourses(response.data.courses || []);
       } catch (error) {
         console.error("Error fetching featured courses:", error);
         setCourses([]);
@@ -42,7 +42,7 @@ export function FeaturedCourses({ onCourseClick }) {
             Khóa học <span className="text-sky-500">Nổi bật</span>
           </h2>
           <p className="text-lg text-slate-500 mb-6">
-            Khám phá những khóa học mới nhất dành cho các họa sĩ nhí
+            Những khóa học được nhiều bé yêu thích nhất
           </p>
           <Button
             variant="outline"
@@ -55,21 +55,22 @@ export function FeaturedCourses({ onCourseClick }) {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[1, 2, 3].map((i) => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="h-96 bg-slate-100 rounded-3xl animate-pulse"
+                className="h-72 bg-slate-100 rounded-2xl animate-pulse"
               />
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {courses.map((course) => (
               <CourseCard
                 key={course._id}
                 course={course}
                 onClick={() => onCourseClick(course.slug || course._id)}
+                compact
               />
             ))}
           </div>

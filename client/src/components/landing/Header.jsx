@@ -37,8 +37,14 @@ export function Header({ onNavigate }) {
       setWishlistCount(0);
       return;
     }
-    cartApi.getCart().then((res) => setCartCount(res.data.data?.length || 0)).catch(() => {});
-    wishlistApi.getWishlist().then((res) => setWishlistCount(res.data.data?.length || 0)).catch(() => {});
+    cartApi
+      .getCart()
+      .then((res) => setCartCount(res.data.data?.length || 0))
+      .catch(() => {});
+    wishlistApi
+      .getWishlist()
+      .then((res) => setWishlistCount(res.data.data?.length || 0))
+      .catch(() => {});
   }, [isAuthenticated, user]);
 
   const handleLogout = () => {
@@ -182,7 +188,9 @@ export function Header({ onNavigate }) {
                       onClick={() => onNavigate("/wishlist")}
                     >
                       <Heart className="mr-2 h-4 w-4" />
-                      <span>Yêu thích {wishlistCount > 0 && `(${wishlistCount})`}</span>
+                      <span>
+                        Yêu thích {wishlistCount > 0 && `(${wishlistCount})`}
+                      </span>
                     </DropdownMenuItem>
                     {["admin", "staff", "instructor"].includes(user?.role) && (
                       <>
