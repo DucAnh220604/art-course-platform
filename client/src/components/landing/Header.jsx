@@ -107,13 +107,31 @@ export function Header({ onNavigate }) {
             {isAuthenticated ? (
               <>
                 <Button
+                  variant="ghost"
                   size="icon"
-                  variant="outline"
-                  className="rounded-full w-9 h-9 lg:w-11 lg:h-11 border-sky-200 hover:bg-sky-50"
+                  className="relative rounded-full h-9 w-9 lg:h-11 lg:w-11 hover:bg-rose-50"
+                  onClick={() => onNavigate("/wishlist")}
                 >
-                  <ShoppingCart className="w-5 h-5 lg:w-6 lg:h-6 text-sky-600" />
+                  <Heart className="w-5 h-5 text-rose-400" />
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
                 </Button>
-
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative rounded-full h-9 w-9 lg:h-11 lg:w-11 hover:bg-sky-50"
+                  onClick={() => onNavigate("/cart")}
+                >
+                  <ShoppingCart className="w-5 h-5 text-sky-500" />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-sky-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
+                </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -160,10 +178,19 @@ export function Header({ onNavigate }) {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onClick={() => onNavigate("/settings")}
+                      onClick={() => onNavigate("/cart")}
                     >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Cài đặt</span>
+                      <ShoppingCart className="mr-2 h-4 w-4" />
+                      <span>Giỏ hàng {cartCount > 0 && `(${cartCount})`}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onClick={() => onNavigate("/wishlist")}
+                    >
+                      <Heart className="mr-2 h-4 w-4" />
+                      <span>
+                        Yêu thích {wishlistCount > 0 && `(${wishlistCount})`}
+                      </span>
                     </DropdownMenuItem>
                     {["admin", "staff", "instructor"].includes(user?.role) && (
                       <>
