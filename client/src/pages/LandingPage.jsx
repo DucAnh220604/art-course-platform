@@ -1,4 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 import {
   Header,
   HeroSection,
@@ -9,9 +11,11 @@ import {
   Testimonials,
   Footer,
 } from "../components/landing";
+import { AboutPage } from "./AboutPage";
 
 export function LandingPage() {
   const navigate = useNavigate();
+  const { isAuthenticated, loading, user } = useAuth();
 
   const handleCourseClick = (courseId) => {
     navigate(`/course/${courseId}`);
@@ -25,25 +29,49 @@ export function LandingPage() {
     navigate(`/bundle/${bundleId}`);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-amber-50 to-white">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        <Header onNavigate={navigate} />
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
+  // Chưa đăng nhập: hiển thị trang giới thiệu
+  if (!isAuthenticated) {
+    return <AboutPage />;
+  }
+
+  // Admin hoặc Staff: redirect đến Dashboard
+  if (user?.role === "admin" || user?.role === "staff") {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  // User thường hoặc Instructor: hiển thị trang chủ
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-gradient-to-b from-sky-50 via-amber-50 to-white overflow-x-hidden"
+    >
+      <Header onNavigate={navigate} />
+
+      <main className="overflow-x-hidden">
         <HeroSection />
 
         <FeaturedCourses onCourseClick={handleCourseClick} />
 
         <FeaturedCombos onComboClick={handleComboClick} />
 
-        <CourseBundles onBundleClick={handleBundleClick} />
-
         <WhyChooseUs />
 
         <Testimonials />
+      </main>
 
-        <Footer />
-      </div>
-    </div>
+      <Footer />
+    </motion.div>
   );
 }

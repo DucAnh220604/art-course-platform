@@ -7,6 +7,8 @@ import {
   CheckCircle2,
   Package,
   Sparkles,
+  ShoppingCart,
+  Heart,
 } from "lucide-react";
 import { Header, Footer } from "@/components/landing";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,9 @@ import comboApi from "@/api/comboApi";
 import userApi from "@/api/userApi";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import paymentApi from "@/api/paymentApi";
+import cartApi from "@/api/cartApi";
+import wishlistApi from "@/api/wishlistApi";
 
 export function ComboDetailPage() {
   const { slug } = useParams();
@@ -27,6 +32,7 @@ export function ComboDetailPage() {
   const [enrolling, setEnrolling] = useState(false);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isInWishlist, setIsInWishlist] = useState(false);
 
   useEffect(() => {
     const fetchComboDetail = async () => {
@@ -47,7 +53,6 @@ export function ComboDetailPage() {
     if (slug) fetchComboDetail();
   }, [slug, navigate]);
 
-  // Kiểm tra đã đăng ký combo chưa
   useEffect(() => {
     if (!combo || !isAuthenticated) return;
 
@@ -57,7 +62,21 @@ export function ComboDetailPage() {
       .catch(() => {});
   }, [combo, isAuthenticated, user]);
 
-  // Auto-rotate ảnh combo mỗi 3 giây
+  useEffect(() => {
+    if (!combo || !isAuthenticated) return;
+    wishlistApi
+      .getWishlist()
+      .then((res) => {
+        const items = res.data.data || [];
+        const found = items.some(
+          (item) =>
+            item.product?._id === combo._id && item.productModel === "Combo"
+        );
+        setIsInWishlist(found);
+      })
+      .catch(() => {});
+  }, [combo, isAuthenticated]);
+
   useEffect(() => {
     if (!combo?.courses || combo.courses.length <= 1) return;
 
@@ -81,12 +100,27 @@ export function ComboDetailPage() {
 
     try {
       setEnrolling(true);
-      const response = await userApi.enrollCombo(combo._id);
-      setIsEnrolled(true);
-      await refreshUser();
-      toast.success("Đăng ký combo thành công! 🎉", {
-        description: response.data.message,
+
+      const res = await paymentApi.createPayment({
+        itemType: "combo",
+        itemId: combo._id,
       });
+
+      const data = res.data;
+
+      if (data.flow === "free") {
+        await refreshUser();
+        setIsEnrolled(true);
+        toast.success(data.message || "Đăng ký combo thành công!");
+        return;
+      }
+
+      if (data.flow === "vnpay" && data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+        return;
+      }
+
+      toast.error("Không tạo được phiên thanh toán.");
     } catch (error) {
       toast.error("Không đăng ký được!", {
         description: error?.response?.data?.message || "Bé thử lại sau nhé! ❌",
@@ -314,17 +348,70 @@ export function ComboDetailPage() {
                     </p>
                   </div>
                 ) : (
-                  <Button
-                    onClick={handleEnroll}
-                    disabled={enrolling || combo.status !== "published"}
-                    className="w-full py-6 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
-                  >
-                    {enrolling
-                      ? "Đang xử lý..."
-                      : combo.status !== "published"
-                        ? "Combo chưa được phát hành"
-                        : "Đăng ký ngay"}
-                  </Button>
+                  <>
+                    <Button
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          toast.error("Vui lòng đăng nhập!");
+                          navigate("/login");
+                          return;
+                        }
+                        try {
+                          await cartApi.addToCart(combo._id, "Combo");
+                          toast.success("Đã thêm vào giỏ hàng!");
+                        } catch (e) {
+                          toast.error(e?.response?.data?.message || "Không thêm được vào giỏ hàng.");
+                        }
+                      }}
+                      className="w-full py-6 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
+                    >
+                      <ShoppingCart className="w-5 h-5 mr-2" />
+                      Thêm vào giỏ hàng
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        if (!isAuthenticated) {
+                          toast.error("Vui lòng đăng nhập!");
+                          navigate("/login");
+                          return;
+                        }
+                        try {
+                          if (isInWishlist) {
+                            await wishlistApi.removeFromWishlist(combo._id, "Combo");
+                            setIsInWishlist(false);
+                            toast.success("Đã xóa khỏi danh sách yêu thích.");
+                          } else {
+                            await wishlistApi.addToWishlist(combo._id, "Combo");
+                            setIsInWishlist(true);
+                            toast.success("Đã thêm vào danh sách yêu thích!");
+                          }
+                        } catch (e) {
+                          toast.error(e?.response?.data?.message || "Không thực hiện được.");
+                        }
+                      }}
+                      className={`w-full py-4 font-bold rounded-2xl border-2 transition-all ${
+                        isInWishlist
+                          ? "border-rose-400 bg-rose-50 text-rose-600"
+                          : "border-rose-200 text-rose-500 hover:bg-rose-50"
+                      }`}
+                    >
+                      <Heart className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`} />
+                      {isInWishlist ? "Đã yêu thích" : "Yêu thích"}
+                    </Button>
+                    <Button
+                      onClick={handleEnroll}
+                      disabled={enrolling || combo.status !== "published"}
+                      variant="outline"
+                      className="w-full py-4 font-bold rounded-2xl border-2 border-amber-200 text-amber-600 hover:bg-amber-50"
+                    >
+                      {enrolling
+                        ? "Đang xử lý..."
+                        : combo.status !== "published"
+                          ? "Combo chưa được phát hành"
+                          : "Mua ngay"}
+                    </Button>
+                  </>
                 )}
 
                 {/* Ưu đãi */}

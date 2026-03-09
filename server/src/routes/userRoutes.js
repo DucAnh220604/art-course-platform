@@ -2,6 +2,7 @@ const express = require("express");
 const userController = require("../controllers/userController");
 const { protect, restrictTo } = require("../middleware/authMiddleware");
 const uploadCloud = require("../middleware/uploadCloud");
+const uploadLocal = require("../middleware/uploadLocal");
 
 const router = express.Router();
 
@@ -14,7 +15,12 @@ router.post(
   userController.uploadAvatar,
 );
 
-router.post("/request-instructor", protect, userController.requestInstructor);
+router.post(
+  "/request-instructor",
+  protect,
+  uploadLocal.single("cvImage"),
+  userController.requestInstructor,
+);
 
 router.get(
   "/instructor-request-status",
@@ -33,6 +39,8 @@ router.get(
   protect,
   userController.checkComboEnrollment,
 );
+
+router.get("/enrolled-courses", protect, userController.getEnrolledCourses);
 
 router.use(protect, restrictTo("admin", "staff"));
 

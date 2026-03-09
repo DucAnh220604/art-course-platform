@@ -12,3 +12,7 @@ build/
 .idea/
 .vscode/
 *.log
+
+# Uploaded files (keep directory structure with .gitkeep)
+server/uploads/**/*
+!server/uploads/**/.gitkeep

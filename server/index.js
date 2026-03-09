@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const path = require("path");
 
 dotenv.config();
 
@@ -13,6 +14,10 @@ const comboRoutes = require("./src/routes/comboRoutes");
 const sectionRoutes = require("./src/routes/sectionRouter");
 const lessonRoutes = require("./src/routes/lessonRouter");
 const reviewRoutes = require("./src/routes/reviewRoutes");
+const paymentRoutes = require("./src/routes/paymentRoutes");
+const cartRoutes = require("./src/routes/cartRoutes");
+const wishlistRoutes = require("./src/routes/wishlistRoutes");
+const contactRoutes = require("./src/routes/contactRoutes");
 
 connectDB();
 
@@ -22,6 +27,9 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from uploads directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/courses", courseRoutes);
@@ -29,6 +37,10 @@ app.use("/api/combos", comboRoutes);
 app.use("/api/sections", sectionRoutes);
 app.use("/api/lessons", lessonRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/contact", contactRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

@@ -38,6 +38,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Header, Footer } from "@/components/landing";
+import { InstructorRequestForm } from "@/components/instructor/InstructorRequestForm";
 
 import userApi from "@/api/userApi";
 
@@ -69,6 +70,7 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isRequestingInstructor, setIsRequestingInstructor] = useState(false);
   const [instructorRequestStatus, setInstructorRequestStatus] = useState(null);
+  const [showInstructorForm, setShowInstructorForm] = useState(false);
 
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
@@ -199,24 +201,14 @@ export default function ProfilePage() {
     setIsEditing(false);
   };
 
-  const handleRequestInstructor = async () => {
-    setIsRequestingInstructor(true);
-    try {
-      await userApi.requestInstructor();
-      toast.success("Gửi yêu cầu thành công!", {
-        description:
-          "Yêu cầu trở thành giảng viên của bạn đã được gửi. Vui lòng chờ xét duyệt.",
-      });
-      setInstructorRequestStatus("pending");
-      if (refreshUser) {
-        await refreshUser();
-      }
-    } catch (error) {
-      toast.error("Có lỗi xảy ra!", {
-        description: error.response?.data?.message || "Vui lòng thử lại sau.",
-      });
-    } finally {
-      setIsRequestingInstructor(false);
+  const handleRequestInstructor = () => {
+    setShowInstructorForm(true);
+  };
+
+  const handleInstructorRequestSuccess = async () => {
+    setInstructorRequestStatus("pending");
+    if (refreshUser) {
+      await refreshUser();
     }
   };
 
@@ -285,16 +277,24 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-bold text-red-800 mb-1">
                   Yêu cầu bị từ chối
                 </h3>
-                <p className="text-red-700 text-sm mb-3 leading-relaxed">
+                <p className="text-red-700 text-sm mb-2">
                   Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.
-                  Bạn có thể gửi lại yêu cầu sau.
                 </p>
+                {user?.instructorRequestData?.rejectionReason && (
+                  <div className="bg-red-100/50 border border-red-200 rounded-xl p-3 mb-3">
+                    <p className="text-red-800 text-sm font-medium mb-1">
+                      Lý do từ chối:
+                    </p>
+                    <p className="text-red-700 text-sm">
+                      {user.instructorRequestData.rejectionReason}
+                    </p>
+                  </div>
+                )}
                 <Button
                   onClick={handleRequestInstructor}
-                  disabled={isRequestingInstructor}
-                  className="bg-red-500 hover:bg-red-600 text-white rounded-full px-6 shadow-lg shadow-red-500/25"
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6"
                 >
-                  {isRequestingInstructor ? "Đang gửi..." : "Gửi lại yêu cầu"}
+                  Gửi lại yêu cầu
                 </Button>
               </div>
             </div>
@@ -323,11 +323,10 @@ export default function ProfilePage() {
               </div>
               <Button
                 onClick={handleRequestInstructor}
-                disabled={isRequestingInstructor}
-                className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-full px-6 shadow-lg shadow-purple-500/25 w-full sm:w-auto"
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 shadow-lg shadow-purple-500/25 w-full sm:w-auto"
               >
                 <GraduationCap className="w-4 h-4 mr-2" />
-                {isRequestingInstructor ? "Đang gửi..." : "Đăng ký ngay"}
+                Đăng ký ngay
               </Button>
             </div>
           </motion.div>
@@ -353,142 +352,58 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-orange-50/30 to-white relative overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <FloatingShape
-          className="top-32 left-[5%] w-20 h-20 rounded-full bg-yellow-200/40"
-          delay={0}
-        />
-        <FloatingShape
-          className="top-48 right-[8%] w-16 h-16 rounded-full bg-pink-200/40"
-          delay={1}
-        />
-        <FloatingShape
-          className="top-[60%] left-[3%] w-12 h-12 rounded-full bg-sky-200/40"
-          delay={2}
-        />
-        <FloatingShape
-          className="top-[70%] right-[5%] w-14 h-14 rounded-full bg-green-200/40"
-          delay={1.5}
-        />
-        <div className="absolute top-20 left-[15%] text-5xl opacity-[0.06] rotate-12">
-          🎨
-        </div>
-        <div className="absolute top-40 right-[12%] text-5xl opacity-[0.06] -rotate-12">
-          🖌️
-        </div>
-        <div className="absolute bottom-40 left-[10%] text-5xl opacity-[0.06] rotate-6">
-          ⭐
-        </div>
-        <div className="absolute bottom-20 right-[15%] text-5xl opacity-[0.06] -rotate-6">
-          🌈
-        </div>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50/80 via-slate-50 to-white">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
+        <Header onNavigate={navigate} />
       </div>
 
-      <div className="relative w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        <Header onNavigate={navigate} />
-
-        <main className="py-8 lg:py-12">
-          <div className="max-w-4xl mx-auto">
-            {/* Hero Profile Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="relative mb-8"
-            >
-              {/* Colorful banner */}
-              <div className="relative h-44 sm:h-52 rounded-t-[2rem] overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400" />
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute top-4 left-8 text-white/40 text-5xl">
-                    ✨
-                  </div>
-                  <div className="absolute top-8 right-12 text-white/40 text-4xl">
-                    🎨
-                  </div>
-                  <div className="absolute bottom-6 left-[30%] text-white/40 text-3xl">
-                    ⭐
-                  </div>
-                  <div className="absolute top-6 left-[50%] text-white/40 text-3xl">
-                    🖌️
-                  </div>
-                  <div className="absolute bottom-4 right-[25%] text-white/40 text-4xl">
-                    🌟
-                  </div>
-                </div>
-                <svg
-                  className="absolute bottom-0 w-full"
-                  viewBox="0 0 1440 60"
-                  fill="none"
-                >
-                  <path
-                    d="M0,60 L0,30 Q360,0 720,30 Q1080,60 1440,30 L1440,60 Z"
-                    fill="white"
-                  />
-                </svg>
-              </div>
-
-              {/* Profile info card overlapping the banner */}
-              <div className="relative bg-white rounded-b-[2rem] shadow-xl shadow-sky-100/50 px-6 sm:px-10 pb-8 pt-0">
-                <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 -mt-16 sm:-mt-20">
-                  {/* Avatar */}
-                  <div className="relative group">
-                    <div className="absolute -inset-1.5 bg-gradient-to-br from-yellow-300 via-pink-300 to-sky-300 rounded-full opacity-75 group-hover:opacity-100 transition-opacity blur-sm" />
-                    <Avatar className="relative w-32 h-32 sm:w-36 sm:h-36 border-4 border-white shadow-xl ring-4 ring-sky-100">
+      <main className="flex-1 py-8 lg:py-12">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
+              <div className="px-6 sm:px-8 pt-8 pb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="relative">
+                    <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-sky-100 shadow-lg">
                       <AvatarImage src={user?.avatar} alt={user?.fullname} />
-                      <AvatarFallback className="bg-gradient-to-br from-sky-400 via-cyan-400 to-teal-400 text-white text-3xl sm:text-4xl font-bold">
+                      <AvatarFallback className="bg-gradient-to-br from-sky-400 to-cyan-400 text-white text-3xl sm:text-4xl font-bold">
                         {getInitials(user?.fullname || user?.username)}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={handleAvatarClick}
                       disabled={isUploadingAvatar}
-                      className="absolute bottom-1 right-1 p-2.5 rounded-full bg-white shadow-lg border-2 border-sky-100 text-sky-500 hover:bg-sky-50 hover:scale-110 hover:border-sky-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute bottom-1 right-1 p-2 rounded-full bg-white shadow-md border border-slate-200 text-sky-600 hover:bg-sky-50 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isUploadingAvatar ? (
-                        <div className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <Camera className="w-5 h-5" />
+                        <Camera className="w-4 h-4" />
                       )}
                     </button>
                   </div>
 
-                  {/* User info */}
-                  <div className="flex-1 text-center sm:text-left pb-1">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                      <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800">
-                        {user?.fullname || user?.username}
-                      </h1>
-                      <span className="inline-flex items-center gap-1 self-center px-3 py-1 rounded-full text-xs font-bold bg-gradient-to-r from-sky-100 to-cyan-100 text-sky-700 border border-sky-200">
-                        <Star className="w-3 h-3 fill-sky-400 text-sky-400" />
-                        {user?.role === "customer"
-                          ? "Học viên"
-                          : user?.role === "instructor"
-                            ? "Giảng viên"
-                            : user?.role === "admin"
-                              ? "Quản trị viên"
-                              : user?.role === "staff"
-                                ? "Nhân viên"
-                                : "Thành viên"}
-                      </span>
-                    </div>
-                    <p className="text-slate-500 mt-1 flex items-center justify-center sm:justify-start gap-1.5">
-                      <Mail className="w-4 h-4" />
-                      {user?.email}
-                    </p>
-                    <p className="text-sm text-slate-400 mt-0.5 flex items-center justify-center sm:justify-start gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
+                  <div className="flex-1">
+                    <h2
+                      className="text-2xl sm:text-3xl font-bold text-slate-800"
+                      style={{ fontFamily: "'Quicksand', sans-serif" }}
+                    >
+                      {user?.fullname || user?.username}
+                    </h2>
+                    <p className="text-slate-500">{user?.email}</p>
+                    <p className="text-sm text-slate-400 mt-1">
                       Tham gia từ {formatDate(user?.createdAt)}
                     </p>
                   </div>
 
-                  {/* Edit button */}
                   {!isEditing && (
                     <Button
                       onClick={() => setIsEditing(true)}
-                      className="rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-semibold px-7 h-12 shadow-lg shadow-sky-500/25 transition-all hover:shadow-xl hover:shadow-sky-500/30 hover:-translate-y-0.5"
+                      className="rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium px-6 h-11 shadow-lg shadow-sky-500/25 sm:ml-auto"
                     >
                       <Pencil className="w-4 h-4 mr-2" />
                       Chỉnh sửa
@@ -496,284 +411,231 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
-            </motion.div>
 
-            {/* Content */}
-            {isEditing ? (
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-6"
-                  >
-                    {/* Personal Info - Edit Mode */}
-                    <div className="bg-white rounded-3xl shadow-lg shadow-sky-100/30 border border-sky-100/50 p-6 sm:p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-400 to-cyan-400 flex items-center justify-center shadow-md shadow-sky-400/20">
-                          <User className="w-5 h-5 text-white" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800">
+              <div className="px-6 sm:px-8 pb-8">
+                {isEditing ? (
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-6"
+                    >
+                      <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
+                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm">
+                            👤
+                          </span>
                           Thông tin cá nhân
                         </h3>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <FormField
-                          control={form.control}
-                          name="fullname"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-600 font-semibold text-sm">
-                                Họ và tên
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Nhập họ và tên"
-                                  className="h-12 rounded-2xl border-sky-200 focus:border-sky-400 focus:ring-sky-400/20 bg-sky-50/30"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="phone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-600 font-semibold text-sm">
-                                Số điện thoại
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="0123 456 789"
-                                  className="h-12 rounded-2xl border-sky-200 focus:border-sky-400 focus:ring-sky-400/20 bg-sky-50/30"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="birthday"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-600 font-semibold text-sm">
-                                Ngày sinh
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="date"
-                                  className="h-12 rounded-2xl border-sky-200 focus:border-sky-400 focus:ring-sky-400/20 bg-sky-50/30"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="address"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-600 font-semibold text-sm">
-                                Địa chỉ
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Nhập địa chỉ"
-                                  className="h-12 rounded-2xl border-sky-200 focus:border-sky-400 focus:ring-sky-400/20 bg-sky-50/30"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Parent Info - Edit Mode */}
-                    <div className="bg-white rounded-3xl shadow-lg shadow-amber-100/30 border border-amber-100/50 p-6 sm:p-8">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center shadow-md shadow-amber-400/20">
-                          <Users className="w-5 h-5 text-white" />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="fullname"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Họ và tên
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Nhập họ và tên"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Số điện thoại
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="0123 456 789"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="birthday"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Ngày sinh
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="date"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                              <FormItem className="sm:col-span-2">
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Địa chỉ
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Nhập địa chỉ"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-800">
+                      </div>
+
+                      <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
+                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm">
+                            👨‍👩‍👧
+                          </span>
                           Thông tin phụ huynh
                         </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="parentName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Tên phụ huynh
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Nhập tên phụ huynh"
+                                    className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="parentPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  SĐT phụ huynh
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="0123 456 789"
+                                    className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <FormField
-                          control={form.control}
-                          name="parentName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-600 font-semibold text-sm">
-                                Tên phụ huynh
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Nhập tên phụ huynh"
-                                  className="h-12 rounded-2xl border-amber-200 focus:border-amber-400 focus:ring-amber-400/20 bg-amber-50/30"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCancel}
+                          className="flex-1 h-12 rounded-full font-medium border-slate-200 hover:bg-slate-50"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Hủy bỏ
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSaving}
+                          className="flex-1 h-12 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-lg shadow-sky-500/25"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        Thông tin cá nhân
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <InfoItem label="Họ và tên" value={user?.fullname} />
+                        <InfoItem label="Email" value={user?.email} />
+                        <InfoItem label="Số điện thoại" value={user?.phone} />
+                        <InfoItem
+                          label="Ngày sinh"
+                          value={formatDate(user?.birthday)}
                         />
-                        <FormField
-                          control={form.control}
-                          name="parentPhone"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-slate-600 font-semibold text-sm">
-                                SĐT phụ huynh
-                              </FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="0123 456 789"
-                                  className="h-12 rounded-2xl border-amber-200 focus:border-amber-400 focus:ring-amber-400/20 bg-amber-50/30"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
+                        <InfoItem
+                          label="Địa chỉ"
+                          value={user?.address}
+                          className="sm:col-span-2"
                         />
                       </div>
                     </div>
 
-                    {/* Save/Cancel buttons */}
-                    <div className="flex gap-4 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleCancel}
-                        className="flex-1 h-13 rounded-full font-semibold border-2 border-slate-200 hover:bg-slate-50 text-slate-600 text-base"
-                      >
-                        <X className="w-5 h-5 mr-2" />
-                        Hủy bỏ
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={isSaving}
-                        className="flex-1 h-13 rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 text-white font-semibold shadow-lg shadow-sky-500/25 text-base"
-                      >
-                        <Save className="w-5 h-5 mr-2" />
-                        {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
-                      </Button>
+                    <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        Thông tin phụ huynh
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <InfoItem
+                          label="Tên phụ huynh"
+                          value={user?.parentName}
+                        />
+                        <InfoItem
+                          label="SĐT phụ huynh"
+                          value={user?.parentPhone}
+                        />
+                      </div>
                     </div>
-                  </form>
-                </Form>
-              </motion.div>
-            ) : (
-              <div className="space-y-6">
-                {/* Personal Info - View Mode */}
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 }}
-                  className="bg-white rounded-3xl shadow-lg shadow-sky-100/30 border border-sky-100/50 p-6 sm:p-8"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-400 to-cyan-400 flex items-center justify-center shadow-md shadow-sky-400/20">
-                      <User className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">
-                      Thông tin cá nhân
-                    </h3>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InfoCard
-                      icon={<User className="w-4.5 h-4.5" />}
-                      label="Họ và tên"
-                      value={user?.fullname}
-                      color="sky"
-                    />
-                    <InfoCard
-                      icon={<Mail className="w-4.5 h-4.5" />}
-                      label="Email"
-                      value={user?.email}
-                      color="sky"
-                    />
-                    <InfoCard
-                      icon={<Phone className="w-4.5 h-4.5" />}
-                      label="Số điện thoại"
-                      value={user?.phone}
-                      color="sky"
-                    />
-                    <InfoCard
-                      icon={<Calendar className="w-4.5 h-4.5" />}
-                      label="Ngày sinh"
-                      value={formatDate(user?.birthday)}
-                      color="sky"
-                    />
-                    <div className="sm:col-span-2">
-                      <InfoCard
-                        icon={<MapPin className="w-4.5 h-4.5" />}
-                        label="Địa chỉ"
-                        value={user?.address}
-                        color="sky"
-                      />
-                    </div>
-                  </div>
-                </motion.div>
 
-                {/* Parent Info - View Mode */}
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.2 }}
-                  className="bg-white rounded-3xl shadow-lg shadow-amber-100/30 border border-amber-100/50 p-6 sm:p-8"
-                >
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center shadow-md shadow-amber-400/20">
-                      <Users className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-800">
-                      Thông tin phụ huynh
-                    </h3>
+                    {getInstructorRequestUI()}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InfoCard
-                      icon={<User className="w-4.5 h-4.5" />}
-                      label="Tên phụ huynh"
-                      value={user?.parentName}
-                      color="amber"
-                    />
-                    <InfoCard
-                      icon={<Phone className="w-4.5 h-4.5" />}
-                      label="SĐT phụ huynh"
-                      value={user?.parentPhone}
-                      color="amber"
-                    />
-                  </div>
-                </motion.div>
-
-                {/* Instructor Request */}
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.3 }}
-                >
-                  {getInstructorRequestUI()}
-                </motion.div>
+                )}
               </div>
-            )}
-          </div>
-        </main>
+            </Card>
+          </motion.div>
+        </div>
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
+
+      {/* Instructor Request Form Dialog */}
+      <InstructorRequestForm
+        open={showInstructorForm}
+        onOpenChange={setShowInstructorForm}
+        onSuccess={handleInstructorRequestSuccess}
+        defaultValues={{
+          fullName: user?.fullname || "",
+          phone: user?.phone || "",
+          email: user?.email || "",
+        }}
+      />
     </div>
   );
 }

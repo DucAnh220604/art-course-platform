@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Search, Filter, BookOpen, Package } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  Search,
+  Filter,
+  BookOpen,
+  Package,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Header, Footer } from "@/components/landing";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { ComboCard } from "@/components/combos/ComboCard";
@@ -18,6 +26,8 @@ import courseApi from "@/api/courseApi";
 import comboApi from "@/api/comboApi";
 import { toast } from "sonner";
 
+const ITEMS_PER_PAGE = 9;
+
 export function CoursesPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -25,6 +35,12 @@ export function CoursesPage() {
   const [courses, setCourses] = useState([]);
   const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination state
+  const [coursePage, setCoursePage] = useState(1);
+  const [comboPage, setComboPage] = useState(1);
+  const [courseTotalPages, setCourseTotalPages] = useState(1);
+  const [comboTotalPages, setComboTotalPages] = useState(1);
 
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -34,32 +50,31 @@ export function CoursesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params = {
+      const baseParams = {
         search: search || undefined,
         category: category !== "all" ? category : undefined,
         level: level !== "all" ? level : undefined,
         status: "published",
+        limit: ITEMS_PER_PAGE,
       };
 
       // Fetch courses và combos song song
       const [coursesResponse, combosResponse] = await Promise.all([
         type !== "combos"
-          ? courseApi.getAllCourses(params)
-          : Promise.resolve({ data: { courses: [] } }),
+          ? courseApi.getAllCourses({ ...baseParams, page: coursePage })
+          : Promise.resolve({ data: { courses: [], totalPages: 1 } }),
         type !== "courses"
-          ? comboApi.getAllCombos(params)
-          : Promise.resolve({ data: { combos: [] } }),
+          ? comboApi.getAllCombos({ ...baseParams, page: comboPage })
+          : Promise.resolve({ data: { combos: [], totalPages: 1 } }),
       ]);
 
-      const publishedCourses = (coursesResponse.data.courses || []).filter(
-        (course) => course.status === "published",
-      );
-      const publishedCombos = (combosResponse.data.combos || []).filter(
-        (combo) => combo.status === "published",
-      );
+      const publishedCourses = coursesResponse.data.courses || [];
+      const publishedCombos = combosResponse.data.combos || [];
 
       setCourses(publishedCourses);
       setCombos(publishedCombos);
+      setCourseTotalPages(coursesResponse.data.totalPages || 1);
+      setComboTotalPages(combosResponse.data.totalPages || 1);
 
       if (
         search &&
@@ -84,6 +99,12 @@ export function CoursesPage() {
       fetchData();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
+  }, [search, category, level, type, coursePage, comboPage]);
+
+  // Reset page khi filter thay đổi
+  useEffect(() => {
+    setCoursePage(1);
+    setComboPage(1);
   }, [search, category, level, type]);
 
   // Update URL params when type changes
@@ -99,6 +120,27 @@ export function CoursesPage() {
     setType(newType);
   };
 
+  // Pagination helpers
+  const currentPage = type === "combos" ? comboPage : coursePage;
+  const totalPages =
+    type === "combos"
+      ? comboTotalPages
+      : type === "courses"
+        ? courseTotalPages
+        : Math.max(courseTotalPages, comboTotalPages);
+
+  const handlePageChange = (newPage) => {
+    if (type === "combos") {
+      setComboPage(newPage);
+    } else if (type === "courses") {
+      setCoursePage(newPage);
+    } else {
+      setCoursePage(newPage);
+      setComboPage(newPage);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const getDisplayItems = () => {
     if (type === "courses") return courses;
     if (type === "combos") return combos;
@@ -109,7 +151,13 @@ export function CoursesPage() {
   const displayItems = getDisplayItems();
 
   return (
-    <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-slate-50/50 overflow-x-hidden"
+    >
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
       </div>
@@ -239,26 +287,89 @@ export function CoursesPage() {
                 ))}
               </div>
             ) : displayItems.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {displayItems.map((item) => {
-                  // Kiểm tra xem item có phải là combo không (có field courses)
-                  const isCombo = item.courses && Array.isArray(item.courses);
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {displayItems.map((item) => {
+                    // Kiểm tra xem item có phải là combo không (có field courses)
+                    const isCombo = item.courses && Array.isArray(item.courses);
 
-                  return isCombo ? (
-                    <ComboCard
-                      key={item._id}
-                      combo={item}
-                      onComboClick={(slug) => navigate(`/combos/${slug}`)}
-                    />
-                  ) : (
-                    <CourseCard
-                      key={item._id}
-                      course={item}
-                      onClick={() => navigate(`/course/${item.slug}`)}
-                    />
-                  );
-                })}
-              </div>
+                    return isCombo ? (
+                      <ComboCard
+                        key={item._id}
+                        combo={item}
+                        onComboClick={(slug) => navigate(`/combos/${slug}`)}
+                      />
+                    ) : (
+                      <CourseCard
+                        key={item._id}
+                        course={item}
+                        onClick={() => navigate(`/course/${item.slug}`)}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-2 mt-10">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full w-10 h-10"
+                      disabled={currentPage === 1}
+                      onClick={() => handlePageChange(currentPage - 1)}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </Button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter((page) => {
+                        // Show first, last, current, and neighbors
+                        return (
+                          page === 1 ||
+                          page === totalPages ||
+                          Math.abs(page - currentPage) <= 1
+                        );
+                      })
+                      .map((page, idx, arr) => {
+                        // Add ellipsis
+                        const showEllipsisBefore =
+                          idx > 0 && page - arr[idx - 1] > 1;
+                        return (
+                          <React.Fragment key={page}>
+                            {showEllipsisBefore && (
+                              <span className="px-2 text-slate-400">...</span>
+                            )}
+                            <Button
+                              variant={
+                                currentPage === page ? "default" : "outline"
+                              }
+                              size="icon"
+                              className={`rounded-full w-10 h-10 ${
+                                currentPage === page
+                                  ? "bg-sky-500 hover:bg-sky-600"
+                                  : ""
+                              }`}
+                              onClick={() => handlePageChange(page)}
+                            >
+                              {page}
+                            </Button>
+                          </React.Fragment>
+                        );
+                      })}
+
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full w-10 h-10"
+                      disabled={currentPage === totalPages}
+                      onClick={() => handlePageChange(currentPage + 1)}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="text-center py-24 bg-white rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center justify-center">
                 <div className="text-7xl mb-6 grayscale opacity-50">
@@ -287,11 +398,7 @@ export function CoursesPage() {
         </div>
       </main>
 
-      <div className="w-full bg-white">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <Footer />
-        </div>
-      </div>
-    </div>
+      <Footer />
+    </motion.div>
   );
 }

@@ -39,6 +39,21 @@ const userSchema = new mongoose.Schema(
       enum: ["none", "pending", "approved", "rejected"],
       default: "none",
     },
+    instructorRequestData: {
+      fullName: String,
+      phone: String,
+      email: String,
+      experience: String, // Kinh nghiệm giảng dạy
+      specialization: String, // Chuyên môn
+      introduction: String, // Giới thiệu bản thân
+      cvImage: String, // Link ảnh/file CV
+      cvFileType: String, // 'image' hoặc 'pdf'
+      cvFileName: String, // Tên file gốc
+      requestedAt: Date,
+      reviewedAt: Date,
+      reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      rejectionReason: String,
+    },
     instructorInfo: {
       bio: String,
       bankAccount: String,

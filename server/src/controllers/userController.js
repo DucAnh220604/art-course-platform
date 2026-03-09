@@ -132,7 +132,33 @@ exports.getUserStats = async (req, res) => {
 
 exports.requestInstructor = async (req, res) => {
   try {
-    const user = await userService.requestInstructor(req.user._id);
+    // For local uploads, create URL path
+    let cvImage = null;
+    if (req.file) {
+      // Create URL path that will be served by the server
+      cvImage = `/uploads/cv/${req.file.filename}`;
+    }
+
+    const cvFileType =
+      req.file?.mimetype === "application/pdf" ? "pdf" : "image";
+    const cvFileName = req.file?.originalname || "CV";
+
+    const requestData = {
+      fullName: req.body.fullName,
+      phone: req.body.phone,
+      email: req.body.email,
+      experience: req.body.experience,
+      specialization: req.body.specialization,
+      introduction: req.body.introduction,
+      cvFileType,
+      cvFileName,
+    };
+
+    const user = await userService.requestInstructor(
+      req.user._id,
+      requestData,
+      cvImage,
+    );
 
     res.status(200).json({
       success: true,
@@ -182,8 +208,9 @@ exports.getInstructorRequests = async (req, res) => {
 
 exports.handleInstructorRequest = async (req, res) => {
   try {
-    const { action } = req.body;
+    const { action, rejectionReason } = req.body;
     const userId = req.params.id;
+    const reviewerId = req.user._id;
 
     if (!["approve", "reject"].includes(action)) {
       return res.status(400).json({
@@ -192,7 +219,12 @@ exports.handleInstructorRequest = async (req, res) => {
       });
     }
 
-    const user = await userService.handleInstructorRequest(userId, action);
+    const user = await userService.handleInstructorRequest(
+      userId,
+      action,
+      reviewerId,
+      rejectionReason,
+    );
 
     res.status(200).json({
       success: true,
@@ -358,6 +390,29 @@ exports.checkComboEnrollment = async (req, res) => {
     );
 
     res.json({ success: true, isEnrolled: allEnrolled });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// Lấy danh sách khóa học đã đăng ký
+exports.getEnrolledCourses = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: "enrolledCourses.course",
+      populate: { path: "instructor", select: "fullname avatar" },
+    });
+
+    const enrolledCourses = user.enrolledCourses.map((item) => ({
+      course: item.course,
+      enrolledAt: item.enrolledAt,
+      progress: item.progress,
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: enrolledCourses,
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

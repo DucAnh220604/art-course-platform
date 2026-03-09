@@ -141,7 +141,7 @@ export function DashboardOverview() {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold mb-2">
-          Xin chào, {user?.fullname || user?.username}! 👋
+          Xin chào, {user?.fullname || user?.username}!
         </h1>
         <p className="text-gray-600">{getWelcomeMessage()}</p>
       </div>
