@@ -41,6 +41,7 @@ import { Header, Footer } from "@/components/landing";
 import { InstructorRequestForm } from "@/components/instructor/InstructorRequestForm";
 
 import userApi from "@/api/userApi";
+import { Card } from "@/components/ui/card";
 
 const profileSchema = z.object({
   fullname: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
@@ -676,6 +677,16 @@ function InfoCard({ icon, label, value, color = "sky" }) {
           )}
         </p>
       </div>
+    </div>
+  );
+}
+function InfoItem({ label, value, className = "" }) {
+  return (
+    <div className={`bg-white rounded-xl p-4 ${className}`}>
+      <p className="text-sm text-slate-500 mb-1">{label}</p>
+      <p className="font-medium text-slate-800">
+        {value || <span className="text-slate-400 italic">Chưa cập nhật</span>}
+      </p>
     </div>
   );
 }
