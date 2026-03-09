@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import contactApi from "@/api/contactApi";
 
 export function ContactPage() {
   const navigate = useNavigate();
@@ -30,14 +31,22 @@ export function ContactPage() {
     }
 
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    toast.success("Gửi tin nhắn thành công!", {
-      description: "Chúng tôi sẽ phản hồi trong 24 giờ.",
-    });
-
-    setFormData({ name: "", email: "", message: "" });
-    setIsSubmitting(false);
+    try {
+      const response = await contactApi.sendMessage(formData);
+      if (response.data?.success) {
+        toast.success("Gửi tin nhắn thành công!", {
+          description: "Chúng tôi sẽ phản hồi trong 24 giờ.",
+        });
+        setFormData({ name: "", email: "", message: "" });
+      }
+    } catch (error) {
+      toast.error("Gửi tin nhắn thất bại!", {
+        description: error.response?.data?.message || "Vui lòng thử lại sau.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactItems = [

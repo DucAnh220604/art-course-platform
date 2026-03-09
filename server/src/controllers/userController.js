@@ -138,10 +138,11 @@ exports.requestInstructor = async (req, res) => {
       // Create URL path that will be served by the server
       cvImage = `/uploads/cv/${req.file.filename}`;
     }
-    
-    const cvFileType = req.file?.mimetype === "application/pdf" ? "pdf" : "image";
+
+    const cvFileType =
+      req.file?.mimetype === "application/pdf" ? "pdf" : "image";
     const cvFileName = req.file?.originalname || "CV";
-    
+
     const requestData = {
       fullName: req.body.fullName,
       phone: req.body.phone,

@@ -17,6 +17,7 @@ const reviewRoutes = require("./src/routes/reviewRoutes");
 const paymentRoutes = require("./src/routes/paymentRoutes");
 const cartRoutes = require("./src/routes/cartRoutes");
 const wishlistRoutes = require("./src/routes/wishlistRoutes");
+const contactRoutes = require("./src/routes/contactRoutes");
 
 connectDB();
 
@@ -39,6 +40,7 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/contact", contactRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");

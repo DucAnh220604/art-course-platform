@@ -197,8 +197,16 @@ const requestInstructor = async (userId, requestData, cvImage) => {
   }
 
   // Validate required fields
-  const { fullName, phone, email, experience, specialization, introduction, cvFileType, cvFileName } =
-    requestData;
+  const {
+    fullName,
+    phone,
+    email,
+    experience,
+    specialization,
+    introduction,
+    cvFileType,
+    cvFileName,
+  } = requestData;
 
   if (!fullName || !phone || !email || !experience || !specialization) {
     throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc.");

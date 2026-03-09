@@ -107,7 +107,7 @@ export function InstructorRequestForm({
       // Check file type - accept images and PDFs
       const isImage = file.type.startsWith("image/");
       const isPdf = file.type === "application/pdf";
-      
+
       if (!isImage && !isPdf) {
         toast.error("File không hợp lệ", {
           description: "Vui lòng chọn file ảnh (JPG, PNG) hoặc PDF",
@@ -117,7 +117,7 @@ export function InstructorRequestForm({
 
       setCvImage(file);
       setCvFileType(isPdf ? "pdf" : "image");
-      
+
       if (isImage) {
         setCvPreview(URL.createObjectURL(file));
       } else {
@@ -384,7 +384,9 @@ export function InstructorRequestForm({
                       <div className="text-center">
                         <File className="w-16 h-16 text-red-500 mx-auto mb-3" />
                         <p className="text-slate-700 font-medium">File PDF</p>
-                        <p className="text-slate-500 text-sm">{cvImage?.name}</p>
+                        <p className="text-slate-500 text-sm">
+                          {cvImage?.name}
+                        </p>
                       </div>
                     </div>
                   )}

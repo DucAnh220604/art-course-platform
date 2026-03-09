@@ -54,8 +54,8 @@ export function WishlistPage() {
             !(
               item.product._id === productId &&
               item.productModel === productModel
-            )
-        )
+            ),
+        ),
       );
       toast.success("Đã xóa khỏi danh sách yêu thích.");
     } catch {
@@ -72,13 +72,13 @@ export function WishlistPage() {
             !(
               item.product._id === productId &&
               item.productModel === productModel
-            )
-        )
+            ),
+        ),
       );
       toast.success("Đã chuyển sang giỏ hàng!");
     } catch (error) {
       toast.error(
-        error?.response?.data?.message || "Không chuyển được sang giỏ hàng."
+        error?.response?.data?.message || "Không chuyển được sang giỏ hàng.",
       );
     }
   };
@@ -134,7 +134,8 @@ export function WishlistPage() {
               Chưa có khóa học yêu thích
             </h3>
             <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              Nhấn vào biểu tượng trái tim ở các khóa học để lưu vào danh sách yêu thích nhé!
+              Nhấn vào biểu tượng trái tim ở các khóa học để lưu vào danh sách
+              yêu thích nhé!
             </p>
             <Button
               className="rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 px-8 h-12 text-base font-bold shadow-lg"
@@ -196,7 +197,11 @@ export function WishlistPage() {
                     {hasDiscount && (
                       <div className="absolute top-0 right-0 overflow-hidden w-20 h-20 pointer-events-none">
                         <div className="absolute top-[14px] right-[-24px] w-[100px] bg-rose-500 text-white text-[10px] font-black text-center py-1 rotate-45 shadow-md">
-                          -{isCombo ? p.discountPercentage : p.discountPercentage}%
+                          -
+                          {isCombo
+                            ? p.discountPercentage
+                            : p.discountPercentage}
+                          %
                         </div>
                       </div>
                     )}
@@ -233,7 +238,7 @@ export function WishlistPage() {
                       className="text-base font-bold text-slate-800 line-clamp-2 mb-3 hover:text-sky-500 transition-colors cursor-pointer leading-snug"
                       onClick={() =>
                         navigate(
-                          isCombo ? `/combos/${slug}` : `/course/${slug}`
+                          isCombo ? `/combos/${slug}` : `/course/${slug}`,
                         )
                       }
                     >
@@ -271,7 +276,9 @@ export function WishlistPage() {
                               {oldPrice?.toLocaleString()}đ
                             </p>
                           )}
-                          <p className={`text-xl font-black ${isCombo ? "text-amber-600" : "text-sky-600"}`}>
+                          <p
+                            className={`text-xl font-black ${isCombo ? "text-amber-600" : "text-sky-600"}`}
+                          >
                             {p.price === 0
                               ? "MIỄN PHÍ"
                               : `${p.price?.toLocaleString()}đ`}

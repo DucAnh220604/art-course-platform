@@ -251,8 +251,12 @@ export default function ProfilePage() {
                 </p>
                 {user?.instructorRequestData?.rejectionReason && (
                   <div className="bg-red-100/50 border border-red-200 rounded-xl p-3 mb-3">
-                    <p className="text-red-800 text-sm font-medium mb-1">Lý do từ chối:</p>
-                    <p className="text-red-700 text-sm">{user.instructorRequestData.rejectionReason}</p>
+                    <p className="text-red-800 text-sm font-medium mb-1">
+                      Lý do từ chối:
+                    </p>
+                    <p className="text-red-700 text-sm">
+                      {user.instructorRequestData.rejectionReason}
+                    </p>
                   </div>
                 )}
                 <Button
@@ -324,258 +328,258 @@ export default function ProfilePage() {
                   <div className="relative">
                     <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-sky-100 shadow-lg">
                       <AvatarImage src={user?.avatar} alt={user?.fullname} />
-                        <AvatarFallback className="bg-gradient-to-br from-sky-400 to-cyan-400 text-white text-3xl sm:text-4xl font-bold">
-                          {getInitials(user?.fullname || user?.username)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <button
-                        onClick={handleAvatarClick}
-                        disabled={isUploadingAvatar}
-                        className="absolute bottom-1 right-1 p-2 rounded-full bg-white shadow-md border border-slate-200 text-sky-600 hover:bg-sky-50 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isUploadingAvatar ? (
-                          <div className="w-4 h-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Camera className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="flex-1">
-                      <h2
-                        className="text-2xl sm:text-3xl font-bold text-slate-800"
-                        style={{ fontFamily: "'Quicksand', sans-serif" }}
-                      >
-                        {user?.fullname || user?.username}
-                      </h2>
-                      <p className="text-slate-500">{user?.email}</p>
-                      <p className="text-sm text-slate-400 mt-1">
-                        Tham gia từ {formatDate(user?.createdAt)}
-                      </p>
-                    </div>
-
-                    {!isEditing && (
-                      <Button
-                        onClick={() => setIsEditing(true)}
-                        className="rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium px-6 h-11 shadow-lg shadow-sky-500/25 sm:ml-auto"
-                      >
-                        <Pencil className="w-4 h-4 mr-2" />
-                        Chỉnh sửa
-                      </Button>
-                    )}
+                      <AvatarFallback className="bg-gradient-to-br from-sky-400 to-cyan-400 text-white text-3xl sm:text-4xl font-bold">
+                        {getInitials(user?.fullname || user?.username)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <button
+                      onClick={handleAvatarClick}
+                      disabled={isUploadingAvatar}
+                      className="absolute bottom-1 right-1 p-2 rounded-full bg-white shadow-md border border-slate-200 text-sky-600 hover:bg-sky-50 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploadingAvatar ? (
+                        <div className="w-4 h-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Camera className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
+
+                  <div className="flex-1">
+                    <h2
+                      className="text-2xl sm:text-3xl font-bold text-slate-800"
+                      style={{ fontFamily: "'Quicksand', sans-serif" }}
+                    >
+                      {user?.fullname || user?.username}
+                    </h2>
+                    <p className="text-slate-500">{user?.email}</p>
+                    <p className="text-sm text-slate-400 mt-1">
+                      Tham gia từ {formatDate(user?.createdAt)}
+                    </p>
+                  </div>
+
+                  {!isEditing && (
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      className="rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium px-6 h-11 shadow-lg shadow-sky-500/25 sm:ml-auto"
+                    >
+                      <Pencil className="w-4 h-4 mr-2" />
+                      Chỉnh sửa
+                    </Button>
+                  )}
                 </div>
+              </div>
 
-                <div className="px-6 sm:px-8 pb-8">
-                  {isEditing ? (
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-6"
-                      >
-                        <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
-                          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm">
-                              👤
-                            </span>
-                            Thông tin cá nhân
-                          </h3>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="fullname"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-slate-600 font-medium">
-                                    Họ và tên
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="Nhập họ và tên"
-                                      className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="phone"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-slate-600 font-medium">
-                                    Số điện thoại
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="0123 456 789"
-                                      className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="birthday"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-slate-600 font-medium">
-                                    Ngày sinh
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      type="date"
-                                      className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="address"
-                              render={({ field }) => (
-                                <FormItem className="sm:col-span-2">
-                                  <FormLabel className="text-slate-600 font-medium">
-                                    Địa chỉ
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="Nhập địa chỉ"
-                                      className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
-                          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm">
-                              👨‍👩‍👧
-                            </span>
-                            Thông tin phụ huynh
-                          </h3>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <FormField
-                              control={form.control}
-                              name="parentName"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-slate-600 font-medium">
-                                    Tên phụ huynh
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="Nhập tên phụ huynh"
-                                      className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                            <FormField
-                              control={form.control}
-                              name="parentPhone"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel className="text-slate-600 font-medium">
-                                    SĐT phụ huynh
-                                  </FormLabel>
-                                  <FormControl>
-                                    <Input
-                                      placeholder="0123 456 789"
-                                      className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
-                                      {...field}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
-                          </div>
-                        </div>
-
-                        <div className="flex gap-3 pt-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleCancel}
-                            className="flex-1 h-12 rounded-full font-medium border-slate-200 hover:bg-slate-50"
-                          >
-                            <X className="w-4 h-4 mr-2" />
-                            Hủy bỏ
-                          </Button>
-                          <Button
-                            type="submit"
-                            disabled={isSaving}
-                            className="flex-1 h-12 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-lg shadow-sky-500/25"
-                          >
-                            <Save className="w-4 h-4 mr-2" />
-                            {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
-                  ) : (
-                    <div className="space-y-6">
+              <div className="px-6 sm:px-8 pb-8">
+                {isEditing ? (
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-6"
+                    >
                       <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
                         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm">
+                            👤
+                          </span>
                           Thông tin cá nhân
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <InfoItem label="Họ và tên" value={user?.fullname} />
-                          <InfoItem label="Email" value={user?.email} />
-                          <InfoItem label="Số điện thoại" value={user?.phone} />
-                          <InfoItem
-                            label="Ngày sinh"
-                            value={formatDate(user?.birthday)}
+                          <FormField
+                            control={form.control}
+                            name="fullname"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Họ và tên
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Nhập họ và tên"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                          <InfoItem
-                            label="Địa chỉ"
-                            value={user?.address}
-                            className="sm:col-span-2"
+                          <FormField
+                            control={form.control}
+                            name="phone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Số điện thoại
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="0123 456 789"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="birthday"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Ngày sinh
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type="date"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="address"
+                            render={({ field }) => (
+                              <FormItem className="sm:col-span-2">
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Địa chỉ
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Nhập địa chỉ"
+                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
                         </div>
                       </div>
 
                       <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
                         <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm">
+                            👨‍👩‍👧
+                          </span>
                           Thông tin phụ huynh
                         </h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <InfoItem
-                            label="Tên phụ huynh"
-                            value={user?.parentName}
+                          <FormField
+                            control={form.control}
+                            name="parentName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  Tên phụ huynh
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Nhập tên phụ huynh"
+                                    className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
-                          <InfoItem
-                            label="SĐT phụ huynh"
-                            value={user?.parentPhone}
+                          <FormField
+                            control={form.control}
+                            name="parentPhone"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-slate-600 font-medium">
+                                  SĐT phụ huynh
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="0123 456 789"
+                                    className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
                         </div>
                       </div>
 
-                      {getInstructorRequestUI()}
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCancel}
+                          className="flex-1 h-12 rounded-full font-medium border-slate-200 hover:bg-slate-50"
+                        >
+                          <X className="w-4 h-4 mr-2" />
+                          Hủy bỏ
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={isSaving}
+                          className="flex-1 h-12 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-lg shadow-sky-500/25"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        Thông tin cá nhân
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <InfoItem label="Họ và tên" value={user?.fullname} />
+                        <InfoItem label="Email" value={user?.email} />
+                        <InfoItem label="Số điện thoại" value={user?.phone} />
+                        <InfoItem
+                          label="Ngày sinh"
+                          value={formatDate(user?.birthday)}
+                        />
+                        <InfoItem
+                          label="Địa chỉ"
+                          value={user?.address}
+                          className="sm:col-span-2"
+                        />
+                      </div>
                     </div>
-                  )}
-                </div>
-              </Card>
-            </motion.div>
-          </div>
-        </main>
+
+                    <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
+                      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        Thông tin phụ huynh
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <InfoItem
+                          label="Tên phụ huynh"
+                          value={user?.parentName}
+                        />
+                        <InfoItem
+                          label="SĐT phụ huynh"
+                          value={user?.parentPhone}
+                        />
+                      </div>
+                    </div>
+
+                    {getInstructorRequestUI()}
+                  </div>
+                )}
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+      </main>
 
       <Footer />
 

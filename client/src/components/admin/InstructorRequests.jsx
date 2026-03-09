@@ -550,7 +550,10 @@ export function InstructorRequests() {
                                 <button
                                   onClick={() =>
                                     handleDownloadFile(
-                                      getCvFileUrl(viewingRequest.instructorRequestData.cvImage),
+                                      getCvFileUrl(
+                                        viewingRequest.instructorRequestData
+                                          .cvImage,
+                                      ),
                                       viewingRequest.instructorRequestData
                                         .cvFileName || "CV.pdf",
                                     )
@@ -566,7 +569,9 @@ export function InstructorRequests() {
                         ) : (
                           <>
                             <img
-                              src={getCvFileUrl(viewingRequest.instructorRequestData.cvImage)}
+                              src={getCvFileUrl(
+                                viewingRequest.instructorRequestData.cvImage,
+                              )}
                               alt="CV"
                               className="w-full max-h-[400px] object-contain rounded-lg border border-amber-200"
                             />
@@ -581,7 +586,9 @@ export function InstructorRequests() {
                             )}
                             <div className="absolute top-2 right-2 flex gap-2">
                               <a
-                                href={getCvFileUrl(viewingRequest.instructorRequestData.cvImage)}
+                                href={getCvFileUrl(
+                                  viewingRequest.instructorRequestData.cvImage,
+                                )}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
@@ -592,7 +599,10 @@ export function InstructorRequests() {
                               <button
                                 onClick={() =>
                                   handleDownloadFile(
-                                    getCvFileUrl(viewingRequest.instructorRequestData.cvImage),
+                                    getCvFileUrl(
+                                      viewingRequest.instructorRequestData
+                                        .cvImage,
+                                    ),
                                     viewingRequest.instructorRequestData
                                       .cvFileName || "CV.jpg",
                                   )

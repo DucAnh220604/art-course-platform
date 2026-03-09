@@ -12,6 +12,7 @@ import {
   Home,
   Package,
   LogOut,
+  Mail,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +24,7 @@ import {
   PlaceholderTab,
   InstructorRequests,
   AdminCourseManagement,
+  ContactManagement,
 } from "@/components/admin";
 import { AdminComboManagement } from "@/components/admin/AdminComboManagement";
 import { CourseManagement } from "@/components/instructor/CourseManagement";
@@ -41,6 +43,7 @@ const getNavigationByRole = (role) => {
         },
         { id: "courses", label: "Quản lý Khóa học", icon: BookOpen },
         { id: "combos", label: "Quản lý Combo", icon: Package },
+        { id: "contact", label: "Tin nhắn liên hệ", icon: Mail },
         { id: "posts", label: "Quản lý Bài viết", icon: FileText },
         { id: "payments", label: "Giao dịch", icon: CreditCard },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
@@ -54,6 +57,7 @@ const getNavigationByRole = (role) => {
           label: "Yêu cầu Instructor",
           icon: UserCheck,
         },
+        { id: "contact", label: "Tin nhắn liên hệ", icon: Mail },
         { id: "posts", label: "Quản lý Bài viết", icon: FileText },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
       ];
@@ -115,6 +119,8 @@ export function Dashboard() {
         return <AdminCourseManagement />;
       case "combos":
         return <AdminComboManagement />;
+      case "contact":
+        return <ContactManagement />;
       case "my-courses":
         return <CourseManagement />;
       case "my-combos":

@@ -15,10 +15,12 @@ const storage = new CloudinaryStorage({
     // Check if file is PDF
     const isPdf = file.mimetype === "application/pdf";
     // Get original filename without extension and sanitize
-    const originalName = path.parse(file.originalname).name.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const originalName = path
+      .parse(file.originalname)
+      .name.replace(/[^a-zA-Z0-9_-]/g, "_");
     const timestamp = Date.now();
     const publicId = `${originalName}_${timestamp}`;
-    
+
     return {
       folder: "art-kids",
       allowed_formats: ["jpg", "png", "jpeg", "pdf"],
