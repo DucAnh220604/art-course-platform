@@ -3,25 +3,43 @@ const Course = require("../models/Course");
 const courseController = {
   getAllCourses: async (req, res) => {
     try {
-      const { category, level, search, page = 1, limit = 10 } = req.query;
+      const {
+        category,
+        level,
+        search,
+        status,
+        sort = "createdAt",
+        order = "desc",
+        page = 1,
+        limit = 10,
+      } = req.query;
+
       const query = {};
       if (category) query.category = category;
       if (level) query.level = level;
+      if (status) query.status = status;
       if (search) query.$text = { $search: search };
+
+      // Build sort object
+      const sortOrder = order === "asc" ? 1 : -1;
+      const sortOptions = { [sort]: sortOrder };
+
       const courses = await Course.find(query)
-        .populate("instructor", "name")
+        .populate("instructor", "fullname avatar")
         .skip((page - 1) * limit)
-        .limit(parseInt(limit * 1))
-        .sort({ createdAt: -1 });
+        .limit(parseInt(limit))
+        .sort(sortOptions);
 
       const total = await Course.countDocuments(query);
       res.json({
+        success: true,
         courses,
         totalPages: Math.ceil(total / limit),
         currentPage: parseInt(page),
+        total,
       });
     } catch (error) {
-      res.status(500).json({ message: "Server error", error: error.message });
+      res.status(500).json({ success: false, message: error.message });
     }
   },
   getCourseBySlug: async (req, res) => {

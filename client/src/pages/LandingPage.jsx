@@ -26,24 +26,22 @@ export function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-amber-50 to-white">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        <Header onNavigate={navigate} />
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-amber-50 to-white overflow-x-hidden">
+      <Header onNavigate={navigate} />
 
+      <main className="overflow-x-hidden">
         <HeroSection />
 
         <FeaturedCourses onCourseClick={handleCourseClick} />
 
         <FeaturedCombos onComboClick={handleComboClick} />
 
-        <CourseBundles onBundleClick={handleBundleClick} />
-
         <WhyChooseUs />
 
         <Testimonials />
+      </main>
 
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 }

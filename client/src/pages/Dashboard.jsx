@@ -26,6 +26,8 @@ import {
 import { AdminComboManagement } from "@/components/admin/AdminComboManagement";
 import { CourseManagement } from "@/components/instructor/CourseManagement";
 import { ComboManagement } from "@/components/instructor/ComboManagement";
+import OrderHistory from "@/components/instructor/OrderHistory";
+import PaymentManager from "@/components/admin/PaymentManager";
 
 const getNavigationByRole = (role) => {
   switch (role) {
@@ -116,21 +118,9 @@ export function Dashboard() {
           />
         );
       case "payments":
-        return (
-          <PlaceholderTab
-            title="Giao dịch"
-            description="Lịch sử thanh toán"
-            message="Chức năng quản lý thanh toán đang được phát triển..."
-          />
-        );
+        return <PaymentManager />;
       case "orders":
-        return (
-          <PlaceholderTab
-            title="Lịch sử đơn hàng"
-            description="Xem các đơn hàng khóa học của bạn"
-            message="Chức năng lịch sử đơn hàng đang được phát triển..."
-          />
-        );
+        return <OrderHistory />;
       case "reports":
         return (
           <PlaceholderTab
