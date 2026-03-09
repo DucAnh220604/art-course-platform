@@ -4,27 +4,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const testimonials = [
   {
-    name: "Jennifer M.",
-    role: "Parent",
+    name: "Chị Lan",
+    role: "Phụ huynh",
     avatar:
       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop",
-    text: "My daughter loves these courses! Her creativity has really blossomed. The instructors are patient and engaging.",
+    text: "Con gái tôi rất thích các khóa học này! Sự sáng tạo của con đã nở rộ. Các giảng viên kiên nhẫn và cuốn hút.",
     rating: 5,
   },
   {
-    name: "David K.",
-    role: "Parent",
+    name: "Anh Hùng",
+    role: "Phụ huynh",
     avatar:
       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop",
-    text: "Great value for money. My son learned so much and now he draws every day. Highly recommend!",
+    text: "Đáng giá từng đồng. Con trai tôi đã học được rất nhiều và bây giờ bé vẽ mỗi ngày. Rất đáng giới thiệu!",
     rating: 5,
   },
   {
-    name: "Sophie L.",
-    role: "Student, Age 10",
+    name: "Bé Vy",
+    role: "Học viên, 10 tuổi",
     avatar:
       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop",
-    text: "I love learning new art techniques! The videos are fun and easy to follow. I made so many cool drawings!",
+    text: "Con rất thích học các kỹ thuật vẽ mới! Các video vui và dễ theo dõi. Con đã vẽ được nhiều bức tranh đẹp!",
     rating: 5,
   },
 ];
@@ -35,11 +35,11 @@ export function Testimonials() {
       <div className="text-center mb-8 sm:mb-12 lg:mb-16">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4">
           <span className="bg-gradient-to-r from-green-500 to-teal-500 bg-clip-text text-transparent">
-            What Parents & Kids Say
+            Phụ huynh và học viên nói gì?
           </span>
         </h2>
         <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-gray-600 px-4">
-          Real stories from our creative community
+          Câu chuyện thật từ cộng đồng sáng tạo của chúng tôi
         </p>
       </div>
 

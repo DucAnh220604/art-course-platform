@@ -4,21 +4,21 @@ import { Card, CardContent } from "../ui/card";
 const features = [
   {
     icon: Clock,
-    title: "Lifetime Access",
+    title: "Truy cập trọn đời",
     description:
-      "Learn at your own pace with unlimited access to all course materials, forever!",
+      "Học theo tốc độ của riêng bé với quyền truy cập không giới hạn tất cả tài liệu khóa học, mãi mãi!",
   },
   {
     icon: PlayCircle,
-    title: "HD Video Lessons",
+    title: "Video HD chất lượng",
     description:
-      "Crystal clear video tutorials that make learning fun and easy to follow.",
+      "Video bài giảng sắc nét giúp việc học trở nên thú vị và dễ theo dõi.",
   },
   {
     icon: Award,
-    title: "Certificate",
+    title: "Chứng chỉ",
     description:
-      "Earn a beautiful certificate of completion to celebrate achievements!",
+      "Nhận chứng chỉ hoàn thành đẹp mắt để tôn vinh thành tích của bé!",
   },
 ];
 
@@ -28,10 +28,10 @@ export function WhyChooseUs() {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8 sm:mb-12 lg:mb-16">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-3 sm:mb-4">
-            Why Choose KidsArt?
+            Tại sao chọn KidsArt?
           </h2>
           <p className="text-base sm:text-lg lg:text-xl xl:text-2xl text-white/90 px-4">
-            Everything your child needs to become a confident artist
+            Tất cả những gì bé cần để trở thành một họa sĩ tự tin
           </p>
         </div>
 

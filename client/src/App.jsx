@@ -14,6 +14,8 @@ import RoleRoute from "./components/RoleRoute";
 import { CoursesPage } from "./pages/CoursesPage";
 import { CourseDetailPage } from "./pages/CourseDetailPage";
 import { ComboDetailPage } from "./pages/ComboDetailPage";
+import { AboutPage } from "./pages/AboutPage";
+import { ContactPage } from "./pages/ContactPage";
 import PaymentResultPage from "./pages/PaymentResultPage";
 import { CartPage } from "./pages/CartPage";
 import { WishlistPage } from "./pages/WishlistPage";
@@ -44,6 +46,9 @@ const App = () => {
           <Route path="/course/:slug" element={<CourseDetailPage />} />
 
           <Route path="/combos/:slug" element={<ComboDetailPage />} />
+
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
 
           <Route path="/payment-result" element={<PaymentResultPage />} />
 

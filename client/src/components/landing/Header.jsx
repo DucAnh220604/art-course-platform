@@ -1,6 +1,4 @@
 import {
-  Search,
-  Filter,
   ShoppingCart,
   Heart,
   User,
@@ -8,9 +6,11 @@ import {
   BookOpen,
   ChevronDown,
   LayoutDashboard,
+  GraduationCap,
+  Info,
+  Phone,
 } from "lucide-react";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import { ArtKidsLogo } from "../icons/ArtKidsLogo";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
@@ -57,35 +57,45 @@ export function Header({ onNavigate }) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md -mx-4 sm:-mx-6 lg:-mx-8 xl:-mx-12 2xl:-mx-16 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-      <div className="py-4 lg:py-5">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex items-center justify-between gap-4">
           <div
             className="flex items-center gap-2 lg:gap-3 cursor-pointer"
             onClick={() => onNavigate("/")}
           >
-            <ArtKidsLogo className="w-10 h-10 lg:w-12 lg:h-12" />
-            <span className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
+            <ArtKidsLogo className="w-10 h-10" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">
               ArtKids
             </span>
           </div>
 
-          <div className="hidden md:flex flex-1 max-w-xl lg:max-w-2xl">
-            <div className="relative w-full">
-              <Search className="absolute left-3 lg:left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5 lg:w-6 lg:h-6" />
-              <Input
-                placeholder="Tìm kiếm khóa học..."
-                className="pl-10 lg:pl-12 pr-12 h-10 lg:h-12 text-base lg:text-lg rounded-full border-2 border-sky-200 focus:border-sky-400"
-              />
-              <Button
-                size="sm"
-                variant="ghost"
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full"
-              >
-                <Filter className="w-4 h-4 lg:w-5 lg:h-5" />
-              </Button>
-            </div>
-          </div>
+          <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+            <Button
+              variant="ghost"
+              className="rounded-full text-slate-600 hover:text-sky-600 hover:bg-sky-50 h-10 lg:h-11 px-4 lg:px-5 text-sm lg:text-base font-medium"
+              onClick={() => onNavigate("/courses")}
+            >
+              <GraduationCap className="w-5 h-5 mr-2" />
+              Khóa học
+            </Button>
+            <Button
+              variant="ghost"
+              className="rounded-full text-slate-600 hover:text-emerald-600 hover:bg-emerald-50 h-10 lg:h-11 px-4 lg:px-5 text-sm lg:text-base font-medium"
+              onClick={() => onNavigate("/about")}
+            >
+              <Info className="w-5 h-5 mr-2" />
+              Giới thiệu
+            </Button>
+            <Button
+              variant="ghost"
+              className="rounded-full text-slate-600 hover:text-amber-600 hover:bg-amber-50 h-10 lg:h-11 px-4 lg:px-5 text-sm lg:text-base font-medium"
+              onClick={() => onNavigate("/contact")}
+            >
+              <Phone className="w-5 h-5 mr-2" />
+              Liên hệ
+            </Button>
+          </nav>
 
           <div className="flex items-center gap-2 lg:gap-4">
             {isAuthenticated ? (
@@ -183,10 +193,10 @@ export function Header({ onNavigate }) {
                         >
                           <LayoutDashboard className="mr-2 h-4 w-4" />
                           <span>
-                            {user?.role === "admin" && "Admin Dashboard"}
-                            {user?.role === "staff" && "Staff Dashboard"}
+                            {user?.role === "admin" && "Quản lý hệ thống"}
+                            {user?.role === "staff" && "Quản lý nhân viên"}
                             {user?.role === "instructor" &&
-                              "Instructor Dashboard"}
+                              "Quản lý giảng viên"}
                           </span>
                         </DropdownMenuItem>
                       </>
