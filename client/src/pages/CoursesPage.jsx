@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   Search,
   Filter,
@@ -33,6 +34,7 @@ export function CoursesPage() {
 
   const [courses, setCourses] = useState([]);
   const [combos, setCombos] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Pagination state
@@ -45,6 +47,13 @@ export function CoursesPage() {
   const [category, setCategory] = useState("all");
   const [level, setLevel] = useState("all");
   const [type, setType] = useState(searchParams.get("type") || "all"); // all, courses, combos
+
+  useEffect(() => {
+    courseApi
+      .getCategories()
+      .then((res) => setCategories(res.data.categories || []))
+      .catch(() => {});
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -150,7 +159,13 @@ export function CoursesPage() {
   const displayItems = getDisplayItems();
 
   return (
-    <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-slate-50/50 overflow-x-hidden"
+    >
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
       </div>
@@ -230,9 +245,11 @@ export function CoursesPage() {
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-none shadow-xl">
                   <SelectItem value="all">Tất cả danh mục</SelectItem>
-                  <SelectItem value="Vẽ chì">Vẽ chì</SelectItem>
-                  <SelectItem value="Màu nước">Màu nước</SelectItem>
-                  <SelectItem value="Digital Art">Digital Art</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -392,6 +409,6 @@ export function CoursesPage() {
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 }

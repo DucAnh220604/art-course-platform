@@ -7,6 +7,7 @@ const comboController = {
     try {
       const {
         search,
+        category,
         page = 1,
         limit = 10,
         status,
@@ -20,6 +21,21 @@ const comboController = {
 
       // Search theo text
       if (search) query.$text = { $search: search };
+
+      // Filter theo category: chỉ lấy combo có ít nhất 1 khóa học đúng danh mục
+      if (category) {
+        const matchingCourseIds = await Course.distinct("_id", { category });
+        if (matchingCourseIds.length === 0) {
+          return res.json({
+            success: true,
+            combos: [],
+            totalPages: 0,
+            currentPage: parseInt(page),
+            total: 0,
+          });
+        }
+        query.courses = { $in: matchingCourseIds };
+      }
 
       // Build sort object
       const sortOrder = order === "asc" ? 1 : -1;
@@ -253,14 +269,6 @@ const comboController = {
         return res.status(404).json({
           success: false,
           message: "Không tìm thấy combo hoặc bạn không có quyền xóa!",
-        });
-      }
-
-      // Kiểm tra đã có học viên đăng ký chưa
-      if (combo.totalStudents > 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Không thể xóa combo vì đã có ${combo.totalStudents} học viên đăng ký!`,
         });
       }
 

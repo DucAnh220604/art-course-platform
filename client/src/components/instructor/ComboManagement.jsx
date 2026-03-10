@@ -80,14 +80,6 @@ export function ComboManagement() {
   const handleDeleteCombo = async () => {
     if (!comboToDelete) return;
 
-    if (comboToDelete.totalStudents > 0) {
-      toast.error("Không thể xóa!", {
-        description: `Combo đã có ${comboToDelete.totalStudents} học viên đăng ký.`,
-      });
-      setIsDeleteDialogOpen(false);
-      return;
-    }
-
     toast.promise(comboApi.deleteCombo(comboToDelete._id), {
       loading: "Đang xóa combo...",
       success: () => {
@@ -348,13 +340,6 @@ export function ComboManagement() {
                           >
                             <Send className="w-4 h-4 text-amber-600" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => confirmDeleteCombo(combo)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
                         </>
                       )}
                       {combo.status === "rejected" && (
@@ -369,6 +354,13 @@ export function ComboManagement() {
                           <Edit className="w-4 h-4" />
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => confirmDeleteCombo(combo)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

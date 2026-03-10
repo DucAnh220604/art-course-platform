@@ -54,8 +54,8 @@ export function CartPage() {
             !(
               item.product._id === productId &&
               item.productModel === productModel
-            )
-        )
+            ),
+        ),
       );
       toast.success("Đã xóa khỏi giỏ hàng.");
     } catch {
@@ -94,7 +94,7 @@ export function CartPage() {
       toast.error("Không tạo được phiên thanh toán.");
     } catch (error) {
       toast.error(
-        error?.response?.data?.message || "Thanh toán thất bại. Thử lại sau!"
+        error?.response?.data?.message || "Thanh toán thất bại. Thử lại sau!",
       );
     } finally {
       setCheckingOut(false);
@@ -103,13 +103,14 @@ export function CartPage() {
 
   const totalPrice = cartItems.reduce(
     (sum, item) => sum + (item.product?.price || 0),
-    0
+    0,
   );
 
   const totalOldPrice = cartItems.reduce((sum, item) => {
     const p = item.product;
     if (!p) return sum;
-    if (item.productModel === "Combo") return sum + (p.originalPrice || p.price || 0);
+    if (item.productModel === "Combo")
+      return sum + (p.originalPrice || p.price || 0);
     return sum + (p.oldPrice || p.price || 0);
   }, 0);
 
@@ -131,12 +132,12 @@ export function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
+    <div className="min-h-screen flex flex-col bg-slate-50/50">
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
       </div>
 
-      <main className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex items-center gap-3 mb-8">
           <ShoppingCart className="w-8 h-8 text-sky-500" />
           <h1 className="text-3xl font-bold text-slate-800">Giỏ hàng</h1>
@@ -189,7 +190,7 @@ export function CartPage() {
                         className="w-28 h-20 sm:w-36 sm:h-24 object-cover rounded-xl shrink-0 cursor-pointer"
                         onClick={() =>
                           navigate(
-                            isCombo ? `/combos/${slug}` : `/course/${slug}`
+                            isCombo ? `/combos/${slug}` : `/course/${slug}`,
                           )
                         }
                       />
@@ -213,7 +214,7 @@ export function CartPage() {
                                 navigate(
                                   isCombo
                                     ? `/combos/${slug}`
-                                    : `/course/${slug}`
+                                    : `/course/${slug}`,
                                 )
                               }
                             >
@@ -271,7 +272,9 @@ export function CartPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-slate-600">
                     <span>Số lượng</span>
-                    <span className="font-bold">{cartItems.length} sản phẩm</span>
+                    <span className="font-bold">
+                      {cartItems.length} sản phẩm
+                    </span>
                   </div>
                   {totalSaved > 0 && (
                     <div className="flex justify-between text-slate-400">
@@ -324,11 +327,7 @@ export function CartPage() {
         )}
       </main>
 
-      <div className="w-full bg-white mt-12">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <Footer />
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }

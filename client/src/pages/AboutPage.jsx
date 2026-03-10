@@ -9,7 +9,13 @@ export function AboutPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen bg-white overflow-x-hidden"
+    >
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <Header onNavigate={navigate} />
       </div>
@@ -193,6 +199,6 @@ export function AboutPage() {
       </main>
 
       <Footer />
-    </div>
+    </motion.div>
   );
 }

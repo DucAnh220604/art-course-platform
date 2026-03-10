@@ -122,7 +122,7 @@ export function CourseDetailPage() {
         const items = res.data.data || [];
         const found = items.some(
           (item) =>
-            item.product?._id === course._id && item.productModel === "Course"
+            item.product?._id === course._id && item.productModel === "Course",
         );
         setIsInWishlist(found);
       })
@@ -184,6 +184,12 @@ export function CourseDetailPage() {
 
   if (!course) return null;
 
+  const levelLabel = {
+    beginner: "Cơ bản",
+    intermediate: "Trung Cấp",
+    advanced: "Nâng Cao",
+  };
+
   const displayPrice =
     course.price === 0 ? "MIỄN PHÍ" : `${course.price?.toLocaleString()}đ`;
   const rating = course.averageRating || 0;
@@ -218,7 +224,7 @@ export function CourseDetailPage() {
                   variant="outline"
                   className="border-slate-200 text-slate-500 rounded-full px-4 py-1"
                 >
-                  Cấp độ: {course.level}
+                  Cấp độ: {levelLabel[course.level] || course.level}
                 </Badge>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6">
@@ -468,7 +474,10 @@ export function CourseDetailPage() {
                           await cartApi.addToCart(course._id, "Course");
                           toast.success("Đã thêm vào giỏ hàng!");
                         } catch (e) {
-                          toast.error(e?.response?.data?.message || "Không thêm được vào giỏ hàng.");
+                          toast.error(
+                            e?.response?.data?.message ||
+                              "Không thêm được vào giỏ hàng.",
+                          );
                         }
                       }}
                       className="w-full mt-6 h-14 text-lg rounded-full font-bold shadow-lg transition-all hover:-translate-y-1 bg-slate-900 hover:bg-sky-500 text-white"
@@ -486,16 +495,25 @@ export function CourseDetailPage() {
                         }
                         try {
                           if (isInWishlist) {
-                            await wishlistApi.removeFromWishlist(course._id, "Course");
+                            await wishlistApi.removeFromWishlist(
+                              course._id,
+                              "Course",
+                            );
                             setIsInWishlist(false);
                             toast.success("Đã xóa khỏi danh sách yêu thích.");
                           } else {
-                            await wishlistApi.addToWishlist(course._id, "Course");
+                            await wishlistApi.addToWishlist(
+                              course._id,
+                              "Course",
+                            );
                             setIsInWishlist(true);
                             toast.success("Đã thêm vào danh sách yêu thích!");
                           }
                         } catch (e) {
-                          toast.error(e?.response?.data?.message || "Không thực hiện được.");
+                          toast.error(
+                            e?.response?.data?.message ||
+                              "Không thực hiện được.",
+                          );
                         }
                       }}
                       className={`w-full mt-3 h-12 rounded-full font-bold border-2 transition-all ${
@@ -504,7 +522,9 @@ export function CourseDetailPage() {
                           : "border-rose-200 text-rose-500 hover:bg-rose-50"
                       }`}
                     >
-                      <Heart className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`} />
+                      <Heart
+                        className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`}
+                      />
                       {isInWishlist ? "Đã yêu thích" : "Yêu thích"}
                     </Button>
                     <Button
@@ -517,6 +537,21 @@ export function CourseDetailPage() {
                     </Button>
                   </>
                 )}
+                <Button
+                  onClick={handleEnroll}
+                  disabled={isEnrolled || enrolling}
+                  className={`w-full mt-6 h-14 text-lg rounded-full font-bold shadow-lg transition-all hover:-translate-y-1 ${
+                    isEnrolled
+                      ? "bg-green-500 hover:bg-green-500 text-white cursor-default"
+                      : "bg-slate-900 hover:bg-sky-500 text-white"
+                  }`}
+                >
+                  {isEnrolled
+                    ? "Đã đăng ký"
+                    : enrolling
+                      ? "Đang đăng ký..."
+                      : "Đăng ký học ngay"}
+                </Button>
                 <p className="text-xs text-slate-400 mt-4 flex items-center justify-center gap-1">
                   <ShieldCheck className="w-4 h-4" /> Cam kết hoàn tiền trong 7
                   ngày

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Package, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import { ComboCard } from "@/components/combos/ComboCard";
 import { Button } from "@/components/ui/button";
 import comboApi from "@/api/comboApi";
@@ -40,7 +41,13 @@ export function FeaturedCombos({ onComboClick }) {
   return (
     <section className="py-16 lg:py-20 bg-amber-50/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
           <h2 className="text-3xl lg:text-4xl font-bold mb-4 text-slate-800">
             Combo <span className="text-amber-500">Tiết kiệm</span>
           </h2>
@@ -55,7 +62,7 @@ export function FeaturedCombos({ onComboClick }) {
             Xem tất cả Combo
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
-        </div>
+        </motion.div>
 
         {loading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -68,13 +75,16 @@ export function FeaturedCombos({ onComboClick }) {
           </div>
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-            {combos.map((combo) => (
-              <ComboCard
+            {combos.map((combo, index) => (
+              <motion.div
                 key={combo._id}
-                combo={combo}
-                onComboClick={onComboClick}
-                compact
-              />
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <ComboCard combo={combo} onComboClick={onComboClick} compact />
+              </motion.div>
             ))}
           </div>
         )}

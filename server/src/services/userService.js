@@ -55,6 +55,7 @@ const getAllUsers = async (queryParams) => {
   } = queryParams;
 
   const query = {};
+  query.role = { $ne: "admin" };
 
   if (search) {
     query.$or = [
@@ -64,12 +65,8 @@ const getAllUsers = async (queryParams) => {
     ];
   }
 
-  if (role && role !== "all") {
+  if (role && role !== "all" && role !== "admin") {
     query.role = role;
-  }
-
-  if (isActive !== "" && isActive !== "all") {
-    query.isActive = isActive === "true";
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -180,7 +177,7 @@ const getUserStats = async () => {
   };
 };
 
-const requestInstructor = async (userId) => {
+const requestInstructor = async (userId, requestData, cvImage) => {
   const user = await User.findById(userId);
 
   if (!user) {
@@ -199,7 +196,40 @@ const requestInstructor = async (userId) => {
     throw new Error("Yêu cầu của bạn đã được duyệt.");
   }
 
+  // Validate required fields
+  const {
+    fullName,
+    phone,
+    email,
+    experience,
+    specialization,
+    introduction,
+    cvFileType,
+    cvFileName,
+  } = requestData;
+
+  if (!fullName || !phone || !email || !experience || !specialization) {
+    throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc.");
+  }
+
+  if (!cvImage) {
+    throw new Error("Vui lòng tải lên CV của bạn.");
+  }
+
   user.instructorRequestStatus = "pending";
+  user.instructorRequestData = {
+    fullName,
+    phone,
+    email,
+    experience,
+    specialization,
+    introduction: introduction || "",
+    cvImage,
+    cvFileType: cvFileType || "image",
+    cvFileName: cvFileName || "CV",
+    requestedAt: new Date(),
+  };
+
   await user.save();
 
   return user;
@@ -261,7 +291,12 @@ const getInstructorRequests = async (queryParams) => {
   };
 };
 
-const handleInstructorRequest = async (userId, action) => {
+const handleInstructorRequest = async (
+  userId,
+  action,
+  reviewerId,
+  rejectionReason,
+) => {
   const user = await User.findById(userId);
 
   if (!user) {
@@ -275,8 +310,25 @@ const handleInstructorRequest = async (userId, action) => {
   if (action === "approve") {
     user.instructorRequestStatus = "approved";
     user.role = "instructor";
+    // Copy instructor data to instructorInfo
+    if (user.instructorRequestData) {
+      user.instructorInfo = {
+        bio: user.instructorRequestData.introduction || "",
+        bankAccount: "",
+        balance: 0,
+      };
+    }
   } else {
     user.instructorRequestStatus = "rejected";
+    if (user.instructorRequestData) {
+      user.instructorRequestData.rejectionReason = rejectionReason || "";
+    }
+  }
+
+  // Update review info
+  if (user.instructorRequestData) {
+    user.instructorRequestData.reviewedAt = new Date();
+    user.instructorRequestData.reviewedBy = reviewerId;
   }
 
   await user.save();

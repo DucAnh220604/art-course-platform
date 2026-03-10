@@ -3,6 +3,7 @@ import axiosClient from "./axiosClient";
 const courseApi = {
   // --- COURSE API ---
   getAllCourses: (params = {}) => axiosClient.get("/courses", { params }),
+  getCategories: () => axiosClient.get("/courses/categories/all"),
   getCourseBySlug: (slug) => axiosClient.get(`/courses/${slug}`),
   createCourse: (data) => axiosClient.post("/courses", data),
   updateCourse: (id, data) => axiosClient.put(`/courses/${id}`, data),
