@@ -1,5 +1,6 @@
 const Combo = require("../models/Combo");
 const Course = require("../models/Course");
+const User = require("../models/User");
 
 const comboController = {
   // Lấy tất cả combos (có filter, search, pagination)
@@ -49,16 +50,34 @@ const comboController = {
 
       const combos = await Combo.find(query)
         .populate("instructor", "fullname username avatar")
-        .populate("courses", "title thumbnail price category")
+        .populate("courses", "title thumbnail price category _id")
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
         .sort(sortOptions);
+
+      // Nếu có param forManagement=true, thêm số người đăng ký
+      let combosWithEnrollment = combos;
+      if (req.query.forManagement === "true") {
+        combosWithEnrollment = await Promise.all(
+          combos.map(async (combo) => {
+            const courseIds = combo.courses.map((c) => c._id);
+            // Đếm số user đã đăng ký bất kỳ khóa học nào trong combo
+            const enrolledCount = await User.countDocuments({
+              "enrolledCourses.course": { $in: courseIds },
+            });
+            return {
+              ...combo.toObject(),
+              enrolledCount, // Tổng số người đã đăng ký combo/courses trong combo
+            };
+          })
+        );
+      }
 
       const total = await Combo.countDocuments(query);
 
       res.json({
         success: true,
-        combos,
+        combos: combosWithEnrollment,
         totalPages: Math.ceil(total / limit),
         currentPage: parseInt(page),
         total,
