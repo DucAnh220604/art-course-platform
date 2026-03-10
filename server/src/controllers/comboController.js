@@ -256,14 +256,6 @@ const comboController = {
         });
       }
 
-      // Kiểm tra đã có học viên đăng ký chưa
-      if (combo.totalStudents > 0) {
-        return res.status(400).json({
-          success: false,
-          message: `Không thể xóa combo vì đã có ${combo.totalStudents} học viên đăng ký!`,
-        });
-      }
-
       await combo.deleteOne();
 
       res.json({

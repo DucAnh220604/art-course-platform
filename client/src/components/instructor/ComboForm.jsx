@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Search, ChevronDown, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import comboApi from "@/api/comboApi";
 import courseApi from "@/api/courseApi";
@@ -18,6 +27,10 @@ export function ComboForm({ open, onClose, onSuccess, editingCombo = null }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [availableCourses, setAvailableCourses] = useState([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const dropdownRef = useRef(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -67,6 +80,17 @@ export function ComboForm({ open, onClose, onSuccess, editingCombo = null }) {
       });
     }
   }, [editingCombo, open]);
+
+  // Đóng dropdown khi click bên ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -141,6 +165,21 @@ export function ComboForm({ open, onClose, onSuccess, editingCombo = null }) {
       ? Math.round(((originalPrice - formData.price) / originalPrice) * 100)
       : 0;
 
+  const categories = [
+    ...new Set(availableCourses.map((c) => c.category).filter(Boolean)),
+  ];
+  const filteredCourses = availableCourses.filter((c) => {
+    const matchesSearch = c.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      categoryFilter === "all" || c.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+  const selectedCourses = availableCourses.filter((c) =>
+    formData.courses.includes(c._id),
+  );
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -184,47 +223,132 @@ export function ComboForm({ open, onClose, onSuccess, editingCombo = null }) {
           </div>
 
           {/* Chọn Khóa Học */}
-          <div>
+          <div ref={dropdownRef}>
             <Label className="font-semibold mb-3 block">
               Chọn Khóa Học (2-8 khóa) *
             </Label>
-            <div className="border rounded-lg p-4 space-y-3 max-h-64 overflow-y-auto">
-              {availableCourses.length === 0 ? (
-                <p className="text-sm text-gray-500">
-                  Bạn chưa có khóa học nào được phát hành. Vui lòng tạo và phát
-                  hành khóa học trước!
-                </p>
-              ) : (
-                availableCourses.map((course) => (
-                  <div
-                    key={course._id}
-                    className="flex items-center space-x-3 p-2 hover:bg-slate-50 rounded"
+
+            {/* Trigger button */}
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between border rounded-md px-3 py-2 text-sm bg-background hover:bg-slate-50 transition-colors"
+            >
+              <span className="text-gray-600">
+                {formData.courses.length === 0
+                  ? "Bấm để chọn khóa học..."
+                  : `Đã chọn ${formData.courses.length} khóa học`}
+              </span>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown panel */}
+            {isDropdownOpen && (
+              <div className="border rounded-lg mt-1 p-3 space-y-3 bg-white shadow-md">
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Tìm khóa học..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Category filter */}
+                <div onMouseDown={(e) => e.stopPropagation()}>
+                  <Select
+                    value={categoryFilter}
+                    onValueChange={setCategoryFilter}
                   >
-                    <Checkbox
-                      id={course._id}
-                      checked={formData.courses.includes(course._id)}
-                      onCheckedChange={() => handleCourseToggle(course._id)}
-                    />
-                    <label
-                      htmlFor={course._id}
-                      className="flex-1 cursor-pointer"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">{course.title}</p>
-                          <p className="text-xs text-gray-500">
-                            {course.category}
-                          </p>
-                        </div>
-                        <p className="font-semibold text-sky-600">
-                          {course.price?.toLocaleString()}đ
-                        </p>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Lọc theo danh mục" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tất cả danh mục</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Course list */}
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {filteredCourses.length === 0 ? (
+                    <p className="text-sm text-gray-500 py-2 text-center">
+                      {availableCourses.length === 0
+                        ? "Bạn chưa có khóa học nào được phát hành!"
+                        : "Không tìm thấy khóa học phù hợp."}
+                    </p>
+                  ) : (
+                    filteredCourses.map((course) => (
+                      <div
+                        key={course._id}
+                        className="flex items-center space-x-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
+                        onClick={() => handleCourseToggle(course._id)}
+                      >
+                        <Checkbox
+                          id={`dropdown-${course._id}`}
+                          checked={formData.courses.includes(course._id)}
+                          onCheckedChange={() => handleCourseToggle(course._id)}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <label
+                          htmlFor={`dropdown-${course._id}`}
+                          className="flex-1 cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-sm">
+                                {course.title}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {course.category}
+                              </p>
+                            </div>
+                            <p className="font-semibold text-sky-600 text-sm">
+                              {course.price?.toLocaleString()}đ
+                            </p>
+                          </div>
+                        </label>
                       </div>
-                    </label>
-                  </div>
-                ))
-              )}
-            </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Selected course tags */}
+            {selectedCourses.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {selectedCourses.map((course) => (
+                  <Badge
+                    key={course._id}
+                    variant="secondary"
+                    className="flex items-center gap-1 pr-1"
+                  >
+                    <span className="text-xs">{course.title}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleCourseToggle(course._id)}
+                      className="ml-1 hover:text-red-500"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+
             <p className="text-sm text-gray-500 mt-2">
               Đã chọn: {formData.courses.length}/8 khóa học
             </p>
