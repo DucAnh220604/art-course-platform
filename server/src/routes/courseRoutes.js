@@ -4,6 +4,7 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+router.get("/categories/all", courseController.getCategories);
 router.post("/", protect, courseController.createCourse);
 router.get("/", courseController.getAllCourses);
 router.get("/:slug", courseController.getCourseBySlug);
