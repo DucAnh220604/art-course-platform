@@ -18,7 +18,13 @@ const courseController = {
       if (category) query.category = category;
       if (level) query.level = level;
       if (status) query.status = status;
-      if (search) query.$text = { $search: search };
+      if (search) {
+        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or = [
+          { title: { $regex: escapedSearch, $options: "i" } },
+          { description: { $regex: escapedSearch, $options: "i" } },
+        ];
+      }
 
       // Build sort object
       const sortOrder = order === "asc" ? 1 : -1;

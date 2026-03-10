@@ -43,9 +43,9 @@ export function CoursesPage() {
   const [courseTotalPages, setCourseTotalPages] = useState(1);
   const [comboTotalPages, setComboTotalPages] = useState(1);
 
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [level, setLevel] = useState("all");
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const [level, setLevel] = useState(searchParams.get("level") || "all");
   const [type, setType] = useState(searchParams.get("type") || "all"); // all, courses, combos
 
   useEffect(() => {
@@ -115,14 +115,15 @@ export function CoursesPage() {
     setComboPage(1);
   }, [search, category, level, type]);
 
-  // Update URL params when type changes
+  // Sync tất cả filter vào URL để giữ lại khi navigate back
   useEffect(() => {
-    if (type !== "all") {
-      setSearchParams({ type });
-    } else {
-      setSearchParams({});
-    }
-  }, [type, setSearchParams]);
+    const params = {};
+    if (type !== "all") params.type = type;
+    if (search) params.search = search;
+    if (category !== "all") params.category = category;
+    if (level !== "all") params.level = level;
+    setSearchParams(params, { replace: true });
+  }, [type, search, category, level, setSearchParams]);
 
   const handleTypeChange = (newType) => {
     setType(newType);
@@ -279,6 +280,7 @@ export function CoursesPage() {
                 setCategory("all");
                 setLevel("all");
                 setType("all");
+                setSearchParams({}, { replace: true });
               }}
             >
               Xóa bộ lọc
