@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Star,
@@ -41,7 +41,12 @@ export function CourseDetailPage() {
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
 
-  // Chuyển YouTube video ID hoặc URL thành embed URL
+  // Theo dõi bài học đã hoàn thành
+  const [completedLessons, setCompletedLessons] = useState(new Set());
+  const ytPlayerRef = useRef(null);
+  const progressIntervalRef = useRef(null);
+  const markedCompleteRef = useRef(new Set()); // tránh gọi API nhiều lần cho cùng 1 lesson
+
   const getEmbedUrl = (videoUrl) => {
     if (!videoUrl) return null;
     if (videoUrl.startsWith("http")) {
@@ -49,10 +54,10 @@ export function CourseDetailPage() {
       try {
         const url = new URL(videoUrl);
         if (url.hostname.includes("youtube.com") && url.searchParams.get("v")) {
-          return `https://www.youtube.com/embed/${url.searchParams.get("v")}`;
+          return url.searchParams.get("v");
         }
         if (url.hostname === "youtu.be") {
-          return `https://www.youtube.com/embed${url.pathname}`;
+          return url.pathname.slice(1);
         }
         return videoUrl;
       } catch {
@@ -60,7 +65,119 @@ export function CourseDetailPage() {
       }
     }
     // Chỉ là video ID
-    return `https://www.youtube.com/embed/${videoUrl}`;
+    return videoUrl;
+  };
+
+  // Khởi tạo YouTube IFrame API một lần
+  useEffect(() => {
+    if (!window.YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(tag);
+    }
+  }, []);
+
+  // Tạo/cập nhật player khi lesson thay đổi
+  const currentVideoId = selectedLesson
+    ? getEmbedUrl(selectedLesson.videoUrl)
+    : course
+      ? getEmbedUrl(
+          course.sections?.flatMap((s) => s.lessonsId || []).find((l) => l.isTrial)?.videoUrl
+        )
+      : null;
+
+  const destroyPlayer = useCallback(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.destroy(); } catch (_) {}
+      ytPlayerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isPlayingPreview || !currentVideoId) return;
+
+    const lessonId = selectedLesson?._id;
+    const canTrack = isEnrolled && isAuthenticated && lessonId;
+
+    const createPlayer = () => {
+      destroyPlayer();
+      const container = document.getElementById("yt-player-container");
+      if (!container) return;
+      container.innerHTML = '';
+      const div = document.createElement('div');
+      div.id = 'yt-iframe';
+      container.appendChild(div);
+
+      ytPlayerRef.current = new window.YT.Player('yt-iframe', {
+        videoId: currentVideoId,
+        playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
+        width: '100%',
+        height: '100%',
+        events: {
+          onReady: (e) => {
+            e.target.playVideo();
+            if (canTrack) startProgressTracking(e.target, lessonId);
+          },
+          onStateChange: (e) => {
+            if (e.data === window.YT.PlayerState.PLAYING && canTrack) {
+              startProgressTracking(e.target, lessonId);
+            } else if (
+              e.data === window.YT.PlayerState.PAUSED ||
+              e.data === window.YT.PlayerState.ENDED
+            ) {
+              if (progressIntervalRef.current) {
+                clearInterval(progressIntervalRef.current);
+                progressIntervalRef.current = null;
+              }
+            }
+          },
+        },
+      });
+    };
+
+    if (window.YT && window.YT.Player) {
+      createPlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = createPlayer;
+    }
+
+    return () => destroyPlayer();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlayingPreview, currentVideoId]);
+
+  const startProgressTracking = (player, lessonId) => {
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    progressIntervalRef.current = setInterval(() => {
+      try {
+        const duration = player.getDuration();
+        const current = player.getCurrentTime();
+        if (duration > 0 && current / duration >= 0.75) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+          if (!markedCompleteRef.current.has(lessonId)) {
+            markedCompleteRef.current.add(lessonId);
+            courseApi
+              .markLessonComplete(lessonId)
+              .then(() => {
+                setCompletedLessons((prev) => new Set([...prev, lessonId]));
+                toast.success("✅ Hoàn thành bài học!", {
+                  description: "Bạn đã xem đủ 75% video này ấy! Ôn ngoàn lắm bé ơi! 🎉",
+                });
+              })
+              .catch(() => {
+                markedCompleteRef.current.delete(lessonId);
+              });
+          }
+        }
+      } catch (_) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    }, 3000);
   };
 
   const handleSelectLesson = (lesson) => {
@@ -113,6 +230,19 @@ export function CourseDetailPage() {
       .then((res) => setIsEnrolled(res.data.isEnrolled))
       .catch(() => {});
   }, [course, isAuthenticated, user]);
+
+  // Tải danh sách bài học đã hoàn thành khi đã enrolled
+  useEffect(() => {
+    if (!course || !isEnrolled) return;
+    courseApi
+      .getCourseProgress(course._id)
+      .then((res) => {
+        const ids = (res.data.data || []).map((p) => p.lesson?.toString() || p.lesson);
+        setCompletedLessons(new Set(ids));
+        markedCompleteRef.current = new Set(ids);
+      })
+      .catch(() => {});
+  }, [course, isEnrolled]);
 
   useEffect(() => {
     if (!course || !isAuthenticated) return;
@@ -194,15 +324,11 @@ export function CourseDetailPage() {
     course.price === 0 ? "MIỄN PHÍ" : `${course.price?.toLocaleString()}đ`;
   const rating = course.averageRating || 0;
 
-  // URL video đang phát: lesson đang chọn, hoặc video đầu tiên dùng thử
+  // Video ID đang phát
   const firstTrialLesson = course.sections
     ?.flatMap((s) => s.lessonsId || [])
     .find((l) => l.isTrial);
-  const currentVideoUrl = selectedLesson
-    ? getEmbedUrl(selectedLesson.videoUrl)
-    : firstTrialLesson
-      ? getEmbedUrl(firstTrialLesson.videoUrl)
-      : null;
+  // currentVideoUrl không cần nữa, đã dùng currentVideoId
 
   return (
     <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
@@ -237,7 +363,7 @@ export function CourseDetailPage() {
 
             {/* 2. VIDEO GIỚI THIỆU / BÀI HỌC */}
             <div className="rounded-[40px] overflow-hidden shadow-xl border-4 border-slate-100 bg-black aspect-video relative">
-              {!isPlayingPreview || !currentVideoUrl ? (
+              {!isPlayingPreview || !currentVideoId ? (
                 <>
                   <img
                     src={course.thumbnail}
@@ -249,7 +375,7 @@ export function CourseDetailPage() {
                       size="lg"
                       className="rounded-full bg-white/90 hover:bg-white text-sky-600 w-24 h-24 hover:scale-110 transition-transform shadow-2xl"
                       onClick={() => {
-                        if (currentVideoUrl) setIsPlayingPreview(true);
+                        if (currentVideoId) setIsPlayingPreview(true);
                         else
                           toast.info("Khóa học chưa có video giới thiệu! 🎬");
                       }}
@@ -272,21 +398,18 @@ export function CourseDetailPage() {
                 </>
               ) : (
                 <>
-                  <iframe
-                    key={currentVideoUrl}
+                  <div
+                    id="yt-player-container"
                     className="w-full h-full"
-                    src={`${currentVideoUrl}?autoplay=1`}
-                    title={selectedLesson?.title || course.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
+                    style={{ minHeight: '100%' }}
+                  />
                   <button
                     onClick={() => {
+                      destroyPlayer();
                       setIsPlayingPreview(false);
                       setSelectedLesson(null);
                     }}
-                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full px-3 py-1 text-sm transition-colors"
+                    className="absolute top-4 right-4 bg-black/50 hover:bg-black/80 text-white rounded-full px-3 py-1 text-sm transition-colors z-10"
                   >
                     ✕ Đóng
                   </button>
@@ -342,6 +465,7 @@ export function CourseDetailPage() {
                           {section.lessonsId?.map((lesson) => {
                             const canWatch = isEnrolled || lesson.isTrial;
                             const isActive = selectedLesson?._id === lesson._id;
+                            const isDone = completedLessons.has(lesson._id?.toString());
                             return (
                               <div
                                 key={lesson._id}
@@ -357,6 +481,8 @@ export function CourseDetailPage() {
                                 <div className="flex items-center gap-3">
                                   {isActive ? (
                                     <PlayCircle className="w-5 h-5 text-sky-500" />
+                                  ) : isDone ? (
+                                    <CheckCircle2 className="w-5 h-5 text-green-500" />
                                   ) : canWatch ? (
                                     <Video className="w-5 h-5 text-sky-400" />
                                   ) : (
@@ -366,15 +492,22 @@ export function CourseDetailPage() {
                                     className={`font-medium transition-colors ${
                                       isActive
                                         ? "text-sky-600"
-                                        : canWatch
-                                          ? "text-slate-700 hover:text-sky-600"
-                                          : "text-slate-400"
+                                        : isDone
+                                          ? "text-green-600"
+                                          : canWatch
+                                            ? "text-slate-700 hover:text-sky-600"
+                                            : "text-slate-400"
                                     }`}
                                   >
                                     {lesson.title}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                  {isDone && (
+                                    <Badge className="bg-green-100 text-green-700 border-none text-xs">
+                                      Đã xem
+                                    </Badge>
+                                  )}
                                   {lesson.isTrial && (
                                     <Badge className="bg-green-100 text-green-700 hover:bg-green-200 border-none">
                                       Học thử

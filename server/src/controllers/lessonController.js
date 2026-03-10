@@ -1,5 +1,6 @@
 const Lesson = require('../models/Lesson');
 const Section = require('../models/Section');
+const LessonProgress = require('../models/LessonProgress');
 
 function extractYouTubeVideoId(url) {
   const patterns = [
@@ -158,7 +159,53 @@ const lessonController = {
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
-  }
+  },
+
+  // POST /api/lessons/:id/complete
+  // Đánh dấu bài học đã hoàn thành (gọi khi xem >= 75% video)
+  markLessonComplete: async (req, res) => {
+    try {
+      const lesson = await Lesson.findById(req.params.id)
+        .populate({ path: 'sectionId', populate: { path: 'courseId', select: '_id' } });
+
+      if (!lesson) {
+        return res.status(404).json({ success: false, message: 'Lesson not found' });
+      }
+
+      const courseId = lesson.sectionId?.courseId?._id;
+      if (!courseId) {
+        return res.status(404).json({ success: false, message: 'Course not found for this lesson' });
+      }
+
+      // Dùng upsert để tránh duplicate
+      await LessonProgress.findOneAndUpdate(
+        { user: req.user._id, lesson: lesson._id },
+        { user: req.user._id, lesson: lesson._id, course: courseId, completedAt: new Date() },
+        { upsert: true, new: true }
+      );
+
+      res.json({ success: true, message: 'Lesson marked as completed' });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
+  // GET /api/lessons/progress/:courseId
+  // Lấy danh sách lesson đã hoàn thành của user trong một khóa học
+  getCourseProgress: async (req, res) => {
+    try {
+      const { courseId } = req.params;
+
+      const completed = await LessonProgress.find({
+        user: req.user._id,
+        course: courseId,
+      }).select('lesson completedAt');
+
+      res.json({ success: true, data: completed });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
 };
 
 module.exports = lessonController;

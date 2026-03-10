@@ -20,7 +20,13 @@ const comboController = {
       if (status) query.status = status;
 
       // Search theo text
-      if (search) query.$text = { $search: search };
+      if (search) {
+        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or = [
+          { title: { $regex: escapedSearch, $options: "i" } },
+          { description: { $regex: escapedSearch, $options: "i" } },
+        ];
+      }
 
       // Filter theo category: chỉ lấy combo có ít nhất 1 khóa học đúng danh mục
       if (category) {
