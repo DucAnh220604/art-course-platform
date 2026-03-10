@@ -41,7 +41,7 @@ export function ComboManagement() {
   const fetchCombos = async () => {
     try {
       setLoading(true);
-      const response = await comboApi.getAllCombos();
+      const response = await comboApi.getAllCombos({ forManagement: true });
       const allCombos = response.data.combos || [];
 
       // Lọc ra combo của instructor này
@@ -80,9 +80,10 @@ export function ComboManagement() {
   const handleDeleteCombo = async () => {
     if (!comboToDelete) return;
 
-    if (comboToDelete.totalStudents > 0) {
+    const enrolled = comboToDelete.enrolledCount ?? comboToDelete.totalStudents ?? 0;
+    if (enrolled > 0) {
       toast.error("Không thể xóa!", {
-        description: `Combo đã có ${comboToDelete.totalStudents} học viên đăng ký.`,
+        description: `Combo đã có ${enrolled} học viên đăng ký.`,
       });
       setIsDeleteDialogOpen(false);
       return;
@@ -182,7 +183,7 @@ export function ComboManagement() {
                 <div>
                   <span className="text-gray-500">Học viên:</span>
                   <p className="font-semibold">
-                    {viewingCombo.totalStudents} người
+                    {viewingCombo.enrolledCount ?? viewingCombo.totalStudents ?? 0} người
                   </p>
                 </div>
               </div>
@@ -318,7 +319,7 @@ export function ComboManagement() {
                       {combo.discountPercentage}%
                     </Badge>
                   </TableCell>
-                  <TableCell>{combo.totalStudents || 0}</TableCell>
+                  <TableCell>{combo.enrolledCount ?? combo.totalStudents ?? 0}</TableCell>
                   <TableCell>{getStatusBadge(combo.status)}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

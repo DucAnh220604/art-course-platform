@@ -47,7 +47,7 @@ export function AdminCourseManagement() {
     try {
       setLoading(true);
       // Admin lấy TẤT CẢ khóa học, không lọc gì cả
-      const response = await courseApi.getAllCourses();
+      const response = await courseApi.getAllCourses({ forManagement: true });
       setCourses(response.data.courses || []);
     } catch (error) {
       toast.error("Không thể tải danh sách khóa học");
@@ -87,7 +87,9 @@ export function AdminCourseManagement() {
         setIsDeleteDialogOpen(false);
         return `Khóa học "${courseToDelete.title}" đã bị xóa vĩnh viễn! 🗑️`;
       },
-      error: "Lỗi hệ thống khi xóa khóa học! ❌",
+      error: (err) => {
+        return err.response?.data?.message || "Lỗi hệ thống khi xóa khóa học! ❌";
+      },
     });
   };
 
@@ -287,6 +289,9 @@ export function AdminCourseManagement() {
                 Giảng viên
               </TableHead>
               <TableHead className="font-bold text-slate-700">
+                Học viên
+              </TableHead>
+              <TableHead className="font-bold text-slate-700">
                 Trạng thái
               </TableHead>
               <TableHead className="text-right pr-6 font-bold text-slate-700">
@@ -298,7 +303,7 @@ export function AdminCourseManagement() {
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="text-center py-20 text-slate-500"
                 >
                   Đang tải dữ liệu...
@@ -307,7 +312,7 @@ export function AdminCourseManagement() {
             ) : displayedCourses.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={4}
+                  colSpan={5}
                   className="text-center py-24 text-slate-400"
                 >
                   <div className="text-4xl mb-2">📁</div>
@@ -345,6 +350,9 @@ export function AdminCourseManagement() {
                   </TableCell>
                   <TableCell className="font-medium text-slate-600">
                     {course.instructor?.fullname || "Không rõ"}
+                  </TableCell>
+                  <TableCell className="font-medium text-slate-600">
+                    {course.enrolledCount ?? course.totalStudents ?? 0} học viên
                   </TableCell>
                   <TableCell>{getStatusBadge(course.status)}</TableCell>
                   <TableCell className="text-right pr-6">
