@@ -3,7 +3,11 @@ const mongoose = require("mongoose");
 const paymentSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    itemType: { type: String, enum: ["course", "combo", "cart"], required: true },
+    itemType: {
+      type: String,
+      enum: ["course", "combo", "cart"],
+      required: true,
+    },
     itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
     amount: { type: Number, required: true, min: 0 },
     txnRef: { type: String, required: true, unique: true },
@@ -19,6 +23,11 @@ const paymentSchema = new mongoose.Schema(
     paidAt: { type: Date },
     rawReturn: { type: Object },
     rawIpn: { type: Object },
+
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
   },
   { timestamps: true },
 );
