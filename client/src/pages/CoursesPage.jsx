@@ -34,6 +34,7 @@ export function CoursesPage() {
 
   const [courses, setCourses] = useState([]);
   const [combos, setCombos] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Pagination state
@@ -46,6 +47,13 @@ export function CoursesPage() {
   const [category, setCategory] = useState("all");
   const [level, setLevel] = useState("all");
   const [type, setType] = useState(searchParams.get("type") || "all"); // all, courses, combos
+
+  useEffect(() => {
+    courseApi
+      .getCategories()
+      .then((res) => setCategories(res.data.categories || []))
+      .catch(() => {});
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -237,9 +245,11 @@ export function CoursesPage() {
                 </SelectTrigger>
                 <SelectContent className="rounded-2xl border-none shadow-xl">
                   <SelectItem value="all">Tất cả danh mục</SelectItem>
-                  <SelectItem value="Vẽ chì">Vẽ chì</SelectItem>
-                  <SelectItem value="Màu nước">Màu nước</SelectItem>
-                  <SelectItem value="Digital Art">Digital Art</SelectItem>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat} value={cat}>
+                      {cat}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

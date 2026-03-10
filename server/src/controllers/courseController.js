@@ -63,6 +63,17 @@ const courseController = {
     }
   },
 
+  getCategories: async (req, res) => {
+    try {
+      const categories = await Course.distinct("category", {
+        status: "published",
+      });
+      res.json({ success: true, categories: categories.filter(Boolean) });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
+
   createCourse: async (req, res) => {
     try {
       const { price, oldPrice, ...otherData } = req.body;

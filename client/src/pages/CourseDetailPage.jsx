@@ -184,6 +184,12 @@ export function CourseDetailPage() {
 
   if (!course) return null;
 
+  const levelLabel = {
+    beginner: "Cơ bản",
+    intermediate: "Trung Cấp",
+    advanced: "Nâng Cao",
+  };
+
   const displayPrice =
     course.price === 0 ? "MIỄN PHÍ" : `${course.price?.toLocaleString()}đ`;
   const rating = course.averageRating || 0;
@@ -218,7 +224,7 @@ export function CourseDetailPage() {
                   variant="outline"
                   className="border-slate-200 text-slate-500 rounded-full px-4 py-1"
                 >
-                  Cấp độ: {course.level}
+                  Cấp độ: {levelLabel[course.level] || course.level}
                 </Badge>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-slate-800 leading-tight mb-6">
