@@ -187,7 +187,20 @@ export function CourseManagement() {
               <Badge variant="outline">
                 Giá: {viewingCourse.price?.toLocaleString()}đ
               </Badge>
+              <Badge className="bg-amber-50 text-amber-700 border-amber-200 border">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400 mr-1" />
+                {viewingCourse.averageRating ?? 0} / 5 ({viewingCourse.numOfReviews ?? 0} đánh giá)
+              </Badge>
+              <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 border">
+                {viewingCourse.totalStudents ?? 0} học viên
+              </Badge>
             </div>
+            {viewingCourse.status === "rejected" && viewingCourse.rejectedReason && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+                <span className="font-bold">Lý do từ chối: </span>
+                {viewingCourse.rejectedReason}
+              </div>
+            )}
           </div>
         </div>
 
@@ -325,6 +338,12 @@ export function CourseManagement() {
                             "vi-VN",
                           )}
                         </div>
+                        {course.status === "rejected" && course.rejectedReason && (
+                          <div className="text-xs text-red-500 mt-1 line-clamp-2" title={course.rejectedReason}>
+                            <span className="font-semibold">Lý do: </span>
+                            {course.rejectedReason}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </TableCell>

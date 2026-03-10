@@ -44,6 +44,7 @@ const courseSchema = new mongoose.Schema(
       enum: ["draft", "pending", "published", "rejected"],
       default: "draft",
     },
+    rejectedReason: { type: String, default: "" },
   },
   { timestamps: true },
 );

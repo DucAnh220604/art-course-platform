@@ -349,13 +349,6 @@ export function ComboManagement() {
                           >
                             <Send className="w-4 h-4 text-amber-600" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => confirmDeleteCombo(combo)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
                         </>
                       )}
                       {combo.status === "rejected" && (
@@ -370,6 +363,13 @@ export function ComboManagement() {
                           <Edit className="w-4 h-4" />
                         </Button>
                       )}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => confirmDeleteCombo(combo)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-600" />
+                      </Button>
                     </div>
                   </TableCell>
                 </TableRow>

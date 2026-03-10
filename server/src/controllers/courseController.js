@@ -20,7 +20,13 @@ const courseController = {
       if (category) query.category = category;
       if (level) query.level = level;
       if (status) query.status = status;
-      if (search) query.$text = { $search: search };
+      if (search) {
+        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or = [
+          { title: { $regex: escapedSearch, $options: "i" } },
+          { description: { $regex: escapedSearch, $options: "i" } },
+        ];
+      }
 
       // Build sort object
       const sortOrder = order === "asc" ? 1 : -1;
@@ -91,6 +97,17 @@ const courseController = {
         message: "Lỗi khi tải thông tin khóa học. Vui lòng thử lại sau.",
         details: error.message 
       });
+    }
+  },
+
+  getCategories: async (req, res) => {
+    try {
+      const categories = await Course.distinct("category", {
+        status: "published",
+      });
+      res.json({ success: true, categories: categories.filter(Boolean) });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
     }
   },
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Star, Edit, Trash2, Eye, CheckCircle2, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -42,6 +43,11 @@ export function AdminCourseManagement() {
   // States cho Modal Xác nhận Xóa
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState(null);
+
+  // States cho Dialog Nhập Lý do Từ chối
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [courseToReject, setCourseToReject] = useState(null);
 
   const fetchCourses = async () => {
     try {
@@ -94,24 +100,47 @@ export function AdminCourseManagement() {
   };
 
   // --- LOGIC DUYỆT / TỪ CHỐI BÀI ---
-  const handleReviewCourse = async (courseId, newStatus) => {
-    const isApproving = newStatus === "published";
-    const msgLoading = isApproving
-      ? "Đang duyệt khóa học..."
-      : "Đang từ chối khóa học...";
-    const msgSuccess = isApproving
-      ? "Đã duyệt! Khóa học hiện đã được đăng lên trang chủ. 🎉"
-      : "Đã từ chối khóa học! 🚫";
+  const openRejectDialog = (courseId) => {
+    setCourseToReject(courseId);
+    setRejectReason("");
+    setIsRejectDialogOpen(true);
+  };
 
+  const handleConfirmReject = () => {
+    if (!courseToReject) return;
+    toast.promise(
+      courseApi.updateCourse(courseToReject, {
+        status: "rejected",
+        rejectedReason: rejectReason.trim(),
+      }),
+      {
+        loading: "Đang từ chối khóa học...",
+        success: () => {
+          fetchCourses();
+          if (viewingCourse && viewingCourse._id === courseToReject) {
+            setViewingCourse((prev) => ({
+              ...prev,
+              status: "rejected",
+              rejectedReason: rejectReason.trim(),
+            }));
+          }
+          setIsRejectDialogOpen(false);
+          return "Đã từ chối khóa học! 🚫";
+        },
+        error: "Thao tác thất bại, vui lòng thử lại! ❌",
+      },
+    );
+  };
+
+  const handleReviewCourse = async (courseId, newStatus) => {
     toast.promise(courseApi.updateCourse(courseId, { status: newStatus }), {
-      loading: msgLoading,
+      loading: "Đang duyệt khóa học...",
       success: () => {
-        fetchCourses(); // Tải lại bảng
-        // Nếu đang mở trang chi tiết, cập nhật luôn state để Badge hiển thị đúng
+        fetchCourses();
         if (viewingCourse && viewingCourse._id === courseId) {
           setViewingCourse((prev) => ({ ...prev, status: newStatus }));
         }
-        return msgSuccess;
+        return "Đã duyệt! Khóa học hiện đã được đăng lên trang chủ. 🎉";
       },
       error: "Thao tác thất bại, vui lòng thử lại! ❌",
     });
@@ -154,9 +183,7 @@ export function AdminCourseManagement() {
           {viewingCourse.status === "pending" && (
             <div className="flex gap-3">
               <Button
-                onClick={() =>
-                  handleReviewCourse(viewingCourse._id, "rejected")
-                }
+                onClick={() => openRejectDialog(viewingCourse._id)}
                 variant="outline"
                 className="rounded-full border-red-200 text-red-600 hover:bg-red-50"
               >
@@ -202,6 +229,12 @@ export function AdminCourseManagement() {
                 Giá: {viewingCourse.price?.toLocaleString()}đ
               </Badge>
             </div>
+            {viewingCourse.status === "rejected" && viewingCourse.rejectedReason && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+                <span className="font-bold">Lý do từ chối: </span>
+                {viewingCourse.rejectedReason}
+              </div>
+            )}
           </div>
         </div>
 
@@ -375,9 +408,7 @@ export function AdminCourseManagement() {
                             size="icon-sm"
                             variant="ghost"
                             className="rounded-full hover:bg-red-100 text-red-600 bg-red-50 mr-2"
-                            onClick={() =>
-                              handleReviewCourse(course._id, "rejected")
-                            }
+                            onClick={() => openRejectDialog(course._id)}
                             title="Từ chối"
                           >
                             <XCircle className="w-4 h-4" />
@@ -462,6 +493,41 @@ export function AdminCourseManagement() {
         initialData={editingCourse}
         onSuccess={fetchCourses}
       />
+
+      {/* DIALOG NHẬP LÝ DO TỪ CHỐI */}
+      <AlertDialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <AlertDialogContent className="rounded-[32px] border-none shadow-2xl p-8">
+          <AlertDialogHeader>
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <XCircle className="w-8 h-8 text-red-500" />
+            </div>
+            <AlertDialogTitle className="text-2xl font-bold text-center text-slate-800">
+              Từ chối khóa học?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-slate-500 text-base mt-2">
+              Nhập lý do từ chối để giảng viên biết và chỉnh sửa lại.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <Textarea
+            className="mt-4 resize-none rounded-2xl border-slate-200 focus:border-red-300"
+            rows={4}
+            placeholder="Ví dụ: Nội dung chưa đầy đủ, thiếu mô tả bài học..."
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+          />
+          <AlertDialogFooter className="flex sm:justify-center gap-3 mt-6">
+            <AlertDialogCancel className="rounded-full px-8 border-slate-200 hover:bg-slate-50">
+              Hủy
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmReject}
+              className="rounded-full px-8 bg-red-500 hover:bg-red-600 shadow-lg shadow-red-100"
+            >
+              Xác nhận từ chối
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
