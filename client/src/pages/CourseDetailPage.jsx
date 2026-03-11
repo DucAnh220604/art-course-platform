@@ -82,7 +82,9 @@ export function CourseDetailPage() {
     ? getEmbedUrl(selectedLesson.videoUrl)
     : course
       ? getEmbedUrl(
-          course.sections?.flatMap((s) => s.lessonsId || []).find((l) => l.isTrial)?.videoUrl
+          course.sections
+            ?.flatMap((s) => s.lessonsId || [])
+            .find((l) => l.isTrial)?.videoUrl,
         )
       : null;
 
@@ -92,7 +94,9 @@ export function CourseDetailPage() {
       progressIntervalRef.current = null;
     }
     if (ytPlayerRef.current) {
-      try { ytPlayerRef.current.destroy(); } catch (_) {}
+      try {
+        ytPlayerRef.current.destroy();
+      } catch (_) {}
       ytPlayerRef.current = null;
     }
   }, []);
@@ -107,16 +111,16 @@ export function CourseDetailPage() {
       destroyPlayer();
       const container = document.getElementById("yt-player-container");
       if (!container) return;
-      container.innerHTML = '';
-      const div = document.createElement('div');
-      div.id = 'yt-iframe';
+      container.innerHTML = "";
+      const div = document.createElement("div");
+      div.id = "yt-iframe";
       container.appendChild(div);
 
-      ytPlayerRef.current = new window.YT.Player('yt-iframe', {
+      ytPlayerRef.current = new window.YT.Player("yt-iframe", {
         videoId: currentVideoId,
         playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
-        width: '100%',
-        height: '100%',
+        width: "100%",
+        height: "100%",
         events: {
           onReady: (e) => {
             e.target.playVideo();
@@ -146,7 +150,7 @@ export function CourseDetailPage() {
     }
 
     return () => destroyPlayer();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPlayingPreview, currentVideoId]);
 
   const startProgressTracking = (player, lessonId) => {
@@ -165,7 +169,8 @@ export function CourseDetailPage() {
               .then(() => {
                 setCompletedLessons((prev) => new Set([...prev, lessonId]));
                 toast.success("✅ Hoàn thành bài học!", {
-                  description: "Bạn đã xem đủ 75% video này ấy! Ôn ngoàn lắm bé ơi! 🎉",
+                  description:
+                    "Bạn đã xem đủ 75% video này ấy! Ôn ngoàn lắm bé ơi! 🎉",
                 });
               })
               .catch(() => {
@@ -237,7 +242,9 @@ export function CourseDetailPage() {
     courseApi
       .getCourseProgress(course._id)
       .then((res) => {
-        const ids = (res.data.data || []).map((p) => p.lesson?.toString() || p.lesson);
+        const ids = (res.data.data || []).map(
+          (p) => p.lesson?.toString() || p.lesson,
+        );
         setCompletedLessons(new Set(ids));
         markedCompleteRef.current = new Set(ids);
       })
@@ -331,12 +338,12 @@ export function CourseDetailPage() {
   // currentVideoUrl không cần nữa, đã dùng currentVideoId
 
   return (
-    <div className="min-h-screen bg-slate-50/50 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50/50 overflow-x-hidden flex flex-col">
       <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
         <Header onNavigate={navigate} />
       </div>
 
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16">
+      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-16 flex-1">
         <div className="flex flex-col lg:flex-row gap-10 items-start">
           {/* CỘT TRÁI: Nội dung chính */}
           <div className="w-full lg:w-2/3 space-y-10">
@@ -401,7 +408,7 @@ export function CourseDetailPage() {
                   <div
                     id="yt-player-container"
                     className="w-full h-full"
-                    style={{ minHeight: '100%' }}
+                    style={{ minHeight: "100%" }}
                   />
                   <button
                     onClick={() => {
@@ -465,7 +472,9 @@ export function CourseDetailPage() {
                           {section.lessonsId?.map((lesson) => {
                             const canWatch = isEnrolled || lesson.isTrial;
                             const isActive = selectedLesson?._id === lesson._id;
-                            const isDone = completedLessons.has(lesson._id?.toString());
+                            const isDone = completedLessons.has(
+                              lesson._id?.toString(),
+                            );
                             return (
                               <div
                                 key={lesson._id}
@@ -722,11 +731,7 @@ export function CourseDetailPage() {
         </div>
       </main>
 
-      <div className="w-full bg-white mt-12">
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <Footer />
-        </div>
-      </div>
+      <Footer />
     </div>
   );
 }
