@@ -33,6 +33,7 @@ export function ComboDetailPage() {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isInWishlist, setIsInWishlist] = useState(false);
+  const [upgradeInfo, setUpgradeInfo] = useState(null);
 
   useEffect(() => {
     const fetchComboDetail = async () => {
@@ -40,6 +41,7 @@ export function ComboDetailPage() {
         setLoading(true);
         const response = await comboApi.getComboBySlug(slug);
         setCombo(response.data.data);
+        setUpgradeInfo(response.data.upgradeInfo); // Lưu thông tin nâng cấp
       } catch (error) {
         toast.error("Ối, không tìm thấy combo này rồi!", {
           description: "Bé quay lại danh sách chọn combo khác nhé! 🎨",
@@ -70,7 +72,7 @@ export function ComboDetailPage() {
         const items = res.data.data || [];
         const found = items.some(
           (item) =>
-            item.product?._id === combo._id && item.productModel === "Combo"
+            item.product?._id === combo._id && item.productModel === "Combo",
         );
         setIsInWishlist(found);
       })
@@ -298,21 +300,69 @@ export function ComboDetailPage() {
               <div className="space-y-6">
                 {/* Giá */}
                 <div>
-                  <div className="flex items-baseline gap-3">
-                    {combo.originalPrice > combo.price && (
-                      <span className="text-2xl text-slate-400 line-through">
-                        {originalPrice}đ
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-5xl font-bold text-amber-600 mt-2">
-                    {displayPrice}
-                  </div>
-                  {discount > 0 && (
-                    <div className="mt-2 inline-block bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
-                      Tiết kiệm:{" "}
-                      {(combo.originalPrice - combo.price).toLocaleString()}đ
+                  {upgradeInfo && !upgradeInfo.isFullyOwned ? (
+                    <>
+                      <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 mb-4 w-full">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          <span className="font-semibold text-green-700">
+                            Bạn đã sở hữu {upgradeInfo.ownedCourses.length}/
+                            {combo.courses.length} khóa học
+                          </span>
+                        </div>
+                        <p className="text-sm text-green-600">
+                          Chỉ cần mua thêm {upgradeInfo.unownedCourses.length}{" "}
+                          khóa học nữa!
+                        </p>
+                      </div>
+
+                      <div className="flex items-baseline gap-3">
+                        <span className="text-2xl text-slate-400 line-through">
+                          {upgradeInfo.unownedOriginalPrice?.toLocaleString()}đ
+                        </span>
+                      </div>
+                      <div className="text-5xl font-bold text-green-600 mt-2">
+                        {upgradeInfo.upgradePrice?.toLocaleString()}đ
+                      </div>
+                      <div className="mt-2 inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
+                        Giá nâng cấp đặc biệt - Tiết kiệm{" "}
+                        {(
+                          upgradeInfo.unownedOriginalPrice -
+                          upgradeInfo.upgradePrice
+                        ).toLocaleString()}
+                        đ
+                      </div>
+                    </>
+                  ) : upgradeInfo?.isFullyOwned ? (
+                    <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-6 text-center w-full">
+                      <CheckCircle2 className="w-16 h-16 text-green-600 mx-auto mb-3" />
+                      <p className="text-xl font-bold text-green-700 mb-2">
+                        Bạn đã sở hữu tất cả khóa học trong combo này!
+                      </p>
+                      <p className="text-sm text-green-600">
+                        Cảm ơn bạn đã tin tưởng ArtKids! 🎨
+                      </p>
                     </div>
+                  ) : (
+                    <>
+                      {combo.originalPrice > combo.price && (
+                        <div className="flex items-baseline gap-3">
+                          <span className="text-2xl text-slate-400 line-through">
+                            {originalPrice}đ
+                          </span>
+                        </div>
+                      )}
+                      <div className="text-5xl font-bold text-amber-600 mt-2">
+                        {displayPrice}
+                      </div>
+                      {discount > 0 && (
+                        <div className="mt-2 inline-block bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
+                          Tiết kiệm:{" "}
+                          {(combo.originalPrice - combo.price).toLocaleString()}
+                          đ
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -341,12 +391,7 @@ export function ComboDetailPage() {
 
                 {/* Button đăng ký */}
                 {isEnrolled ? (
-                  <div className="bg-green-50 border-2 border-green-200 rounded-2xl p-4 text-center">
-                    <CheckCircle2 className="w-12 h-12 text-green-600 mx-auto mb-2" />
-                    <p className="text-green-700 font-semibold">
-                      Bạn đã tham gia combo này!
-                    </p>
-                  </div>
+                  <></>
                 ) : (
                   <>
                     <Button
@@ -360,7 +405,10 @@ export function ComboDetailPage() {
                           await cartApi.addToCart(combo._id, "Combo");
                           toast.success("Đã thêm vào giỏ hàng!");
                         } catch (e) {
-                          toast.error(e?.response?.data?.message || "Không thêm được vào giỏ hàng.");
+                          toast.error(
+                            e?.response?.data?.message ||
+                              "Không thêm được vào giỏ hàng.",
+                          );
                         }
                       }}
                       className="w-full py-6 text-lg font-bold rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-lg"
@@ -378,7 +426,10 @@ export function ComboDetailPage() {
                         }
                         try {
                           if (isInWishlist) {
-                            await wishlistApi.removeFromWishlist(combo._id, "Combo");
+                            await wishlistApi.removeFromWishlist(
+                              combo._id,
+                              "Combo",
+                            );
                             setIsInWishlist(false);
                             toast.success("Đã xóa khỏi danh sách yêu thích.");
                           } else {
@@ -387,23 +438,28 @@ export function ComboDetailPage() {
                             toast.success("Đã thêm vào danh sách yêu thích!");
                           }
                         } catch (e) {
-                          toast.error(e?.response?.data?.message || "Không thực hiện được.");
+                          toast.error(
+                            e?.response?.data?.message ||
+                              "Không thực hiện được.",
+                          );
                         }
                       }}
-                      className={`w-full py-4 font-bold rounded-2xl border-2 transition-all ${
+                      className={`w-full mt-3 h-12 font-bold rounded-2xl border-2 transition-all ${
                         isInWishlist
                           ? "border-rose-400 bg-rose-50 text-rose-600"
                           : "border-rose-200 text-rose-500 hover:bg-rose-50"
                       }`}
                     >
-                      <Heart className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`} />
+                      <Heart
+                        className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`}
+                      />
                       {isInWishlist ? "Đã yêu thích" : "Yêu thích"}
                     </Button>
                     <Button
                       onClick={handleEnroll}
                       disabled={enrolling || combo.status !== "published"}
                       variant="outline"
-                      className="w-full py-4 font-bold rounded-2xl border-2 border-amber-200 text-amber-600 hover:bg-amber-50"
+                      className="w-full h-12 font-bold rounded-2xl border-2 border-amber-200 text-amber-600 hover:bg-amber-50"
                     >
                       {enrolling
                         ? "Đang xử lý..."

@@ -11,6 +11,8 @@ import {
   ChevronDown,
   ShoppingCart,
   Heart,
+  Package,
+  TrendingUp,
 } from "lucide-react";
 import { Header, Footer } from "@/components/landing";
 import { Button } from "@/components/ui/button";
@@ -24,6 +26,7 @@ import { useAuth } from "@/context/AuthContext";
 import paymentApi from "@/api/paymentApi";
 import cartApi from "@/api/cartApi";
 import wishlistApi from "@/api/wishlistApi";
+import comboApi from "../api/comboApi";
 
 export function CourseDetailPage() {
   const { slug } = useParams();
@@ -41,11 +44,13 @@ export function CourseDetailPage() {
   const [isPlayingPreview, setIsPlayingPreview] = useState(false);
   const [isInWishlist, setIsInWishlist] = useState(false);
 
+  const [relatedCombos, setRelatedCombos] = useState([]);
+
   // Theo dõi bài học đã hoàn thành
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const ytPlayerRef = useRef(null);
   const progressIntervalRef = useRef(null);
-  const markedCompleteRef = useRef(new Set()); // tránh gọi API nhiều lần cho cùng 1 lesson
+  const markedCompleteRef = useRef(new Set());
 
   const getEmbedUrl = (videoUrl) => {
     if (!videoUrl) return null;
@@ -580,6 +585,97 @@ export function CourseDetailPage() {
 
             {/* 5. REVIEW SECTION */}
             <ReviewSection courseId={course._id} />
+
+            {/* 6. COMBO SECTION */}
+            {relatedCombos.length > 0 && (
+              <div className="space-y-6">
+                <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+                  <TrendingUp className="text-amber-500 w-6 h-6" />
+                  Nâng cấp lên Combo và tiết kiệm hơn!
+                </h2>
+                <div className="space-y-4">
+                  {relatedCombos.map((combo) => (
+                    <Card
+                      key={combo._id}
+                      className="p-6 rounded-3xl border-2 border-amber-100 hover:border-amber-300 transition-all hover:shadow-xl cursor-pointer bg-gradient-to-br from-white to-amber-50/30"
+                      onClick={() => navigate(`/combo/${combo.slug}`)}
+                    >
+                      <div className="flex flex-col md:flex-row gap-6">
+                        {/* Thumbnail */}
+                        <div className="w-full md:w-48 h-32 rounded-2xl overflow-hidden flex-shrink-0">
+                          <img
+                            src={
+                              combo.thumbnail || combo.courses?.[0]?.thumbnail
+                            }
+                            alt={combo.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <Badge className="bg-amber-100 text-amber-700 mb-2">
+                                <Package className="w-3 h-3 mr-1" />
+                                COMBO {combo.courses?.length} KHÓA HỌC
+                              </Badge>
+                              <h3 className="text-xl font-bold text-slate-800 mb-2">
+                                {combo.title}
+                              </h3>
+                              <p className="text-sm text-slate-600 line-clamp-2">
+                                {combo.description}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Pricing Info */}
+                          <div className="flex items-center justify-between mt-4 pt-4 border-t border-amber-100">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                <span className="text-sm text-green-600 font-medium">
+                                  Bạn đã có{" "}
+                                  {combo.upgradeInfo.ownedCourses.length}/
+                                  {combo.courses.length} khóa học
+                                </span>
+                              </div>
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-sm text-slate-400 line-through">
+                                  {combo.upgradeInfo.unownedOriginalPrice?.toLocaleString()}
+                                  đ
+                                </span>
+                                <span className="text-2xl font-bold text-green-600">
+                                  {combo.upgradeInfo.upgradePrice?.toLocaleString()}
+                                  đ
+                                </span>
+                              </div>
+                              <p className="text-xs text-green-600 mt-1">
+                                💎 Tiết kiệm{" "}
+                                {(
+                                  combo.upgradeInfo.unownedOriginalPrice -
+                                  combo.upgradeInfo.upgradePrice
+                                ).toLocaleString()}
+                                đ
+                              </p>
+                            </div>
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/combo/${combo.slug}`);
+                              }}
+                              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-full px-6"
+                            >
+                              Nâng cấp ngay →
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* CỘT PHẢI: Khung thanh toán (Sticky Sidebar) */}
@@ -597,12 +693,7 @@ export function CourseDetailPage() {
                 )}
 
                 {isEnrolled ? (
-                  <Button
-                    disabled
-                    className="w-full mt-6 h-14 text-lg rounded-full font-bold bg-green-500 hover:bg-green-500 text-white cursor-default"
-                  >
-                    ✅ Đã đăng ký
-                  </Button>
+                  <></>
                 ) : (
                   <>
                     <Button
@@ -622,7 +713,7 @@ export function CourseDetailPage() {
                           );
                         }
                       }}
-                      className="w-full mt-6 h-14 text-lg rounded-full font-bold shadow-lg transition-all hover:-translate-y-1 bg-slate-900 hover:bg-sky-500 text-white"
+                      className="w-full mt-3 h-12 rounded-full font-bold bg-white border-2 border-sky-500 text-sky-600 hover:bg-sky-50 hover:text-black"
                     >
                       <ShoppingCart className="w-5 h-5 mr-2" />
                       Thêm vào giỏ hàng
@@ -668,14 +759,6 @@ export function CourseDetailPage() {
                         className={`w-5 h-5 mr-2 ${isInWishlist ? "fill-rose-500" : ""}`}
                       />
                       {isInWishlist ? "Đã yêu thích" : "Yêu thích"}
-                    </Button>
-                    <Button
-                      onClick={handleEnroll}
-                      disabled={enrolling}
-                      variant="outline"
-                      className="w-full mt-3 h-12 rounded-full font-bold border-2 border-sky-200 text-sky-600 hover:bg-sky-50"
-                    >
-                      {enrolling ? "Đang xử lý..." : "Mua ngay"}
                     </Button>
                   </>
                 )}

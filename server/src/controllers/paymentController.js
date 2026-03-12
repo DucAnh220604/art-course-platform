@@ -105,20 +105,18 @@ exports.createPayment = async (req, res) => {
     let item;
     let amount = 0;
     let title = "";
+    let isUpgrade = false;
+    let upgradeInfo = null;
+
+    // Lấy thông tin user
+    const buyer = await User.findById(userId);
 
     if (itemType === "course") {
       item = await ensureCoursePublished(itemId);
       amount = item.price || 0;
       title = item.title;
-    } else {
-      item = await ensureComboPublished(itemId);
-      amount = item.price || 0;
-      title = item.title;
-    }
 
-    // Kiểm tra đã đăng ký chưa
-    const buyer = await User.findById(userId);
-    if (itemType === "course") {
+      // Kiểm tra đã đăng ký chưa
       const alreadyEnrolled = buyer.enrolledCourses.some(
         (e) => e.course.toString() === itemId.toString(),
       );
@@ -127,6 +125,59 @@ exports.createPayment = async (req, res) => {
           success: false,
           message: "Bạn đã đăng ký khóa học này rồi!",
         });
+      }
+    }
+
+    if (itemType === "combo") {
+      const combo = await ensureComboPublished(itemId);
+      item = combo;
+      title = combo.title;
+
+      // Lấy danh sách các khóa học người dùng đã sở hữu
+      const userEnrolledCourseIds = buyer.enrolledCourses.map((ec) =>
+        ec.course.toString(),
+      );
+
+      // Lọc các khóa học chưa sở hữu
+      const unownedCourses = combo.courses.filter(
+        (course) => !userEnrolledCourseIds.includes(course._id.toString()),
+      );
+
+      // Nếu đã sở hữu tất cả khóa học
+      if (unownedCourses.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Bạn đã sở hữu tất cả khóa học trong combo này!",
+        });
+      }
+
+      // Tính tổng giá gốc các khóa chưa sở hữu
+      const unownedOriginalPrice = unownedCourses.reduce(
+        (sum, c) => sum + c.price,
+        0,
+      );
+
+      // Tính giá nâng cấp: áp dụng % giảm giá của combo
+      amount = Math.round(
+        unownedOriginalPrice * (1 - combo.discountPercentage / 100),
+      );
+
+      // Kiểm tra xem có phải là upgrade không (người dùng đã sở hữu ít nhất 1 khóa học)
+      const ownedCoursesCount = combo.courses.length - unownedCourses.length;
+      if (ownedCoursesCount > 0) {
+        isUpgrade = true;
+        upgradeInfo = {
+          ownedCoursesCount,
+          totalCoursesCount: combo.courses.length,
+          unownedCourseIds: unownedCourses.map((c) => c._id.toString()),
+          originalComboPrice: combo.price,
+          unownedOriginalPrice,
+          discountPercentage: combo.discountPercentage,
+          upgradeSavings: combo.price - amount,
+        };
+      } else {
+        // Người dùng chưa sở hữu khóa học nào, dùng giá combo thông thường
+        amount = combo.price || 0;
       }
     }
 
@@ -155,9 +206,10 @@ exports.createPayment = async (req, res) => {
     }
 
     const txnRef = generateTxnRef();
-    const orderInfo = `${itemType}:${itemId}:${userId}`;
+    const orderInfo = `${itemType}:${itemId}:${userId}${isUpgrade ? ":upgrade" : ""}`;
 
-    await Payment.create({
+    // Tạo payment record với thông tin upgrade nếu có
+    const paymentData = {
       user: userId,
       itemType,
       itemId,
@@ -166,12 +218,21 @@ exports.createPayment = async (req, res) => {
       orderInfo,
       status: "pending",
       provider: "vnpay",
-    });
+    };
+
+    // Lưu thông tin upgrade vào metadata
+    if (isUpgrade && upgradeInfo) {
+      paymentData.metadata = upgradeInfo;
+    }
+
+    await Payment.create(paymentData);
 
     const paymentUrl = buildPaymentUrl({
       amount,
       txnRef,
-      orderInfo,
+      orderInfo: isUpgrade
+        ? `Nang cap combo ${title}`
+        : `Thanh toan ${itemType === "course" ? "khoa hoc" : "combo"} ${title}`,
       ipAddr: getClientIp(req),
     });
 
@@ -180,6 +241,8 @@ exports.createPayment = async (req, res) => {
       flow: "vnpay",
       txnRef,
       paymentUrl,
+      isUpgrade,
+      upgradeInfo: isUpgrade ? upgradeInfo : null,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -209,7 +272,8 @@ const grantPaymentAccess = async (payment) => {
     await User.findByIdAndUpdate(payment.user, {
       $pull: { cart: { product: payment.itemId, productModel: "Course" } },
     });
-  } else {
+  } else if (payment.itemType === "combo") {
+    // grantComboAccess đã tự động xử lý việc chỉ enroll các khóa học chưa có
     await grantComboAccess(payment.user, payment.itemId);
     // Xóa combo này khỏi cart nếu có
     await User.findByIdAndUpdate(payment.user, {
@@ -350,6 +414,7 @@ exports.getPaymentStatus = async (req, res) => {
         itemSlug,
         amount: payment.amount,
         paidAt: payment.paidAt,
+        metadata: payment.metadata, // Trả về thông tin upgrade nếu có
       },
     });
   } catch (error) {
@@ -365,7 +430,7 @@ exports.checkoutCart = async (req, res) => {
     if (!user.cart || user.cart.length === 0) {
       return res
         .status(400)
-        .json({ success: false, message: "Đơn hàng đã được thanh toán." });
+        .json({ success: false, message: "Giỏ hàng trống." });
     }
 
     // Calculate total and validate all items
