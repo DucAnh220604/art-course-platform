@@ -403,8 +403,19 @@ export function ComboDetailPage() {
                           return;
                         }
                         try {
-                          await cartApi.addToCart(combo._id, "Combo");
-                          toast.success("Đã thêm vào giỏ hàng!");
+                          const res = await cartApi.addToCart(
+                            combo._id,
+                            "Combo",
+                          );
+
+                          if (res.data.info?.merged) {
+                            toast.success(res.data.message, {
+                              description: res.data.info.messageDetail,
+                              duration: 5000,
+                            });
+                          } else {
+                            toast.success("Đã thêm combo vào giỏ hàng!");
+                          }
                         } catch (e) {
                           toast.error(
                             e?.response?.data?.message ||
