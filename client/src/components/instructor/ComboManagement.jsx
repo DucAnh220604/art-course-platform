@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, Send, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Send, Package, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -38,17 +38,24 @@ export function ComboManagement() {
   const [comboToDelete, setComboToDelete] = useState(null);
   const [viewingCombo, setViewingCombo] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   const fetchCombos = async () => {
+    if (!user?._id) return;
     try {
       setLoading(true);
-      const response = await comboApi.getAllCombos({ forManagement: true });
-      const allCombos = response.data.combos || [];
-
-      // Lọc ra combo của instructor này
-      const myCombos = allCombos.filter(
-        (c) => c.instructor?._id === user?._id || c.instructor === user?._id,
-      );
-      setCombos(myCombos);
+      const response = await comboApi.getAllCombos({ 
+        forManagement: true,
+        instructor: user._id,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        status: activeTab !== "all" ? activeTab : undefined
+      });
+      setCombos(response.data.combos || []);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       toast.error("Không thể tải danh sách combo!");
     } finally {
@@ -60,7 +67,18 @@ export function ComboManagement() {
     if (user) {
       fetchCombos();
     }
-  }, [user]);
+  }, [user, currentPage, activeTab]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const handleViewDetail = async (slug) => {
     try {
@@ -223,17 +241,16 @@ export function ComboManagement() {
     );
   }
 
-  const filteredCombos =
-    activeTab === "all" ? combos : combos.filter((c) => c.status === activeTab);
+  const filteredCombos = combos;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-gray-800">Quản lý Combo</h2>
-          <p className="text-gray-600 mt-1">
-            Tạo và quản lý combo khóa học của bạn
+          <h1 className="text-4xl font-bold text-slate-800">Quản lý Combo</h1>
+          <p className="text-slate-500 mt-2">
+            Tạo và quản lý các gói combo khóa học của bé.
           </p>
         </div>
         <Button
@@ -241,7 +258,7 @@ export function ComboManagement() {
             setEditingCombo(null);
             setIsComboFormOpen(true);
           }}
-          className="bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 rounded-full"
+          className="rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 shadow-lg shadow-sky-200"
         >
           <Plus className="w-4 h-4 mr-2" />
           Tạo Combo Mới
@@ -249,112 +266,127 @@ export function ComboManagement() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full max-w-md grid-cols-5">
-          <TabsTrigger value="all">Tất cả</TabsTrigger>
-          <TabsTrigger value="draft">Nháp</TabsTrigger>
-          <TabsTrigger value="pending">Chờ duyệt</TabsTrigger>
-          <TabsTrigger value="published">Đã đăng</TabsTrigger>
-          <TabsTrigger value="rejected">Từ chối</TabsTrigger>
+      <Tabs
+        defaultValue="all"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="bg-white border border-slate-100 p-1 rounded-full shadow-sm flex overflow-x-auto hide-scrollbar w-max max-w-full">
+          <TabsTrigger
+            value="all"
+            className="rounded-full px-6 data-[state=active]:bg-sky-50 data-[state=active]:text-sky-600 data-[state=active]:font-bold transition-all"
+          >
+            Tất cả
+          </TabsTrigger>
+          <TabsTrigger
+            value="draft"
+            className="rounded-full px-6 data-[state=active]:bg-slate-100 data-[state=active]:text-slate-800 data-[state=active]:font-bold transition-all"
+          >
+            Bản nháp
+          </TabsTrigger>
+          <TabsTrigger
+            value="pending"
+            className="rounded-full px-6 data-[state=active]:bg-amber-50 data-[state=active]:text-amber-600 data-[state=active]:font-bold transition-all"
+          >
+            Chờ duyệt
+          </TabsTrigger>
+          <TabsTrigger
+            value="published"
+            className="rounded-full px-6 data-[state=active]:bg-green-50 data-[state=active]:text-green-600 data-[state=active]:font-bold transition-all"
+          >
+            Đã đăng
+          </TabsTrigger>
+          <TabsTrigger
+            value="rejected"
+            className="rounded-full px-6 data-[state=active]:bg-red-50 data-[state=active]:text-red-600 data-[state=active]:font-bold transition-all"
+          >
+            Bị từ chối
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
       {/* Table */}
-      <Card>
+      <Card className="rounded-[32px] border border-slate-100 shadow-sm overflow-hidden bg-white">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Combo</TableHead>
-              <TableHead>Khóa học</TableHead>
-              <TableHead>Giá gốc</TableHead>
-              <TableHead>Giá combo</TableHead>
-              <TableHead>Giảm giá</TableHead>
-              <TableHead>Học viên</TableHead>
-              <TableHead>Trạng thái</TableHead>
-              <TableHead>Thao tác</TableHead>
+          <TableHeader className="bg-slate-50/80">
+            <TableRow className="border-b-slate-100">
+              <TableHead className="pl-6 font-bold text-slate-700">Combo</TableHead>
+              <TableHead className="font-bold text-slate-700">Trạng thái</TableHead>
+              <TableHead className="font-bold text-slate-700">Giá gốc</TableHead>
+              <TableHead className="font-bold text-slate-700">Giá combo</TableHead>
+              <TableHead className="font-bold text-slate-700">Học viên</TableHead>
+              <TableHead className="text-right pr-6 font-bold text-slate-700">Thao tác</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  Đang tải...
+                <TableCell colSpan={6} className="text-center py-20 text-slate-500">
+                  Đang tải dữ liệu...
                 </TableCell>
               </TableRow>
             ) : filteredCombos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8">
-                  <Package className="w-12 h-12 mx-auto text-gray-300 mb-2" />
-                  <p className="text-gray-500">Chưa có combo nào</p>
+                <TableCell colSpan={6} className="text-center py-24 text-slate-400">
+                  <div className="text-4xl mb-2">📦</div>
+                  Bạn chưa có combo nào ở mục này.
                 </TableCell>
               </TableRow>
             ) : (
               filteredCombos.map((combo) => (
-                <TableRow key={combo._id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
+                <TableRow key={combo._id} className="hover:bg-slate-50/50 transition-colors border-b-slate-50">
+                  <TableCell className="pl-6 py-4">
+                    <div className="flex items-center gap-4">
                       <img
-                        src={
-                          combo.courses?.[0]?.thumbnail ||
-                          combo.thumbnail ||
-                          "/placeholder-course.jpg"
-                        }
+                        src={combo.courses?.[0]?.thumbnail || combo.thumbnail || "/placeholder-course.jpg"}
                         alt={combo.title}
-                        className="w-16 h-12 object-cover rounded"
+                        className="w-24 h-16 rounded-xl object-cover shadow-sm border border-slate-100"
                       />
-                      <div>
-                        <p className="font-semibold">{combo.title}</p>
+                      <div className="max-w-[200px]">
+                        <p className="font-bold text-slate-800 line-clamp-1">{combo.title}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {combo.courses?.length || 0} khóa học trong gói
+                        </p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>{combo.courses?.length || 0}</TableCell>
-                  <TableCell>
+                  <TableCell>{getStatusBadge(combo.status)}</TableCell>
+                  <TableCell className="text-slate-400 line-through text-xs">
                     {combo.originalPrice?.toLocaleString()}đ
                   </TableCell>
-                  <TableCell className="font-semibold text-sky-600">
+                  <TableCell className="font-black text-sky-600">
                     {combo.price?.toLocaleString()}đ
                   </TableCell>
-                  <TableCell>
-                    <Badge className="bg-green-100 text-green-700">
-                      {combo.discountPercentage}%
-                    </Badge>
+                  <TableCell className="font-medium text-slate-600">
+                    {combo.enrolledCount ?? combo.totalStudents ?? 0} học viên
                   </TableCell>
-                  <TableCell>{combo.enrolledCount ?? combo.totalStudents ?? 0}</TableCell>
-                  <TableCell>{getStatusBadge(combo.status)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="text-right pr-6">
+                    <div className="flex justify-end gap-1">
+                      {(combo.status === "draft" || combo.status === "rejected") && (
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="rounded-full hover:bg-green-100 text-green-600 bg-green-50 mr-1"
+                          onClick={() => handleSubmitForReview(combo._id)}
+                          title="Gửi duyệt"
+                        >
+                          <Send className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
-                        size="sm"
+                        size="icon-sm"
                         variant="ghost"
+                        className="rounded-full hover:bg-sky-50 text-sky-600"
                         onClick={() => handleViewDetail(combo.slug)}
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
-                      {combo.status === "draft" && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingCombo(combo);
-                              setIsComboFormOpen(true);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleSubmitForReview(combo._id)}
-                          >
-                            <Send className="w-4 h-4 text-amber-600" />
-                          </Button>
-                        </>
-                      )}
-                      {combo.status === "rejected" && (
+                      {(combo.status === "draft" || combo.status === "rejected") && (
                         <Button
-                          size="sm"
+                          size="icon-sm"
                           variant="ghost"
+                          className="rounded-full hover:bg-amber-50 text-amber-600"
                           onClick={() => {
                             setEditingCombo(combo);
                             setIsComboFormOpen(true);
@@ -364,11 +396,12 @@ export function ComboManagement() {
                         </Button>
                       )}
                       <Button
-                        size="sm"
+                        size="icon-sm"
                         variant="ghost"
+                        className="rounded-full hover:bg-red-50 text-red-600"
                         onClick={() => confirmDeleteCombo(combo)}
                       >
-                        <Trash2 className="w-4 h-4 text-red-600" />
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -377,6 +410,60 @@ export function ComboManagement() {
             )}
           </TableBody>
         </Table>
+
+        {/* PHÂN TRANG */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-6 border-t border-slate-50">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (page) =>
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1,
+              )
+              .map((page, idx, arr) => {
+                const showEllipsisBefore =
+                  idx > 0 && page - arr[idx - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsisBefore && (
+                      <span className="px-2 text-slate-400">...</span>
+                    )}
+                    <Button
+                      variant={
+                        currentPage === page ? "default" : "outline"
+                      }
+                      size="icon"
+                      className={`rounded-full w-10 h-10 ${currentPage === page ? "bg-sky-500 hover:bg-sky-600 text-white" : ""}`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  </React.Fragment>
+                );
+              })}
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* Combo Form Modal */}

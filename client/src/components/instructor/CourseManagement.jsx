@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Star, Edit, Trash2, Eye, Send } from "lucide-react";
+import { Plus, Star, Edit, Trash2, Eye, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -34,6 +34,11 @@ export function CourseManagement() {
   const [loading, setLoading] = useState(true);
   const [viewingCourse, setViewingCourse] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   // State quản lý Tab hiển thị
   const [activeTab, setActiveTab] = useState("all");
 
@@ -46,16 +51,18 @@ export function CourseManagement() {
   const [courseToDelete, setCourseToDelete] = useState(null);
 
   const fetchCourses = async () => {
+    if (!user?._id) return;
     try {
       setLoading(true);
-      const response = await courseApi.getAllCourses({ forManagement: true });
-      const allCourses = response.data.courses || [];
-
-      // 1. CHỈ LỌC RA KHÓA HỌC CỦA INSTRUCTOR NÀY
-      const myCourses = allCourses.filter(
-        (c) => c.instructor?._id === user?._id || c.instructor === user?._id,
-      );
-      setCourses(myCourses);
+      const response = await courseApi.getAllCourses({ 
+        forManagement: true,
+        instructor: user._id,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        status: activeTab !== "all" ? activeTab : undefined
+      });
+      setCourses(response.data.courses || []);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       toast.error("Không thể tải danh sách khóa học");
     } finally {
@@ -67,7 +74,18 @@ export function CourseManagement() {
     if (user) {
       fetchCourses();
     }
-  }, [user]);
+  }, [user, currentPage, activeTab]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const handleViewDetail = async (slug) => {
     try {
@@ -212,10 +230,8 @@ export function CourseManagement() {
     );
   }
 
-  // Lọc khóa học theo Tab đang chọn
-  const displayedCourses = courses.filter(
-    (c) => activeTab === "all" || c.status === activeTab,
-  );
+  // Lọc khóa học theo Tab đã được thực hiện ở Server Side
+  const displayedCourses = courses;
 
   return (
     <div className="space-y-8">
@@ -416,6 +432,60 @@ export function CourseManagement() {
             )}
           </TableBody>
         </Table>
+
+        {/* PHÂN TRANG */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-6 border-t border-slate-50">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (page) =>
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1,
+              )
+              .map((page, idx, arr) => {
+                const showEllipsisBefore =
+                  idx > 0 && page - arr[idx - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsisBefore && (
+                      <span className="px-2 text-slate-400">...</span>
+                    )}
+                    <Button
+                      variant={
+                        currentPage === page ? "default" : "outline"
+                      }
+                      size="icon"
+                      className={`rounded-full w-10 h-10 ${currentPage === page ? "bg-sky-500 hover:bg-sky-600 text-white" : ""}`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  </React.Fragment>
+                );
+              })}
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* MODAL XÁC NHẬN XÓA KHÓA HỌC */}

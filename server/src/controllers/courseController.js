@@ -10,16 +10,23 @@ const courseController = {
         level,
         search,
         status,
+        instructor,
         sort = "createdAt",
         order = "desc",
         page = 1,
         limit = 10,
       } = req.query;
 
+      // Ép kiểu (parse) page và limit sang số nguyên một cách an toàn để Mongoose hiểu đúng
+      const pageNum = Math.max(1, parseInt(page, 10) || 1);
+      const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+      const skipItems = (pageNum - 1) * limitNum;
+
       const query = {};
       if (category) query.category = category;
       if (level) query.level = level;
       if (status) query.status = status;
+      if (instructor) query.instructor = instructor;
       if (search) {
         const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         query.$or = [
@@ -34,8 +41,8 @@ const courseController = {
 
       const courses = await Course.find(query)
         .populate("instructor", "fullname avatar")
-        .skip((page - 1) * limit)
-        .limit(parseInt(limit))
+        .skip(skipItems) // Sử dụng biến đã ép kiểu chuẩn xác
+        .limit(limitNum) // Sử dụng biến đã ép kiểu chuẩn xác
         .sort(sortOptions);
 
       // Nếu có param forManagement=true, thêm số người đăng ký
@@ -50,7 +57,7 @@ const courseController = {
               ...course.toObject(),
               enrolledCount, // Tổng số người đã đăng ký
             };
-          })
+          }),
         );
       }
 
@@ -58,19 +65,20 @@ const courseController = {
       res.json({
         success: true,
         courses: coursesWithEnrollment,
-        totalPages: Math.ceil(total / limit),
-        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limitNum), // Sử dụng biến đã ép kiểu
+        currentPage: pageNum, // Sử dụng biến đã ép kiểu
         total,
       });
     } catch (error) {
-      console.error('Lỗi khi lấy danh sách khóa học:', error);
-      res.status(500).json({ 
-        success: false, 
+      console.error("Lỗi khi lấy danh sách khóa học:", error);
+      res.status(500).json({
+        success: false,
         message: "Lỗi khi tải danh sách khóa học. Vui lòng thử lại sau.",
-        details: error.message 
+        details: error.message,
       });
     }
   },
+
   getCourseBySlug: async (req, res) => {
     try {
       const course = await Course.findOne({ slug: req.params.slug })
@@ -84,18 +92,18 @@ const courseController = {
           },
         });
       if (!course) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: `Không tìm thấy khóa học với slug: ${req.params.slug}` 
+          message: `Không tìm thấy khóa học với slug: ${req.params.slug}`,
         });
       }
       res.json(course);
     } catch (error) {
-      console.error('Lỗi khi lấy thông tin khóa học:', error);
-      res.status(500).json({ 
+      console.error("Lỗi khi lấy thông tin khóa học:", error);
+      res.status(500).json({
         success: false,
         message: "Lỗi khi tải thông tin khóa học. Vui lòng thử lại sau.",
-        details: error.message 
+        details: error.message,
       });
     }
   },
@@ -132,22 +140,22 @@ const courseController = {
       await newCourse.save();
       res.status(201).json({ success: true, course: newCourse });
     } catch (error) {
-      console.error('Lỗi khi tạo khóa học:', error);
-      
+      console.error("Lỗi khi tạo khóa học:", error);
+
       let message = "Lỗi khi tạo khóa học. Vui lòng thử lại.";
-      
+
       // Xử lý các lỗi cụ thể
       if (error.code === 11000) {
         message = "Tiêu đề khóa học đã tồn tại. Vui lòng chọn tiêu đề khác.";
-      } else if (error.name === 'ValidationError') {
-        const errors = Object.values(error.errors).map(e => e.message);
-        message = `Dữ liệu không hợp lệ: ${errors.join(', ')}`;
+      } else if (error.name === "ValidationError") {
+        const errors = Object.values(error.errors).map((e) => e.message);
+        message = `Dữ liệu không hợp lệ: ${errors.join(", ")}`;
       }
-      
-      res.status(400).json({ 
-        success: false, 
+
+      res.status(400).json({
+        success: false,
         message,
-        details: error.message 
+        details: error.message,
       });
     }
   },
@@ -158,20 +166,23 @@ const courseController = {
 
       // Validation: Nếu đang gửi yêu cầu duyệt (status = pending), kiểm tra sections & lessons
       if (status === "pending") {
-        const course = await Course.findById(req.params.id).populate('sections');
-        
+        const course = await Course.findById(req.params.id).populate(
+          "sections",
+        );
+
         if (!course) {
-          return res.status(404).json({ 
+          return res.status(404).json({
             success: false,
-            message: "Không tìm thấy khóa học" 
+            message: "Không tìm thấy khóa học",
           });
         }
 
         // Kiểm tra có sections không
         if (!course.sections || course.sections.length === 0) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             success: false,
-            message: "Không thể gửi duyệt! Khóa học phải có ít nhất 1 chương (Section)." 
+            message:
+              "Không thể gửi duyệt! Khóa học phải có ít nhất 1 chương (Section).",
           });
         }
 
@@ -185,9 +196,10 @@ const courseController = {
         }
 
         if (!hasLessons) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             success: false,
-            message: "Không thể gửi duyệt! Khóa học phải có ít nhất 1 bài học (Lesson) trong các chương." 
+            message:
+              "Không thể gửi duyệt! Khóa học phải có ít nhất 1 bài học (Lesson) trong các chương.",
           });
         }
 
@@ -225,43 +237,43 @@ const courseController = {
       );
 
       if (!updatedCourse) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: `Không tìm thấy khóa học với ID: ${req.params.id}` 
+          message: `Không tìm thấy khóa học với ID: ${req.params.id}`,
         });
       }
-      
+
       res.json({ success: true, course: updatedCourse });
     } catch (error) {
-      console.error('Lỗi khi cập nhật khóa học:', error);
-      
+      console.error("Lỗi khi cập nhật khóa học:", error);
+
       let message = "Lỗi khi cập nhật khóa học. Vui lòng thử lại.";
-      
+
       // Xử lý các lỗi cụ thể
       if (error.code === 11000) {
         message = "Tiêu đề khóa học đã tồn tại. Vui lòng chọn tiêu đề khác.";
-      } else if (error.name === 'ValidationError') {
-        const errors = Object.values(error.errors).map(e => e.message);
-        message = `Dữ liệu không hợp lệ: ${errors.join(', ')}`;
-      } else if (error.name === 'CastError') {
+      } else if (error.name === "ValidationError") {
+        const errors = Object.values(error.errors).map((e) => e.message);
+        message = `Dữ liệu không hợp lệ: ${errors.join(", ")}`;
+      } else if (error.name === "CastError") {
         message = "ID khóa học không hợp lệ.";
       }
-      
-      res.status(400).json({ 
-        success: false, 
+
+      res.status(400).json({
+        success: false,
         message,
-        details: error.message 
+        details: error.message,
       });
     }
   },
   deleteCourse: async (req, res) => {
     try {
       const course = await Course.findById(req.params.id);
-      
+
       if (!course) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           success: false,
-          message: "Không tìm thấy khóa học" 
+          message: "Không tìm thấy khóa học",
         });
       }
 
@@ -279,26 +291,26 @@ const courseController = {
 
       // Xóa khóa học
       await course.deleteOne();
-      
-      res.json({ 
-        success: true, 
-        message: "Xóa khóa học thành công" 
+
+      res.json({
+        success: true,
+        message: "Xóa khóa học thành công",
       });
     } catch (error) {
-      console.error('Lỗi khi xóa khóa học:', error);
-      
+      console.error("Lỗi khi xóa khóa học:", error);
+
       let message = "Lỗi khi xóa khóa học. Vui lòng thử lại.";
       let statusCode = 500;
-      
-      if (error.name === 'CastError') {
+
+      if (error.name === "CastError") {
         message = "ID khóa học không hợp lệ.";
         statusCode = 400;
       }
-      
-      res.status(statusCode).json({ 
+
+      res.status(statusCode).json({
         success: false,
         message,
-        details: error.message 
+        details: error.message,
       });
     }
   },

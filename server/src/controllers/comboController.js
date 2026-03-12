@@ -13,6 +13,7 @@ const comboController = {
         page = 1,
         limit = 10,
         status,
+        instructor,
         sort = "createdAt",
         order = "desc",
       } = req.query;
@@ -20,6 +21,7 @@ const comboController = {
 
       // Filter theo status (admin/instructor muốn xem draft/pending)
       if (status) query.status = status;
+      if (instructor) query.instructor = instructor;
 
       // Search theo text
       if (search) {
