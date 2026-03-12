@@ -46,6 +46,8 @@ export function CourseDetailPage() {
 
   const [relatedCombos, setRelatedCombos] = useState([]);
 
+  const [courseInCart, setCourseInCart] = useState(null);
+
   // Theo dõi bài học đã hoàn thành
   const [completedLessons, setCompletedLessons] = useState(new Set());
   const ytPlayerRef = useRef(null);
@@ -312,6 +314,28 @@ export function CourseDetailPage() {
       setEnrolling(false);
     }
   };
+
+  useEffect(() => {
+    const checkInCart = async () => {
+      if (!course?._id || !isAuthenticated) {
+        setCourseInCart(null);
+        return;
+      }
+
+      try {
+        const res = await cartApi.checkCourseInCart(course._id);
+        if (res.data.inCart) {
+          setCourseInCart(res.data);
+        } else {
+          setCourseInCart(null);
+        }
+      } catch (error) {
+        setCourseInCart(null);
+      }
+    };
+
+    checkInCart();
+  }, [course, isAuthenticated]);
 
   if (loading) {
     return (
@@ -704,8 +728,25 @@ export function CourseDetailPage() {
                           navigate("/login");
                           return;
                         }
+
+                        // Nếu đã có trong giỏ (qua combo), chuyển đến giỏ hàng
+                        if (courseInCart && courseInCart.type === "combo") {
+                          toast.info(
+                            `Khóa học này đã có trong ${courseInCart.comboTitle}`,
+                            {
+                              description: "Bạn có muốn xem giỏ hàng không?",
+                              action: {
+                                label: "Xem giỏ hàng",
+                                onClick: () => navigate("/cart"),
+                              },
+                            },
+                          );
+                          return;
+                        }
+
                         try {
                           await cartApi.addToCart(course._id, "Course");
+                          setCourseInCart({ inCart: true, type: "direct" });
                           toast.success("Đã thêm vào giỏ hàng!");
                         } catch (e) {
                           toast.error(
@@ -714,10 +755,19 @@ export function CourseDetailPage() {
                           );
                         }
                       }}
-                      className="w-full mt-3 h-12 rounded-full font-bold bg-white border-2 border-sky-500 text-sky-600 hover:bg-sky-50 hover:text-black"
+                      disabled={courseInCart?.inCart}
+                      className={`w-full mt-3 h-12 rounded-full font-bold border-2 ${
+                        courseInCart?.inCart
+                          ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed"
+                          : "bg-white border-sky-500 text-sky-600 hover:bg-sky-50 hover:text-black"
+                      }`}
                     >
                       <ShoppingCart className="w-5 h-5 mr-2" />
-                      Thêm vào giỏ hàng
+                      {courseInCart?.inCart
+                        ? courseInCart.type === "combo"
+                          ? `Đã có trong Combo: ${courseInCart.comboTitle}`
+                          : "Đã có trong giỏ hàng"
+                        : "Thêm vào giỏ hàng"}
                     </Button>
                     <Button
                       variant="outline"
