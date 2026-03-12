@@ -225,6 +225,7 @@ export function CourseDetailPage() {
   }, [slug, navigate]);
 
   useEffect(() => {
+    setIsEnrolled(false);
     if (!course || !isAuthenticated) return;
     const enrolled = user?.enrolledCourses?.some(
       (e) =>

@@ -56,6 +56,7 @@ export function ComboDetailPage() {
   }, [slug, navigate]);
 
   useEffect(() => {
+    setIsEnrolled(false);
     if (!combo || !isAuthenticated) return;
 
     userApi
