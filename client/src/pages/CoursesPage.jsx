@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -26,6 +26,7 @@ import courseApi from "@/api/courseApi";
 import comboApi from "@/api/comboApi";
 import { toast } from "sonner";
 
+// Trả lại đúng 9 items như ý bạn
 const ITEMS_PER_PAGE = 9;
 
 export function CoursesPage() {
@@ -37,62 +38,68 @@ export function CoursesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination state
-  const [coursePage, setCoursePage] = useState(1);
-  const [comboPage, setComboPage] = useState(1);
+  // Quản lý state phân trang tập trung
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page")) || 1,
+  );
   const [courseTotalPages, setCourseTotalPages] = useState(1);
   const [comboTotalPages, setComboTotalPages] = useState(1);
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const [category, setCategory] = useState(
+    searchParams.get("category") || "all",
+  );
   const [level, setLevel] = useState(searchParams.get("level") || "all");
-  const [type, setType] = useState(searchParams.get("type") || "all"); // all, courses, combos
+  const [type, setType] = useState(searchParams.get("type") || "all");
 
   useEffect(() => {
     courseApi
       .getCategories()
-      .then((res) => setCategories(res.data.categories || []))
+      .then((res) => {
+        const data = res.data || res || {};
+        setCategories(data.categories || []);
+      })
       .catch(() => {});
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      
+      // Nếu là tab "Tất cả", chia limit để tổng không quá 9
       const baseParams = {
         search: search || undefined,
         category: category !== "all" ? category : undefined,
         level: level !== "all" ? level : undefined,
         status: "published",
-        limit: ITEMS_PER_PAGE,
+        limit: type === "all" ? Math.ceil(ITEMS_PER_PAGE / 2) : ITEMS_PER_PAGE,
+        page: currentPage,
       };
 
-      // Fetch courses và combos song song
-      const [coursesResponse, combosResponse] = await Promise.all([
-        type !== "combos"
-          ? courseApi.getAllCourses({ ...baseParams, page: coursePage })
-          : Promise.resolve({ data: { courses: [], totalPages: 1 } }),
-        type !== "courses"
-          ? comboApi.getAllCombos({ ...baseParams, page: comboPage })
-          : Promise.resolve({ data: { combos: [], totalPages: 1 } }),
-      ]);
+      let coursesRes = { data: { courses: [], totalPages: 1 } };
+      let combosRes = { data: { combos: [], totalPages: 1 } };
 
-      const publishedCourses = coursesResponse.data.courses || [];
-      const publishedCombos = combosResponse.data.combos || [];
+      if (type === "all") {
+        [coursesRes, combosRes] = await Promise.all([
+          courseApi.getAllCourses({ ...baseParams, limit: 5 }), // 5 courses
+          comboApi.getAllCombos({ ...baseParams, limit: 4 })  // 4 combos
+        ]);
+      } else if (type === "courses") {
+        coursesRes = await courseApi.getAllCourses(baseParams);
+      } else if (type === "combos") {
+        combosRes = await comboApi.getAllCombos(baseParams);
+      }
+
+      const publishedCourses = coursesRes?.data?.courses || coursesRes?.courses || [];
+      const publishedCombos = combosRes?.data?.combos || combosRes?.combos || [];
 
       setCourses(publishedCourses);
       setCombos(publishedCombos);
-      setCourseTotalPages(coursesResponse.data.totalPages || 1);
-      setComboTotalPages(combosResponse.data.totalPages || 1);
 
-      if (
-        search &&
-        (publishedCourses.length > 0 || publishedCombos.length > 0)
-      ) {
-        toast.info("Tìm thấy rồi nè!", {
-          description: `Có ${publishedCourses.length + publishedCombos.length} kết quả phù hợp với bé đó! ✨`,
-        });
-      }
+      setCourseTotalPages(coursesRes?.data?.totalPages || coursesRes?.totalPages || 1);
+      setComboTotalPages(combosRes?.data?.totalPages || combosRes?.totalPages || 1);
     } catch (error) {
+      console.error("Lỗi fetch data:", error);
       toast.error("Ối, có lỗi rồi!", {
         description:
           "Máy chủ đang bận một chút, bé đợi tẹo rồi tải lại trang nhé! 🛠️",
@@ -102,35 +109,37 @@ export function CoursesPage() {
     }
   };
 
+  // Lắng nghe thay đổi dữ liệu
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchData();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [search, category, level, type, coursePage, comboPage]);
+  }, [search, category, level, type, currentPage]);
 
-  // Reset page khi filter thay đổi
+  // CHỈ reset trang về 1 khi người dùng đổi bộ lọc
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    setCoursePage(1);
-    setComboPage(1);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
   }, [search, category, level, type]);
 
-  // Sync tất cả filter vào URL để giữ lại khi navigate back
+  // Đồng bộ lên thanh URL
   useEffect(() => {
     const params = {};
     if (type !== "all") params.type = type;
     if (search) params.search = search;
     if (category !== "all") params.category = category;
     if (level !== "all") params.level = level;
+    if (currentPage > 1) params.page = currentPage.toString();
+
     setSearchParams(params, { replace: true });
-  }, [type, search, category, level, setSearchParams]);
+  }, [type, search, category, level, currentPage, setSearchParams]);
 
-  const handleTypeChange = (newType) => {
-    setType(newType);
-  };
-
-  // Pagination helpers
-  const currentPage = type === "combos" ? comboPage : coursePage;
+  // Tính tổng trang dựa trên Tab hiện tại
   const totalPages =
     type === "combos"
       ? comboTotalPages
@@ -139,25 +148,24 @@ export function CoursesPage() {
         : Math.max(courseTotalPages, comboTotalPages);
 
   const handlePageChange = (newPage) => {
-    if (type === "combos") {
-      setComboPage(newPage);
-    } else if (type === "courses") {
-      setCoursePage(newPage);
-    } else {
-      setCoursePage(newPage);
-      setComboPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const getDisplayItems = () => {
-    if (type === "courses") return courses;
-    if (type === "combos") return combos;
-    // "all" - gộp cả hai
-    return [...courses, ...combos];
-  };
+  // Reset về trang 1 khi chuyển loại (type)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [type]);
 
-  const displayItems = getDisplayItems();
+  // Xác định mảng hiển thị dựa theo Tab
+  const displayItems =
+    type === "courses"
+      ? courses
+      : type === "combos"
+        ? combos
+        : [...courses, ...combos];
 
   return (
     <motion.div
@@ -172,7 +180,6 @@ export function CoursesPage() {
       </div>
 
       <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12">
-        {/* Tiêu đề trang */}
         <div className="mb-10 text-center md:text-left">
           <h1 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">
             Khám phá thế giới <span className="text-sky-500">Nghệ thuật</span>{" "}
@@ -184,33 +191,23 @@ export function CoursesPage() {
           </p>
         </div>
 
-        {/* Tabs để filter type */}
         <div className="mb-8">
-          <Tabs
-            value={type}
-            onValueChange={handleTypeChange}
-            className="w-full"
-          >
+          <Tabs value={type} onValueChange={setType} className="w-full">
             <TabsList className="grid w-full max-w-md grid-cols-3 h-12">
               <TabsTrigger value="all" className="flex items-center gap-2">
-                <Filter className="w-4 h-4" />
-                Tất cả
+                <Filter className="w-4 h-4" /> Tất cả
               </TabsTrigger>
               <TabsTrigger value="courses" className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                Khóa học
+                <BookOpen className="w-4 h-4" /> Khóa học
               </TabsTrigger>
               <TabsTrigger value="combos" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Combo
+                <Package className="w-4 h-4" /> Combo
               </TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
 
-        {/* LAYOUT: CHIA CỘT 2.5 / 7.5 */}
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* CỘT TRÁI (SIDEBAR) */}
           <aside className="w-full lg:w-1/4 shrink-0 bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col gap-6 sticky top-24">
             <div className="flex items-center gap-2 border-b border-slate-50 pb-4">
               <Filter className="w-5 h-5 text-sky-500" />
@@ -219,7 +216,6 @@ export function CoursesPage() {
               </h3>
             </div>
 
-            {/* Ô tìm kiếm */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">
                 Tìm kiếm
@@ -235,7 +231,6 @@ export function CoursesPage() {
               </div>
             </div>
 
-            {/* Lọc danh mục */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">
                 Danh mục
@@ -255,7 +250,6 @@ export function CoursesPage() {
               </Select>
             </div>
 
-            {/* Lọc cấp độ */}
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700">Cấp độ</label>
               <Select value={level} onValueChange={setLevel}>
@@ -271,7 +265,6 @@ export function CoursesPage() {
               </Select>
             </div>
 
-            {/* Nút xóa bộ lọc */}
             <Button
               variant="outline"
               className="w-full rounded-2xl mt-4 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
@@ -287,11 +280,10 @@ export function CoursesPage() {
             </Button>
           </aside>
 
-          {/* CỘT PHẢI (MAIN CONTENT) */}
           <div className="w-full lg:w-3/4">
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+                {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
                     className="h-[380px] bg-slate-200/50 animate-pulse rounded-[32px]"
@@ -302,18 +294,16 @@ export function CoursesPage() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {displayItems.map((item) => {
-                    // Kiểm tra xem item có phải là combo không (có field courses)
                     const isCombo = item.courses && Array.isArray(item.courses);
-
                     return isCombo ? (
                       <ComboCard
-                        key={item._id}
+                        key={`combo-${item._id}`}
                         combo={item}
                         onComboClick={(slug) => navigate(`/combos/${slug}`)}
                       />
                     ) : (
                       <CourseCard
-                        key={item._id}
+                        key={`course-${item._id}`}
                         course={item}
                         onClick={() => navigate(`/course/${item.slug}`)}
                       />
@@ -321,7 +311,6 @@ export function CoursesPage() {
                   })}
                 </div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 mt-10">
                     <Button
@@ -335,16 +324,13 @@ export function CoursesPage() {
                     </Button>
 
                     {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter((page) => {
-                        // Show first, last, current, and neighbors
-                        return (
+                      .filter(
+                        (page) =>
                           page === 1 ||
                           page === totalPages ||
-                          Math.abs(page - currentPage) <= 1
-                        );
-                      })
+                          Math.abs(page - currentPage) <= 1,
+                      )
                       .map((page, idx, arr) => {
-                        // Add ellipsis
                         const showEllipsisBefore =
                           idx > 0 && page - arr[idx - 1] > 1;
                         return (
@@ -357,11 +343,7 @@ export function CoursesPage() {
                                 currentPage === page ? "default" : "outline"
                               }
                               size="icon"
-                              className={`rounded-full w-10 h-10 ${
-                                currentPage === page
-                                  ? "bg-sky-500 hover:bg-sky-600"
-                                  : ""
-                              }`}
+                              className={`rounded-full w-10 h-10 ${currentPage === page ? "bg-sky-500 hover:bg-sky-600 text-white" : ""}`}
                               onClick={() => handlePageChange(page)}
                             >
                               {page}
@@ -388,28 +370,17 @@ export function CoursesPage() {
                   {type === "combos" ? "📦" : type === "courses" ? "📚" : "🎨"}
                 </div>
                 <h3 className="text-2xl font-bold text-slate-800">
-                  {type === "combos"
-                    ? "Không có combo nào"
-                    : type === "courses"
-                      ? "Không có khóa học nào"
-                      : "Không có kết quả"}
+                  Không có kết quả
                 </h3>
                 <p className="text-slate-500 mt-2 text-base max-w-sm">
-                  Hiện tại không có{" "}
-                  {type === "combos"
-                    ? "combo"
-                    : type === "courses"
-                      ? "khóa học"
-                      : "kết quả"}{" "}
-                  nào đang được hiển thị. Bé hãy thử thay đổi bộ lọc bên trái
-                  xem sao nhé!
+                  Hiện tại không có dữ liệu nào đang được hiển thị. Bé hãy thử
+                  thay đổi bộ lọc bên trái xem sao nhé!
                 </p>
               </div>
             )}
           </div>
         </div>
       </main>
-
       <Footer />
     </motion.div>
   );

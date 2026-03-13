@@ -1,4 +1,4 @@
-const crypto = require("crypto");
+﻿const crypto = require("crypto");
 const dayjs = require("dayjs");
 const Payment = require("../models/Payment");
 const Course = require("../models/Course");
@@ -30,10 +30,26 @@ const sortObject = (obj) => {
   return sorted;
 };
 
-const buildSignData = (params) => {
+const buildSignDataForSend = (params) => {
   const sorted = sortObject(params);
   return Object.entries(sorted)
     .map(([k, v]) => `${k}=${encodeURIComponent(v).replace(/%20/g, "+")}`)
+    .join("&");
+};
+
+const buildSignDataForVerify = (params) => {
+  const sorted = sortObject(params);
+  return Object.entries(sorted)
+    .filter(
+      ([k, v]) =>
+        k.startsWith("vnp_") &&
+        k !== "vnp_SecureHash" &&
+        k !== "vnp_SecureHashType" &&
+        v !== "" &&
+        v !== null &&
+        v !== undefined,
+    )
+    .map(([k, v]) => `${k}=${v}`) // Giữ nguyên v đã encoded
     .join("&");
 };
 
@@ -42,6 +58,21 @@ const sign = (data) =>
     .createHmac("sha512", vnpConfig.hashSecret)
     .update(Buffer.from(data, "utf-8"))
     .digest("hex");
+
+// Parse query từ URL gốc (giữ nguyên encoded values)
+const parseQueryFromUrl = (url) => {
+  const queryString = url.split("?")[1];
+  if (!queryString) return {};
+
+  const params = {};
+  queryString.split("&").forEach((pair) => {
+    const [key, value] = pair.split("=");
+    if (key && value !== undefined) {
+      params[key] = value; // Giữ nguyên value đã encoded
+    }
+  });
+  return params;
+};
 
 const getClientIp = (req) =>
   req.headers["x-forwarded-for"]?.split(",")[0] ||
@@ -72,7 +103,7 @@ const buildPaymentUrl = ({ amount, txnRef, orderInfo, ipAddr }) => {
     vnp_ExpireDate: expireDate,
   };
 
-  const signData = buildSignData(params);
+  const signData = buildSignDataForSend(params); // Gửi đi vẫn cần encode
   const secureHash = sign(signData);
   const query = `${signData}&vnp_SecureHash=${secureHash}`;
 
@@ -80,13 +111,14 @@ const buildPaymentUrl = ({ amount, txnRef, orderInfo, ipAddr }) => {
 };
 
 const verifyVnpay = (query) => {
-  const cloned = { ...query };
-  const secureHash = cloned.vnp_SecureHash;
-  delete cloned.vnp_SecureHash;
-  delete cloned.vnp_SecureHashType;
-
-  const signData = buildSignData(cloned);
+  const secureHash = query.vnp_SecureHash;
+  const signData = buildSignDataForVerify(query);
   const expected = sign(signData);
+
+  console.log("=== Signature Verification Debug ===");
+  console.log("Sign Data:", signData);
+  console.log("Expected Hash:", expected);
+  console.log("Received Hash:", secureHash);
 
   return secureHash === expected;
 };
@@ -105,20 +137,18 @@ exports.createPayment = async (req, res) => {
     let item;
     let amount = 0;
     let title = "";
+    let isUpgrade = false;
+    let upgradeInfo = null;
+
+    // Lấy thông tin user
+    const buyer = await User.findById(userId);
 
     if (itemType === "course") {
       item = await ensureCoursePublished(itemId);
       amount = item.price || 0;
       title = item.title;
-    } else {
-      item = await ensureComboPublished(itemId);
-      amount = item.price || 0;
-      title = item.title;
-    }
 
-    // Kiểm tra đã đăng ký chưa
-    const buyer = await User.findById(userId);
-    if (itemType === "course") {
+      // Kiểm tra đã đăng ký chưa
       const alreadyEnrolled = buyer.enrolledCourses.some(
         (e) => e.course.toString() === itemId.toString(),
       );
@@ -127,6 +157,59 @@ exports.createPayment = async (req, res) => {
           success: false,
           message: "Bạn đã đăng ký khóa học này rồi!",
         });
+      }
+    }
+
+    if (itemType === "combo") {
+      const combo = await ensureComboPublished(itemId);
+      item = combo;
+      title = combo.title;
+
+      // Lấy danh sách các khóa học người dùng đã sở hữu
+      const userEnrolledCourseIds = buyer.enrolledCourses.map((ec) =>
+        ec.course.toString(),
+      );
+
+      // Lọc các khóa học chưa sở hữu
+      const unownedCourses = combo.courses.filter(
+        (course) => !userEnrolledCourseIds.includes(course._id.toString()),
+      );
+
+      // Nếu đã sở hữu tất cả khóa học
+      if (unownedCourses.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Bạn đã sở hữu tất cả khóa học trong combo này!",
+        });
+      }
+
+      // Tính tổng giá gốc các khóa chưa sở hữu
+      const unownedOriginalPrice = unownedCourses.reduce(
+        (sum, c) => sum + c.price,
+        0,
+      );
+
+      // Tính giá nâng cấp: áp dụng % giảm giá của combo
+      amount = Math.round(
+        unownedOriginalPrice * (1 - combo.discountPercentage / 100),
+      );
+
+      // Kiểm tra xem có phải là upgrade không (người dùng đã sở hữu ít nhất 1 khóa học)
+      const ownedCoursesCount = combo.courses.length - unownedCourses.length;
+      if (ownedCoursesCount > 0) {
+        isUpgrade = true;
+        upgradeInfo = {
+          ownedCoursesCount,
+          totalCoursesCount: combo.courses.length,
+          unownedCourseIds: unownedCourses.map((c) => c._id.toString()),
+          originalComboPrice: combo.price,
+          unownedOriginalPrice,
+          discountPercentage: combo.discountPercentage,
+          upgradeSavings: combo.price - amount,
+        };
+      } else {
+        // Người dùng chưa sở hữu khóa học nào, dùng giá combo thông thường
+        amount = combo.price || 0;
       }
     }
 
@@ -155,9 +238,10 @@ exports.createPayment = async (req, res) => {
     }
 
     const txnRef = generateTxnRef();
-    const orderInfo = `${itemType}:${itemId}:${userId}`;
+    const orderInfo = `${itemType}:${itemId}:${userId}${isUpgrade ? ":upgrade" : ""}`;
 
-    await Payment.create({
+    // Tạo payment record với thông tin upgrade nếu có
+    const paymentData = {
       user: userId,
       itemType,
       itemId,
@@ -166,12 +250,21 @@ exports.createPayment = async (req, res) => {
       orderInfo,
       status: "pending",
       provider: "vnpay",
-    });
+    };
+
+    // Lưu thông tin upgrade vào metadata
+    if (isUpgrade && upgradeInfo) {
+      paymentData.metadata = upgradeInfo;
+    }
+
+    await Payment.create(paymentData);
 
     const paymentUrl = buildPaymentUrl({
       amount,
       txnRef,
-      orderInfo,
+      orderInfo: isUpgrade
+        ? `Nang cap combo ${title}`
+        : `Thanh toan ${itemType === "course" ? "khoa hoc" : "combo"} ${title}`,
       ipAddr: getClientIp(req),
     });
 
@@ -180,6 +273,8 @@ exports.createPayment = async (req, res) => {
       flow: "vnpay",
       txnRef,
       paymentUrl,
+      isUpgrade,
+      upgradeInfo: isUpgrade ? upgradeInfo : null,
     });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -209,7 +304,8 @@ const grantPaymentAccess = async (payment) => {
     await User.findByIdAndUpdate(payment.user, {
       $pull: { cart: { product: payment.itemId, productModel: "Course" } },
     });
-  } else {
+  } else if (payment.itemType === "combo") {
+    // grantComboAccess đã tự động xử lý việc chỉ enroll các khóa học chưa có
     await grantComboAccess(payment.user, payment.itemId);
     // Xóa combo này khỏi cart nếu có
     await User.findByIdAndUpdate(payment.user, {
@@ -220,48 +316,125 @@ const grantPaymentAccess = async (payment) => {
 
 exports.vnpayReturn = async (req, res) => {
   try {
-    const isValid = verifyVnpay(req.query);
+    console.log("=== VNPay Return Callback ===");
+    console.log("Full URL:", req.originalUrl);
+
+    // LẤY QUERY GỐC TỪ URL thay vì dùng req.query
+    const originalQuery = parseQueryFromUrl(req.originalUrl);
+    console.log(
+      "Original Query (encoded):",
+      JSON.stringify(originalQuery, null, 2),
+    );
+
+    const isValid = verifyVnpay(originalQuery);
+
     const txnRef = req.query.vnp_TxnRef || "";
     const responseCode = req.query.vnp_ResponseCode || "";
+
+    console.log("Verification Result:", isValid);
 
     // Redirect helper
     const redirectToClient = (extra = "") =>
       `${clientUrl}/payment-result?txnRef=${encodeURIComponent(txnRef)}&code=${encodeURIComponent(responseCode)}&valid=${isValid ? "1" : "0"}${extra}`;
 
+    const payment = txnRef ? await Payment.findOne({ txnRef }) : null;
+
+    if (!payment) {
+      console.log("❌ Payment not found for txnRef:", txnRef);
+      return res.redirect(redirectToClient("&status=notfound"));
+    }
+
     if (!isValid) {
+      console.log("❌ Invalid signature - updating status and redirecting");
+      payment.status = "failed";
+      payment.errorMessage = "Chữ ký thanh toán không hợp lệ";
+      await payment.save();
       return res.redirect(redirectToClient("&status=failed"));
     }
 
-    const payment = txnRef ? await Payment.findOne({ txnRef }) : null;
+    console.log("Payment found:", {
+      id: payment._id,
+      status: payment.status,
+      amount: payment.amount,
+      itemType: payment.itemType,
+      itemId: payment.itemId,
+    });
 
-    if (payment) {
-      payment.rawReturn = req.query;
+    payment.rawReturn = req.query;
 
-      // Fallback xử lý thành công ngay tại return nếu IPN chưa tới
-      if (responseCode === "00" && payment.status === "pending") {
-        await grantPaymentAccess(payment);
+    // Xử lý payment dựa trên response code
+    if (responseCode === "00") {
+      if (payment.status === "pending") {
+        console.log("✅ Processing successful payment (responseCode: 00)");
 
-        payment.status = "paid";
-        payment.paidAt = new Date();
-        payment.vnpTransactionNo = req.query.vnp_TransactionNo;
-        payment.vnpBankTranNo = req.query.vnp_BankTranNo;
-      } else if (responseCode !== "00" && payment.status === "pending") {
+        // Kiểm tra số tiền
+        const amountFromVnp = Number(req.query.vnp_Amount || 0) / 100;
+        if (Number(payment.amount) !== amountFromVnp) {
+          console.log(
+            `❌ Amount mismatch. Expected: ${payment.amount}, Got: ${amountFromVnp}`,
+          );
+          payment.status = "failed";
+          payment.errorMessage = "Số tiền thanh toán không khớp";
+          await payment.save();
+          return res.redirect(redirectToClient("&status=amount_mismatch"));
+        }
+
+        try {
+          await grantPaymentAccess(payment);
+          console.log("✅ Access granted successfully");
+
+          payment.status = "paid";
+          payment.paidAt = new Date();
+          payment.vnpTransactionNo = req.query.vnp_TransactionNo;
+          payment.vnpBankTranNo = req.query.vnp_BankTranNo;
+
+          await payment.save();
+          console.log("✅ Payment saved with status: paid");
+        } catch (grantError) {
+          console.error("❌ Error granting access:", grantError);
+          payment.status = "failed";
+          payment.errorMessage = grantError.message;
+          await payment.save();
+
+          return res.redirect(redirectToClient("&status=grant_failed"));
+        }
+      } else {
+        console.log(
+          "ℹ️ Payment already processed. Current status:",
+          payment.status,
+        );
+      }
+    } else {
+      console.log("❌ Payment failed with responseCode:", responseCode);
+      if (payment.status === "pending") {
         payment.status = "failed";
       }
-
-      await payment.save();
     }
+
+    await payment.save();
+    console.log("=== VNPay Return Complete - Redirecting to client ===");
 
     return res.redirect(redirectToClient());
   } catch (error) {
-    return res.redirect(`${clientUrl}/payment-result?error=1`);
+    console.error("❌❌❌ VNPay Return Fatal Error:", error);
+    const txnRef = req.query?.vnp_TxnRef || "unknown";
+    return res.redirect(
+      `${clientUrl}/payment-result?txnRef=${txnRef}&error=1&message=${encodeURIComponent(error.message)}`,
+    );
   }
 };
 
 exports.vnpayIpn = async (req, res) => {
   try {
-    const isValid = verifyVnpay(req.query);
+    console.log("=== VNPay IPN Callback ===");
+    console.log("Original URL:", req.originalUrl);
+
+    // LẤY QUERY GỐC
+    const originalQuery = parseQueryFromUrl(req.originalUrl);
+
+    const isValid = verifyVnpay(originalQuery);
     if (!isValid) {
+      console.log("❌ IPN: Invalid checksum");
       return res
         .status(200)
         .json({ RspCode: "97", Message: "Invalid checksum" });
@@ -273,8 +446,11 @@ exports.vnpayIpn = async (req, res) => {
     const bankTranNo = req.query.vnp_BankTranNo;
     const amountFromVnp = Number(req.query.vnp_Amount || 0) / 100;
 
+    console.log("IPN Data:", { txnRef, responseCode, amountFromVnp });
+
     const payment = await Payment.findOne({ txnRef });
     if (!payment) {
+      console.log("❌ IPN: Payment not found");
       return res
         .status(200)
         .json({ RspCode: "01", Message: "Order not found" });
@@ -282,6 +458,7 @@ exports.vnpayIpn = async (req, res) => {
 
     // Idempotent: đã paid rồi thì trả OK luôn
     if (payment.status === "paid") {
+      console.log("ℹ️ IPN: Payment already paid");
       return res
         .status(200)
         .json({ RspCode: "00", Message: "Confirm Success" });
@@ -289,6 +466,12 @@ exports.vnpayIpn = async (req, res) => {
 
     // Check amount
     if (Number(payment.amount) !== Number(amountFromVnp)) {
+      console.log(
+        "❌ IPN: Amount mismatch. Expected:",
+        payment.amount,
+        "Got:",
+        amountFromVnp,
+      );
       payment.status = "failed";
       payment.rawIpn = req.query;
       await payment.save();
@@ -296,26 +479,42 @@ exports.vnpayIpn = async (req, res) => {
     }
 
     if (responseCode === "00") {
-      await grantPaymentAccess(payment);
+      console.log("✅ IPN: Processing payment");
 
-      payment.status = "paid";
-      payment.paidAt = new Date();
-      payment.vnpTransactionNo = transactionNo;
-      payment.vnpBankTranNo = bankTranNo;
-      payment.rawIpn = req.query;
-      await payment.save();
+      try {
+        await grantPaymentAccess(payment);
 
-      return res
-        .status(200)
-        .json({ RspCode: "00", Message: "Confirm Success" });
+        payment.status = "paid";
+        payment.paidAt = new Date();
+        payment.vnpTransactionNo = transactionNo;
+        payment.vnpBankTranNo = bankTranNo;
+        payment.rawIpn = req.query;
+        await payment.save();
+
+        console.log("✅ IPN: Payment processed successfully");
+        return res
+          .status(200)
+          .json({ RspCode: "00", Message: "Confirm Success" });
+      } catch (error) {
+        console.error("❌ IPN: Error granting access:", error);
+        payment.status = "failed";
+        payment.errorMessage = error.message;
+        payment.rawIpn = req.query;
+        await payment.save();
+        return res
+          .status(200)
+          .json({ RspCode: "99", Message: "Unknown error" });
+      }
     }
 
     payment.status = "failed";
     payment.rawIpn = req.query;
     await payment.save();
 
+    console.log("❌ IPN: Payment failed with code:", responseCode);
     return res.status(200).json({ RspCode: "00", Message: "Confirm Success" });
   } catch (error) {
+    console.error("❌❌❌ IPN Fatal Error:", error);
     return res.status(200).json({ RspCode: "99", Message: "Unknown error" });
   }
 };
@@ -350,6 +549,7 @@ exports.getPaymentStatus = async (req, res) => {
         itemSlug,
         amount: payment.amount,
         paidAt: payment.paidAt,
+        metadata: payment.metadata, // Trả về thông tin upgrade nếu có
       },
     });
   } catch (error) {
@@ -365,7 +565,7 @@ exports.checkoutCart = async (req, res) => {
     if (!user.cart || user.cart.length === 0) {
       return res
         .status(400)
-        .json({ success: false, message: "Đơn hàng đã được thanh toán." });
+        .json({ success: false, message: "Giỏ hàng trống." });
     }
 
     // Calculate total and validate all items

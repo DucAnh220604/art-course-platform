@@ -7,6 +7,10 @@ const comboApi = {
   // Lấy combo theo slug
   getComboBySlug: (slug) => axiosClient.get(`/combos/${slug}`),
 
+  // Lấy các combo chứa một khóa học cụ thể
+  getCombosContainingCourse: (courseId) =>
+    axiosClient.get(`/combos/course/${courseId}/containing`),
+
   // Tạo combo mới (Instructor)
   createCombo: (data) => axiosClient.post("/combos", data),
 

@@ -6,7 +6,9 @@ const cartApi = {
     axiosClient.post("/cart/add", { productId, productModel }),
   removeFromCart: (productId, productModel) =>
     axiosClient.post("/cart/remove", { productId, productModel }),
-  clearCart: () => axiosClient.delete("/cart/clear"),
+  clearCart: () => axiosClient.post("/cart/clear"),
+  checkCourseInCart: (courseId) =>
+    axiosClient.get(`/cart/check-course/${courseId}`),
 };
 
 export default cartApi;
