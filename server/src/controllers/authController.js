@@ -11,11 +11,21 @@ exports.register = async (req, res) => {
       data: { user: result.user },
     });
   } catch (error) {
+    let errorMessage = error.message;
+
+    if (error.code === 11000 || error.message.includes("E11000")) {
+      if (error.message.includes("username")) {
+        errorMessage = "Tên đăng nhập này đã tồn tại. Vui lòng chọn tên khác.";
+      } else if (error.message.includes("email")) {
+        errorMessage = "Email này đã được sử dụng.";
+      } else {
+        errorMessage = "Thông tin này đã tồn tại trong hệ thống.";
+      }
+    }
+
     res.status(400).json({
       success: false,
-      message: error.message.includes("duplicate")
-        ? "Email này đã được sử dụng."
-        : error.message,
+      message: errorMessage,
     });
   }
 };

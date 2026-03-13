@@ -8,6 +8,11 @@ const generateToken = (id) => {
 };
 
 const registerUser = async (userData) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(userData.email)) {
+    throw new Error("Định dạng email không hợp lệ.");
+  }
+
   const newUser = await User.create({
     fullname: userData.fullname,
     username: userData.username,
