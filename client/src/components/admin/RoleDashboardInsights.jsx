@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Clock3, Mail, ShoppingCart, UserCheck } from "lucide-react";
+import {
+  Activity,
+  Clock3,
+  Mail,
+  ShoppingCart,
+  UserCheck,
+  Zap,
+  BarChart2,
+  Trophy,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
 import adminApi from "@/api/adminApi";
 import paymentApi from "@/api/paymentApi";
 import contactApi from "@/api/contactApi";
@@ -31,12 +41,33 @@ const getDaysDiff = (date) => {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 };
 
+// Framer motion variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 300, damping: 24 },
+  },
+};
+
 export default function RoleDashboardInsights({ role }) {
   const [loading, setLoading] = useState(true);
   const [activities, setActivities] = useState([]);
   const [quickStats, setQuickStats] = useState([]);
   const [topSellingItems, setTopSellingItems] = useState([]);
 
+  // ==========================================
+  // LOGIC GIỮ NGUYÊN 100%
+  // ==========================================
   useEffect(() => {
     const fetchInsights = async () => {
       try {
@@ -229,203 +260,193 @@ export default function RoleDashboardInsights({ role }) {
       .slice(0, 5);
   }, [activities]);
 
+  // ==========================================
+  // GIAO DIỆN MỚI TỐI ƯU
+  // ==========================================
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <Card className="rounded-xl">
-        <CardHeader>
-          <CardTitle>Hoạt động gần đây</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(4)].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-10 rounded-lg bg-slate-100 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : displayActivities.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Chưa có hoạt động nào
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {displayActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="flex items-start gap-3 rounded-lg border border-slate-100 p-3"
-                >
-                  <div className="w-9 h-9 rounded-full bg-sky-50 flex items-center justify-center shrink-0">
-                    <activity.icon className="w-4 h-4 text-sky-600" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-slate-800 line-clamp-1">
-                      {activity.title}
-                    </p>
-                    <p className="text-xs text-slate-500 line-clamp-1">
-                      {activity.description}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                      {formatDateTime(activity.time)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card className="rounded-xl">
-        <CardHeader>
-          <CardTitle>Thống kê nhanh</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="space-y-3">
-              {[...Array(4)].map((_, index) => (
-                <div
-                  key={index}
-                  className="h-10 rounded-lg bg-slate-100 animate-pulse"
-                />
-              ))}
-            </div>
-          ) : quickStats.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Dữ liệu sẽ được cập nhật khi có thông tin
-            </div>
-          ) : role === "admin" ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {quickStats.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-lg border border-slate-100 p-3 flex items-center gap-3"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
-                      <item.icon className="w-4 h-4 text-slate-600" />
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+    >
+      {/* CỘT TRÁI: HOẠT ĐỘNG GẦN ĐÂY */}
+      <motion.div variants={itemVariants}>
+        <Card className="rounded-2xl border-none shadow-sm bg-white h-full">
+          <CardHeader className="border-b border-slate-50/80 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-500 fill-amber-100" />
+              Hoạt động gần đây
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="p-6 space-y-5">
+                {[...Array(5)].map((_, index) => (
+                  <div key={index} className="flex gap-4">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse shrink-0" />
+                    <div className="space-y-2 flex-1 pt-1">
+                      <div className="h-4 w-3/4 rounded bg-slate-100 animate-pulse" />
+                      <div className="h-3 w-1/2 rounded bg-slate-50 animate-pulse" />
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-500">{item.label}</p>
-                      <p className="text-sm font-semibold text-slate-800">
-                        {item.value}
+                  </div>
+                ))}
+              </div>
+            ) : displayActivities.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+                <Activity className="w-12 h-12 mb-3 opacity-20" />
+                <p className="text-sm">Chưa có hoạt động nào</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {displayActivities.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-start gap-4 p-4 hover:bg-slate-50/80 transition-colors group"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-sky-50 flex items-center justify-center shrink-0 group-hover:scale-110 group-hover:bg-sky-100 transition-all duration-300">
+                      <activity.icon className="w-5 h-5 text-sky-600" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-800 line-clamp-1 group-hover:text-sky-600 transition-colors">
+                        {activity.title}
+                      </p>
+                      <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                        {activity.description}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[11px] font-medium text-slate-400 whitespace-nowrap">
+                        {formatDateTime(activity.time).split(" ")[0]}
+                      </p>
+                      <p className="text-[10px] text-slate-400 whitespace-nowrap">
+                        {formatDateTime(activity.time).split(" ")[1]}
                       </p>
                     </div>
                   </div>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
-              <div className="rounded-lg border border-slate-100 p-3">
-                <p className="text-xs font-semibold text-slate-500 mb-2">
-                  Khóa học / Combo bán chạy nhất
+      {/* CỘT PHẢI: THỐNG KÊ NHANH & BÁN CHẠY */}
+      <motion.div variants={itemVariants}>
+        <Card className="rounded-2xl border-none shadow-sm bg-white h-full flex flex-col">
+          <CardHeader className="border-b border-slate-50/80 pb-4">
+            <CardTitle className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <BarChart2 className="w-5 h-5 text-indigo-500" />
+              Thống kê nhanh
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6 flex-1 flex flex-col">
+            {loading ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[...Array(4)].map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-16 rounded-xl bg-slate-50 animate-pulse"
+                    />
+                  ))}
+                </div>
+                <div className="h-40 rounded-xl bg-slate-50 animate-pulse mt-4" />
+              </div>
+            ) : quickStats.length === 0 ? (
+              <div className="flex flex-col items-center justify-center flex-1 text-slate-400 min-h-[200px]">
+                <BarChart2 className="w-12 h-12 mb-3 opacity-20" />
+                <p className="text-sm">
+                  Dữ liệu sẽ được cập nhật khi có thông tin
                 </p>
-
-                {topSellingItems.length === 0 ? (
-                  <p className="text-sm text-slate-500">
-                    Chưa có dữ liệu bán hàng
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {topSellingItems.map((item, index) => (
-                      <div
-                        key={`${item.itemType}-${item.itemId}`}
-                        className="flex items-start justify-between gap-3"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-800 line-clamp-1">
-                            {index + 1}. {item.title}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {item.itemType === "course" ? "Khóa học" : "Combo"}{" "}
-                            • {item.orderCount} đơn
-                          </p>
-                        </div>
-                        <p className="text-xs font-semibold text-green-600 whitespace-nowrap">
-                          {formatCurrency(item.revenue)}
+              </div>
+            ) : (
+              <div className="space-y-6 flex-1">
+                {/* GRID THỐNG KÊ */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {quickStats.map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl border border-slate-100 p-4 flex items-center gap-4 hover:border-indigo-100 hover:shadow-md transition-all group bg-white"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform duration-300">
+                        <item.icon className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-500 mb-0.5 truncate">
+                          {item.label}
+                        </p>
+                        <p className="text-base font-bold text-slate-800 truncate">
+                          {item.value}
                         </p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          ) : role === "instructor" ? (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {quickStats.map((item) => (
-                  <div
-                    key={item.label}
-                    className="rounded-lg border border-slate-100 p-3 flex items-center gap-3"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
-                      <item.icon className="w-4 h-4 text-slate-600" />
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-500">{item.label}</p>
-                      <p className="text-sm font-semibold text-slate-800">
-                        {item.value}
+                  ))}
+                </div>
+
+                {/* KHU VỰC TOP SELLING (Chỉ hiển thị cho admin/instructor) */}
+                {(role === "admin" || role === "instructor") && (
+                  <div className="rounded-xl border border-slate-100 bg-slate-50/30 p-5 mt-auto">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Trophy className="w-4 h-4 text-amber-500" />
+                      <p className="text-sm font-bold text-slate-800">
+                        {role === "admin"
+                          ? "Khóa học / Combo bán chạy nhất"
+                          : "Khóa học bán chạy"}
                       </p>
                     </div>
-                  </div>
-                ))}
-              </div>
 
-              <div className="rounded-lg border border-slate-100 p-3">
-                <p className="text-xs font-semibold text-slate-500 mb-2">
-                  Khóa học bán chạy
-                </p>
-
-                {topSellingItems.length === 0 ? (
-                  <p className="text-sm text-slate-500">
-                    Chưa có dữ liệu bán khóa học
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {topSellingItems.map((item, index) => (
-                      <div
-                        key={item.itemId}
-                        className="flex items-start justify-between gap-3"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-800 line-clamp-1">
-                            {index + 1}. {item.title}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {item.orderCount} đơn
-                          </p>
-                        </div>
-                        <p className="text-xs font-semibold text-green-600 whitespace-nowrap">
-                          {formatCurrency(item.revenue)}
+                    {topSellingItems.length === 0 ? (
+                      <div className="text-center py-4">
+                        <p className="text-sm text-slate-500">
+                          Chưa có dữ liệu bán hàng
                         </p>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="space-y-3">
+                        {topSellingItems.map((item, index) => (
+                          <div
+                            key={
+                              item.itemId || `${item.itemType}-${item.itemId}`
+                            }
+                            className="flex items-center justify-between gap-3 bg-white p-3 rounded-lg border border-slate-100/50 shadow-sm"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold ${index < 3 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500"}`}
+                              >
+                                {index + 1}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-slate-800 truncate">
+                                  {item.title}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                  {item.itemType
+                                    ? (item.itemType === "course"
+                                        ? "Khóa học"
+                                        : "Combo") + " • "
+                                    : ""}
+                                  {item.orderCount} đơn
+                                </p>
+                              </div>
+                            </div>
+                            <div className="shrink-0 text-right pl-2">
+                              <p className="text-sm font-bold text-emerald-600 whitespace-nowrap">
+                                {formatCurrency(item.revenue)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {quickStats.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-lg border border-slate-100 p-3 flex items-center gap-3"
-                >
-                  <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center shrink-0">
-                    <item.icon className="w-4 h-4 text-slate-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">{item.label}</p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      {item.value}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 }
