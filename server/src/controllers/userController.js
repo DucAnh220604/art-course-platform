@@ -132,16 +132,10 @@ exports.getUserStats = async (req, res) => {
 
 exports.requestInstructor = async (req, res) => {
   try {
-    // For local uploads, create URL path
     let cvImage = null;
     if (req.file) {
-      // Create URL path that will be served by the server
       cvImage = `/uploads/cv/${req.file.filename}`;
     }
-
-    const cvFileType =
-      req.file?.mimetype === "application/pdf" ? "pdf" : "image";
-    const cvFileName = req.file?.originalname || "CV";
 
     const requestData = {
       fullName: req.body.fullName,
@@ -150,8 +144,6 @@ exports.requestInstructor = async (req, res) => {
       experience: req.body.experience,
       specialization: req.body.specialization,
       introduction: req.body.introduction,
-      cvFileType,
-      cvFileName,
     };
 
     const user = await userService.requestInstructor(

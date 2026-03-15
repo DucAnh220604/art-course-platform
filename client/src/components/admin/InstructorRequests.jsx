@@ -11,7 +11,6 @@ import {
   Phone,
   Mail,
   Briefcase,
-  BookOpen,
   FileImage,
   ExternalLink,
   Download,
@@ -60,14 +59,12 @@ const getServerBaseUrl = () => {
   return apiUrl.replace(/\/api$/, "");
 };
 
-// Helper function to get full CV file URL
-const getCvFileUrl = (cvImage) => {
+// Helper function to get full file URL
+const getFileUrl = (cvImage) => {
   if (!cvImage) return null;
-  // If it's already a full URL (Cloudinary or other), return as-is
   if (cvImage.startsWith("http://") || cvImage.startsWith("https://")) {
     return cvImage;
   }
-  // If it's a relative path, prepend server base URL
   return `${getServerBaseUrl()}${cvImage}`;
 };
 
@@ -92,23 +89,17 @@ export function InstructorRequests() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Helper function to download file with custom filename
   const handleDownloadFile = async (url, fileName) => {
     try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
-      link.href = downloadUrl;
+      link.href = url;
+      link.target = "_blank";
       link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.error("Download error:", error);
-      // Fallback to opening in new tab
-      window.open(url, "_blank");
+      console.warn("Download failed:", error);
     }
   };
 
@@ -417,6 +408,9 @@ export function InstructorRequests() {
             <DialogTitle className="text-xl">
               Chi tiết yêu cầu đăng ký Giảng viên
             </DialogTitle>
+            <DialogDescription>
+              Xem thông tin cá nhân và chứng chỉ hồ sơ của người đăng ký.
+            </DialogDescription>
           </DialogHeader>
           {viewingRequest && (
             <div className="space-y-6 py-4">
@@ -511,110 +505,48 @@ export function InstructorRequests() {
                     </div>
                   </div>
 
-                  {/* CV File */}
+                  {/* Cert Image */}
                   {viewingRequest.instructorRequestData.cvImage && (
                     <div className="bg-amber-50 rounded-xl p-4">
                       <h4 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
                         <FileImage className="w-4 h-4 text-amber-500" />
-                        CV / Hồ sơ
+                        Ảnh chứng chỉ / Hồ sơ
                       </h4>
                       <div className="relative group">
-                        {viewingRequest.instructorRequestData.cvFileType ===
-                          "pdf" ||
-                        viewingRequest.instructorRequestData.cvImage
-                          .toLowerCase()
-                          .includes(".pdf") ||
-                        viewingRequest.instructorRequestData.cvImage.includes(
-                          "/raw/",
-                        ) ? (
-                          <div className="flex items-center justify-center p-8 bg-amber-100/50 rounded-lg border border-amber-200">
-                            <div className="text-center">
-                              <FileImage className="w-16 h-16 text-red-500 mx-auto mb-3" />
-                              <p className="text-slate-700 font-medium">
-                                {viewingRequest.instructorRequestData
-                                  .cvFileName || "File PDF"}
-                              </p>
-                              <div className="flex items-center justify-center gap-2 mt-3">
-                                <a
-                                  href={getCvFileUrl(
-                                    viewingRequest.instructorRequestData
-                                      .cvImage,
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition-colors"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                  Xem PDF
-                                </a>
-                                <button
-                                  onClick={() =>
-                                    handleDownloadFile(
-                                      getCvFileUrl(
-                                        viewingRequest.instructorRequestData
-                                          .cvImage,
-                                      ),
-                                      viewingRequest.instructorRequestData
-                                        .cvFileName || "CV.pdf",
-                                    )
-                                  }
-                                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                                >
-                                  <Download className="w-4 h-4" />
-                                  Tải về
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <img
-                              src={getCvFileUrl(
-                                viewingRequest.instructorRequestData.cvImage,
-                              )}
-                              alt="CV"
-                              className="w-full max-h-[400px] object-contain rounded-lg border border-amber-200"
-                            />
-                            {viewingRequest.instructorRequestData
-                              .cvFileName && (
-                              <p className="text-center text-sm text-slate-600 mt-2">
-                                {
-                                  viewingRequest.instructorRequestData
-                                    .cvFileName
-                                }
-                              </p>
+                        <img
+                          src={getFileUrl(
+                            viewingRequest.instructorRequestData.cvImage,
+                          )}
+                          alt="Certificate"
+                          className="w-full max-h-[400px] object-contain rounded-lg border border-amber-200"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          <a
+                            href={getFileUrl(
+                              viewingRequest.instructorRequestData.cvImage,
                             )}
-                            <div className="absolute top-2 right-2 flex gap-2">
-                              <a
-                                href={getCvFileUrl(
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                            title="Xem ảnh"
+                          >
+                            <ExternalLink className="w-4 h-4 text-gray-600" />
+                          </a>
+                          <button
+                            onClick={() =>
+                              handleDownloadFile(
+                                getFileUrl(
                                   viewingRequest.instructorRequestData.cvImage,
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-                                title="Xem ảnh"
-                              >
-                                <ExternalLink className="w-4 h-4 text-gray-600" />
-                              </a>
-                              <button
-                                onClick={() =>
-                                  handleDownloadFile(
-                                    getCvFileUrl(
-                                      viewingRequest.instructorRequestData
-                                        .cvImage,
-                                    ),
-                                    viewingRequest.instructorRequestData
-                                      .cvFileName || "CV.jpg",
-                                  )
-                                }
-                                className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
-                                title="Tải về"
-                              >
-                                <Download className="w-4 h-4 text-gray-600" />
-                              </button>
-                            </div>
-                          </>
-                        )}
+                                ),
+                                "certificate.jpg",
+                              )
+                            }
+                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors"
+                            title="Tải về"
+                          >
+                            <Download className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
