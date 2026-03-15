@@ -42,14 +42,13 @@ export function ComboForm({ open, onClose, onSuccess, editingCombo = null }) {
   useEffect(() => {
     const fetchMyCourses = async () => {
       try {
-        const response = await courseApi.getAllCourses();
-        const allCourses = response.data.courses || [];
-        // Lọc ra courses của instructor này và đã published
-        const myCourses = allCourses.filter(
-          (c) =>
-            (c.instructor?._id === user?._id || c.instructor === user?._id) &&
-            c.status === "published",
-        );
+        const response = await courseApi.getAllCourses({
+          instructor: user?._id,
+          status: "published",
+          page: 1,
+          limit: 1000,
+        });
+        const myCourses = response?.data?.courses || [];
         setAvailableCourses(myCourses);
       } catch (error) {
         toast.error("Không thể tải danh sách khóa học!");
