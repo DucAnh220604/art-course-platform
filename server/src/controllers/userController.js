@@ -3,6 +3,8 @@ const User = require("../models/User");
 const Course = require("../models/Course");
 const Combo = require("../models/Combo");
 const Payment = require("../models/Payment");
+const Section = require("../models/Section");
+const LessonProgress = require("../models/LessonProgress");
 
 exports.updateProfile = async (req, res) => {
   try {
@@ -541,10 +543,70 @@ exports.getEnrolledCourses = async (req, res) => {
       populate: { path: "instructor", select: "fullname avatar" },
     });
 
+    const courseIds = user.enrolledCourses
+      .map((item) => item.course?._id)
+      .filter(Boolean);
+
+    const [completedByCourse, totalLessonsByCourse] = await Promise.all([
+      LessonProgress.aggregate([
+        {
+          $match: {
+            user: req.user._id,
+            course: { $in: courseIds },
+          },
+        },
+        {
+          $group: {
+            _id: "$course",
+            completedLessons: { $sum: 1 },
+          },
+        },
+      ]),
+      Section.aggregate([
+        {
+          $match: {
+            courseId: { $in: courseIds },
+          },
+        },
+        {
+          $project: {
+            courseId: 1,
+            lessonCount: { $size: { $ifNull: ["$lessonsId", []] } },
+          },
+        },
+        {
+          $group: {
+            _id: "$courseId",
+            totalLessons: { $sum: "$lessonCount" },
+          },
+        },
+      ]),
+    ]);
+
+    const completedMap = new Map(
+      completedByCourse.map((item) => [
+        item._id.toString(),
+        item.completedLessons || 0,
+      ]),
+    );
+
+    const totalLessonsMap = new Map(
+      totalLessonsByCourse.map((item) => [item._id.toString(), item.totalLessons || 0]),
+    );
+
     const enrolledCourses = user.enrolledCourses.map((item) => ({
       course: item.course,
       enrolledAt: item.enrolledAt,
-      progress: item.progress,
+      progress: (() => {
+        const courseId = item.course?._id?.toString();
+        if (!courseId) return 0;
+
+        const completedLessons = completedMap.get(courseId) || 0;
+        const totalLessons = totalLessonsMap.get(courseId) || 0;
+        if (totalLessons <= 0) return 0;
+
+        return Math.round((completedLessons / totalLessons) * 100);
+      })(),
     }));
 
     res.status(200).json({
