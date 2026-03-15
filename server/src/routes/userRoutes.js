@@ -42,6 +42,13 @@ router.get(
 
 router.get("/enrolled-courses", protect, userController.getEnrolledCourses);
 
+router.get(
+  "/instructor-dashboard",
+  protect,
+  restrictTo("instructor"),
+  userController.getInstructorDashboardStats,
+);
+
 router.use(protect, restrictTo("admin", "staff"));
 
 router.get("/stats", userController.getUserStats);

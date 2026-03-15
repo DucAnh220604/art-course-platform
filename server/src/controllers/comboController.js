@@ -10,6 +10,7 @@ const comboController = {
       const {
         search,
         category,
+        level, // Đã bổ sung biến level từ query
         page = 1,
         limit = 10,
         status,
@@ -32,9 +33,14 @@ const comboController = {
         ];
       }
 
-      // Filter theo category: chỉ lấy combo có ít nhất 1 khóa học đúng danh mục
-      if (category) {
-        const matchingCourseIds = await Course.distinct("_id", { category });
+      // Filter theo category và level: chỉ lấy combo có ít nhất 1 khóa học đúng điều kiện
+      if (category || level) {
+        const courseFilter = {};
+        if (category) courseFilter.category = category;
+        if (level) courseFilter.level = level;
+
+        const matchingCourseIds = await Course.distinct("_id", courseFilter);
+
         if (matchingCourseIds.length === 0) {
           return res.json({
             success: true,
@@ -44,6 +50,7 @@ const comboController = {
             total: 0,
           });
         }
+
         query.courses = { $in: matchingCourseIds };
       }
 
@@ -53,7 +60,7 @@ const comboController = {
 
       const combos = await Combo.find(query)
         .populate("instructor", "fullname username avatar")
-        .populate("courses", "title thumbnail price category _id")
+        .populate("courses", "title thumbnail price category level _id") // Thêm level vào để frontend có thể dùng nếu cần
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
         .sort(sortOptions);
@@ -333,7 +340,7 @@ const comboController = {
     }
   },
 
-  // Thêm endpoint mới để lấy combos chứa một khóa học cụ thể
+  // Lấy combos chứa một khóa học cụ thể
   getCombosContainingCourse: async (req, res) => {
     try {
       const { courseId } = req.params;

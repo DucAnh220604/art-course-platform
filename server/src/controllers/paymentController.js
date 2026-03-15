@@ -840,9 +840,49 @@ exports.getAllPayments = async (req, res) => {
     const totalPayments = await Payment.countDocuments(filter);
 
     // Calculate summary statistics
-    const allPayments = await Payment.find({ status: "paid" });
-    const totalRevenue = allPayments.reduce((sum, p) => sum + p.amount, 0);
-    const totalOrders = allPayments.length;
+    const allPaidPayments = await Payment.find({ status: "paid" }).select(
+      "amount",
+    );
+    const totalRevenue = allPaidPayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalOrders = allPaidPayments.length;
+
+    // Top selling courses/combos based on paid orders
+    const topSellingAgg = await Payment.aggregate([
+      { $match: { status: "paid", itemType: { $in: ["course", "combo"] } } },
+      {
+        $group: {
+          _id: { itemType: "$itemType", itemId: "$itemId" },
+          orderCount: { $sum: 1 },
+          revenue: { $sum: "$amount" },
+        },
+      },
+      { $sort: { orderCount: -1, revenue: -1 } },
+      { $limit: 5 },
+    ]);
+
+    const topSelling = await Promise.all(
+      topSellingAgg.map(async (item) => {
+        const itemType = item._id.itemType;
+        const itemId = item._id.itemId;
+
+        let title = "N/A";
+        if (itemType === "course") {
+          const course = await Course.findById(itemId).select("title");
+          title = course?.title || "Khóa học không tồn tại";
+        } else if (itemType === "combo") {
+          const combo = await Combo.findById(itemId).select("title");
+          title = combo?.title || "Combo không tồn tại";
+        }
+
+        return {
+          itemType,
+          itemId,
+          title,
+          orderCount: item.orderCount,
+          revenue: item.revenue,
+        };
+      }),
+    );
 
     // Group by status
     const statusCount = await Payment.aggregate([
@@ -862,6 +902,7 @@ exports.getAllPayments = async (req, res) => {
         summary: {
           totalRevenue,
           totalOrders,
+          topSelling,
           statusCount: statusCount.reduce((acc, item) => {
             acc[item._id] = item.count;
             return acc;

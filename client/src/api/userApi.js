@@ -58,6 +58,10 @@ const userApi = {
   getEnrolledCourses: () => {
     return axiosClient.get("/users/enrolled-courses");
   },
+
+  getInstructorDashboardStats: () => {
+    return axiosClient.get("/users/instructor-dashboard");
+  },
 };
 
 export default userApi;

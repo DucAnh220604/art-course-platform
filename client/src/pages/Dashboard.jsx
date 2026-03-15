@@ -31,6 +31,7 @@ import { CourseManagement } from "@/components/instructor/CourseManagement";
 import { ComboManagement } from "@/components/instructor/ComboManagement";
 import OrderHistory from "@/components/instructor/OrderHistory";
 import PaymentManager from "@/components/admin/PaymentManager";
+import ReportsPanel from "@/components/admin/ReportsPanel";
 
 const getNavigationByRole = (role) => {
   switch (role) {
@@ -140,13 +141,7 @@ export function Dashboard() {
       case "orders":
         return <OrderHistory />;
       case "reports":
-        return (
-          <PlaceholderTab
-            title="Báo cáo & Thống kê"
-            description="Xem các báo cáo và thống kê"
-            message="Chức năng báo cáo đang được phát triển..."
-          />
-        );
+        return <ReportsPanel role={userRole} />;
       default:
         return <DashboardOverview />;
     }
