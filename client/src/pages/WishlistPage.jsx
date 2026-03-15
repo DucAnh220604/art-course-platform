@@ -48,11 +48,20 @@ export function WishlistPage() {
         page: currentPage, 
         limit: ITEMS_PER_PAGE 
       });
-      const data = res.data || res || {};
-      setWishlistItems(data.data || []);
-      setTotalPages(data.pagination?.totalPages || 1);
-      setTotalItems(data.pagination?.total || 0);
-    } catch {
+      
+      const payload = res.data || {};
+      const wishlistData = payload.wishlist || payload.data || [];
+      
+      // Get pagination metadata from either the root or the pagination object
+      const pagination = payload.pagination || {};
+      const totalP = pagination.totalPages || payload.totalPages || 1;
+      const totalI = pagination.total || payload.totalItems || 0;
+
+      setWishlistItems(wishlistData);
+      setTotalPages(totalP);
+      setTotalItems(totalI);
+    } catch (error) {
+      console.error("Fetch Wishlist Error:", error);
       toast.error("Không tải được danh sách yêu thích.");
     } finally {
       setLoading(false);

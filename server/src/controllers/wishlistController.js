@@ -5,38 +5,64 @@ const Combo = require("../models/Combo");
 exports.getWishlist = async (req, res) => {
   try {
     const { page = 1, limit = 9 } = req.query;
-    const pageNum = parseInt(page, 10) || 1;
-    const limitNum = parseInt(limit, 10) || 9;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, parseInt(limit, 10) || 9);
     const skip = (pageNum - 1) * limitNum;
 
     const user = await User.findById(req.user._id)
-      .populate("wishlist.product")
+      .populate({
+        path: "wishlist.product",
+        populate: {
+          path: "instructor",
+          select: "fullname username avatar",
+        },
+      })
       .lean();
 
-    const allWishlistItems = (user.wishlist || [])
-      .filter((item) => item.product)
-      .map((item) => ({
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Người dùng không tồn tại" });
+    }
+
+    // Filter out invalid items
+    const allValidItems = (user.wishlist || []).filter(item => item && item.product);
+    
+    // Process items (ensure thumbnails for combos)
+    const processedItems = await Promise.all(allValidItems.map(async (item) => {
+      if (item.productModel === "Combo" && (!item.product.thumbnail || item.product.thumbnail === "")) {
+        const comboWithCourses = await Combo.findById(item.product._id).populate("courses", "thumbnail").lean();
+        if (comboWithCourses && comboWithCourses.courses?.length > 0) {
+          item.product.courses = comboWithCourses.courses;
+        }
+      }
+      return {
         _id: item._id,
         product: item.product,
         productModel: item.productModel,
-      }))
-      .reverse(); // Đảo ngược để hiện cái mới nhất lên đầu
+      };
+    }));
 
-    const total = allWishlistItems.length;
-    const wishlistItems = allWishlistItems.slice(skip, skip + limitNum);
+    // Newest first
+    const sortedItems = processedItems.reverse();
+    const totalCount = sortedItems.length;
+    const paginatedItems = sortedItems.slice(skip, skip + limitNum);
 
     res.json({
       success: true,
-      data: wishlistItems,
+      wishlist: paginatedItems,
+      data: paginatedItems, // Compatibility
+      totalItems: totalCount,
+      totalPages: Math.ceil(totalCount / limitNum),
+      currentPage: pageNum,
       pagination: {
-        total,
-        totalPages: Math.ceil(total / limitNum),
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limitNum),
         currentPage: pageNum,
-        limit: limitNum,
-      },
+        limit: limitNum
+      }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Wishlist Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi hệ thống khi tải danh sách yêu thích" });
   }
 };
 

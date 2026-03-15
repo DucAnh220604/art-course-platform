@@ -43,7 +43,7 @@ export function Header({ onNavigate }) {
       .catch(() => {});
     wishlistApi
       .getWishlist()
-      .then((res) => setWishlistCount(res.data.data?.length || 0))
+      .then((res) => setWishlistCount(res.data.totalItems || 0))
       .catch(() => {});
   }, [isAuthenticated, user]);
 
