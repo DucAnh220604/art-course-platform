@@ -15,7 +15,8 @@ export function DashboardSidebar({
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+  const isAdminOrStaff =
+    userRole === "admin" || userRole === "staff" || userRole === "instructor";
 
   const handleButtonClick = () => {
     if (isAdminOrStaff) {
