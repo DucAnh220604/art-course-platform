@@ -32,7 +32,7 @@ const testimonials = [
 
 export function Testimonials() {
   return (
-    <section className="py-8 sm:py-12 lg:py-16 xl:py-20">
+    <section id="testimonials" className="py-8 sm:py-12 lg:py-16 xl:py-20">
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}

@@ -7,7 +7,6 @@ import {
   FeaturedCourses,
   FeaturedCombos,
   CourseBundles,
-  WhyChooseUs,
   Testimonials,
   Footer,
 } from "../components/landing";
@@ -69,8 +68,6 @@ export function LandingPage() {
         <FeaturedCourses onCourseClick={handleCourseClick} />
 
         <FeaturedCombos onComboClick={handleComboClick} />
-
-        <WhyChooseUs />
 
         <Testimonials />
       </main>

@@ -1,79 +1,60 @@
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import { ArtKidsLogo } from "../icons/ArtKidsLogo";
+import { useNavigate } from "react-router-dom";
 
 export function Footer() {
+  const navigate = useNavigate();
+
   return (
-    <footer className="bg-gray-900 text-white py-12 lg:py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10 mb-8 lg:mb-10">
-          <div className="text-center sm:text-left">
-            <div className="flex items-center gap-2 lg:gap-3 mb-4 justify-center sm:justify-start">
-              <ArtKidsLogo className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12" />
-              <span className="text-xl sm:text-2xl lg:text-3xl font-bold">
-                ArtKids
-              </span>
+    <footer className="bg-surface-container-highest mt-20 py-16 px-6 border-t border-outline-variant/10">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+        <div className="md:col-span-2">
+          <div 
+            className="flex items-center gap-4 mb-6 cursor-pointer group"
+            onClick={() => navigate("/")}
+          >
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shadow-lg group-hover:rotate-12 transition-transform">
+              <span className="material-symbols-outlined text-surface text-3xl">palette</span>
             </div>
-            <p className="text-gray-400 text-sm sm:text-base">
-              Truyền cảm hứng sáng tạo cho mọi trẻ em
-            </p>
+            <span className="font-headline font-bold text-2xl text-primary tracking-tighter">ArtKids Studio</span>
           </div>
-
-          <div className="text-center sm:text-left">
-            <h4 className="font-semibold mb-4 text-base">Liên kết nhanh</h4>
-            <ul className="space-y-3 text-gray-400 text-sm">
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Về chúng tôi
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Khóa học
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Giảng viên
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Liên hệ
-              </li>
-            </ul>
-          </div>
-
-          <div className="text-center sm:text-left">
-            <h4 className="font-semibold mb-4 text-base">Hỗ trợ</h4>
-            <ul className="space-y-3 text-gray-400 text-sm">
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Trung tâm trợ giúp
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Điều khoản dịch vụ
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Chính sách bảo mật
-              </li>
-              <li className="hover:text-white cursor-pointer transition-colors">
-                Câu hỏi thường gặp
-              </li>
-            </ul>
-          </div>
-
-          <div className="text-center sm:text-left">
-            <h4 className="font-semibold mb-4 text-base">Bản tin</h4>
-            <p className="text-gray-400 mb-4 text-sm">
-              Nhận thông tin về khóa học mới!
-            </p>
-            <div className="flex gap-2 flex-col sm:flex-row">
-              <Input
-                placeholder="Email của bạn"
-                className="rounded-xl h-10 text-sm bg-gray-800 border-gray-700 text-white placeholder:text-gray-500"
-              />
-              <Button className="rounded-xl bg-sky-500 hover:bg-sky-600 whitespace-nowrap h-10 px-4 text-sm">
-                Đăng ký
-              </Button>
-            </div>
+          <p className="text-on-surface-variant max-w-sm font-medium leading-relaxed">
+            Nơi khơi nguồn sáng tạo và chắp cánh ước mơ cho những họa sĩ nhí tài năng. Hãy cùng Artie vẽ nên thế giới muôn màu!
+          </p>
+          <div className="flex gap-4 mt-8">
+            <button className="w-10 h-10 rounded-full bg-primary-container text-on-primary-fixed flex items-center justify-center hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-sm">facebook</span>
+            </button>
+            <button className="w-10 h-10 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-sm">video_library</span>
+            </button>
+            <button className="w-10 h-10 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined text-sm">camera_enhance</span>
+            </button>
           </div>
         </div>
 
-        <div className="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
-          <p>© 2026 ArtKids - Nền tảng học vẽ cho trẻ em. Bảo lưu mọi quyền.</p>
+        <div className="flex flex-col gap-4">
+          <h4 className="font-headline font-black text-on-surface uppercase tracking-widest text-xs mb-2">Khám Phá</h4>
+          <button onClick={() => navigate("/about")} className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Về chúng mình</button>
+          <button onClick={() => navigate("/courses")} className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Lớp học vẽ</button>
+          <button className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Giảng viên nhân ái</button>
+          <button className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Góc triển lãm</button>
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <h4 className="font-headline font-black text-on-surface uppercase tracking-widest text-xs mb-2">Hỗ Trợ Bé</h4>
+          <button className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Trung tâm giải đáp</button>
+          <button className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Quyền riêng tư</button>
+          <button className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Điều khoản sử dụng</button>
+          <button className="text-left text-on-surface-variant hover:text-primary transition-colors font-bold text-sm">Liên hệ thầy cô</button>
+        </div>
+      </div>
+      
+      <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4">
+        <p className="text-on-surface-variant text-xs font-bold">© 2026 ArtKids Creative Studio. Cùng bé tô màu thế giới!</p>
+        <div className="flex items-center gap-2 text-on-surface-variant/50">
+          <span className="material-symbols-outlined text-sm">favorite</span>
+          <span className="text-[10px] font-black uppercase tracking-widest">Làm bằng tình yêu cho trẻ em</span>
         </div>
       </div>
     </footer>

@@ -1,204 +1,134 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { Header, Footer } from "@/components/landing";
-import { Button } from "@/components/ui/button";
+import { Header, Footer, HeroSection } from "@/components/landing";
+import { cn } from "@/lib/utils";
+import courseApi from "../api/courseApi";
 
 export function AboutPage() {
   const navigate = useNavigate();
+  const [popularCourses, setPopularCourses] = useState([]);
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const response = await courseApi.getAllCourses({ limit: 10, status: "published" });
+        // Cấu trúc API chính xác từ CoursesPage: response.data?.courses hoặc response.data
+        const courses = response.data?.courses || response.data || [];
+        
+        // Sắp xếp theo số lượng học viên nếu có, hoặc lấy ngẫu nhiên 3 cái đầu
+        const sorted = Array.isArray(courses) 
+          ? [...courses].sort((a, b) => (b.enrollmentCount || 0) - (a.enrollmentCount || 0))
+          : [];
+          
+        setPopularCourses(sorted.slice(0, 3));
+      } catch (error) {
+        console.error("Failed to fetch courses:", error);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="min-h-screen bg-white overflow-x-hidden"
-    >
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Header onNavigate={navigate} />
-      </div>
+    <div className="bg-surface font-body text-on-surface antialiased overflow-x-hidden min-h-screen">
+      <Header onNavigate={navigate} />
 
-      <main className="overflow-x-hidden">
-        {/* Hero Section */}
-        <section className="relative py-20 lg:py-32 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-              >
-                <span className="inline-block px-4 py-2 bg-sky-100 text-sky-600 rounded-full text-sm font-medium mb-6">
-                  Về chúng tôi
-                </span>
-                <h1 className="text-4xl lg:text-6xl font-bold text-slate-900 leading-tight mb-6">
-                  Nơi khơi nguồn
-                  <span className="text-sky-500"> sáng tạo</span>
-                </h1>
-                <p className="text-lg text-slate-500 leading-relaxed mb-8">
-                  ArtKids là nền tảng học vẽ trực tuyến hàng đầu dành cho trẻ em
-                  Việt Nam. Chúng tôi tin rằng nghệ thuật là ngôn ngữ của tâm
-                  hồn.
-                </p>
-                <Button
-                  size="lg"
-                  className="rounded-full bg-slate-900 hover:bg-slate-800 px-8 h-14 text-base"
-                  onClick={() => navigate("/courses")}
-                >
-                  Khám phá khóa học
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </motion.div>
+      <main className="relative">
+        <HeroSection 
+          badgeText="🎨 Let's Get Creative!"
+          title={<>Paint Your <br /><span className="text-primary italic">Imagination</span></>}
+          description="Join Artie and a community of young creators. Discover online courses that turn every day into a colorful masterpiece!"
+          primaryBtnText="Start Painting"
+          secondaryBtnText="View Courses"
+          imageSrc="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80"
+          mascotMode={true}
+          showStats={false}
+        />
 
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="relative"
-              >
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl">
-                  <img
-                    src="https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&h=600&fit=crop"
-                    alt="Children painting"
-                    className="w-full h-[400px] lg:h-[500px] object-cover"
-                  />
-                </div>
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-amber-400 rounded-3xl -z-10" />
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-sky-400 rounded-full -z-10" />
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* Stats Section */}
-        <section className="py-16 bg-slate-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                { number: "10K+", label: "Học viên" },
-                { number: "500+", label: "Bài học" },
-                { number: "50+", label: "Giảng viên" },
-                { number: "4.9", label: "Đánh giá" },
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  className="text-center"
-                >
-                  <p className="text-4xl lg:text-5xl font-bold text-slate-900 mb-2">
-                    {stat.number}
-                  </p>
-                  <p className="text-slate-500">{stat.label}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Mission Section */}
-        <section className="py-20 lg:py-32">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="order-2 lg:order-1 relative"
-              >
-                <div className="grid grid-cols-2 gap-4">
-                  <img
-                    src="https://images.unsplash.com/photo-1596464716127-f2a82984de30?w=400&h=300&fit=crop"
-                    alt="Art class"
-                    className="rounded-2xl h-48 w-full object-cover"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=400&h=300&fit=crop"
-                    alt="Painting"
-                    className="rounded-2xl h-48 w-full object-cover mt-8"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=400&h=300&fit=crop"
-                    alt="Art supplies"
-                    className="rounded-2xl h-48 w-full object-cover"
-                  />
-                  <img
-                    src="https://images.unsplash.com/photo-1551913902-c92207136625?w=400&h=300&fit=crop"
-                    alt="Kids drawing"
-                    className="rounded-2xl h-48 w-full object-cover mt-8"
-                  />
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8 }}
-                className="order-1 lg:order-2"
-              >
-                <span className="inline-block px-4 py-2 bg-amber-100 text-amber-600 rounded-full text-sm font-medium mb-6">
-                  Sứ mệnh
-                </span>
-                <h2 className="text-3xl lg:text-5xl font-bold text-slate-900 leading-tight mb-6">
-                  Nuôi dưỡng tài năng nghệ thuật
-                </h2>
-                <p className="text-lg text-slate-500 leading-relaxed mb-6">
-                  Chúng tôi mong muốn mang đến cho mỗi trẻ em cơ hội được học vẽ
-                  một cách vui vẻ và sáng tạo, giúp các bé tự tin thể hiện bản
-                  thân qua nghệ thuật.
-                </p>
-                <div className="space-y-4">
-                  {[
-                    "Học theo tốc độ riêng",
-                    "Giảng viên tận tâm",
-                    "Chứng chỉ hoàn thành",
-                  ].map((item, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <div className="w-2 h-2 bg-sky-500 rounded-full" />
-                      <span className="text-slate-700">{item}</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-                Bắt đầu hành trình nghệ thuật
+        {/* Popular Courses Section */}
+        <section className="py-24 bg-surface-container-low px-6">
+          <div className="max-w-7xl mx-auto text-center">
+             <h2 className="font-headline font-extrabold text-5xl text-on-background mb-4 relative inline-block">
+                Popular Courses
+                <div className="absolute -bottom-2 left-0 w-full h-4 bg-primary-container/30 -z-10 scrapbook-blob"></div>
               </h2>
-              <p className="text-lg text-white/90 mb-8">
-                Hàng ngàn khóa học đang chờ bé khám phá
-              </p>
-              <Button
-                size="lg"
-                className="rounded-full bg-white text-amber-600 hover:bg-slate-100 px-8 h-14 text-base font-semibold"
-                onClick={() => navigate("/courses")}
-              >
-                Xem khóa học ngay
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </motion.div>
+              <p className="text-on-surface-variant text-lg mb-16 font-medium">Pick a path and start your artistic journey today.</p>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
+                {popularCourses.length > 0 ? (
+                  popularCourses.map((course, index) => (
+                    <motion.div 
+                      key={course._id} 
+                      whileHover={{ y: -10 }} 
+                      onClick={() => navigate(`/course/${course.slug}`)}
+                      className={cn(
+                        "bg-surface-container-lowest rounded-xl overflow-hidden paper-stack hover:shadow-2xl transition-all cursor-pointer",
+                        index === 1 ? "lg:mt-8" : index === 2 ? "lg:-mt-4" : ""
+                      )}
+                    >
+                      <div className="h-64 bg-secondary-container relative overflow-hidden">
+                        <img alt={course.title} className="w-full h-full object-cover" src={course.thumbnail || "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=800"} />
+                        {course.category && (
+                          <div className="absolute top-4 left-4 bg-tertiary-container text-on-tertiary-container px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+                            {course.category}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-8 text-left">
+                        <h3 className="font-headline font-bold text-2xl text-on-background mb-3 line-clamp-1">{course.title}</h3>
+                        <p className="text-on-surface-variant mb-6 line-clamp-2">{course.description}</p>
+                        <div className="flex items-center justify-between border-t border-outline-variant/10 pt-6">
+                          <span className="font-headline font-extrabold text-2xl text-primary">
+                            {course.price === 0 ? "Miễn phí" : `${course.price?.toLocaleString()}đ`}
+                          </span>
+                          <div className="flex items-center gap-1 text-on-surface-variant">
+                            <span className="material-symbols-outlined text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                            <span className="text-sm font-bold">
+                              {(course.averageRating || course.rating || 4.9).toFixed(1)} ({course.totalStudents || course.enrollmentCount || 0})
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))
+                ) : (
+                  // Fallback hoặc Loading khi không có dữ liệu
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-surface-container-low h-[400px] animate-pulse rounded-xl" />
+                  ))
+                )}
+              </div>
+          </div>
+        </section>
+
+
+        {/* Student Masterpieces Gallery */}
+        <section className="py-24 bg-surface px-6 overflow-hidden">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="font-headline font-extrabold text-5xl mb-4">Student Masterpieces</h2>
+              <p className="text-on-surface-variant text-lg font-medium">Check out the amazing art created by our young students!</p>
+            </div>
+            <div className="columns-1 md:columns-2 lg:columns-4 gap-6 space-y-6">
+                {[
+                  { img: "https://images.unsplash.com/photo-1482160545775-568ad363fb7a?q=80&w=600&auto=format&fit=crop", name: "Leo, Age 7", rot: "rotate-2" },
+                  { img: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=600&auto=format&fit=crop", name: "Emma, Age 5", rot: "-rotate-3" },
+                  { img: "https://images.unsplash.com/photo-1560412431-7e8346e96906?q=80&w=600&auto=format&fit=crop", name: "Sophie, Age 10", rot: "rotate-1" },
+                  { img: "https://images.unsplash.com/photo-1564349683136-77e08bef1ef1?q=80&w=600&auto=format&fit=crop", name: "Noah, Age 8", rot: "-rotate-1" }
+                ].map((item, i) => (
+                 <div key={i} className={`break-inside-avoid relative group rounded-xl overflow-hidden paper-stack ${item.rot}`}>
+                  <img alt={item.name} className="w-full h-auto" src={item.img} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-6 flex items-end">
+                    <p className="text-white font-bold">{item.name}</p>
+                  </div>
+                </div>
+               ))}
+            </div>
           </div>
         </section>
       </main>
 
       <Footer />
-    </motion.div>
+    </div>
   );
 }
