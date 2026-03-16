@@ -43,12 +43,16 @@ export function LandingPage() {
     return <AboutPage />;
   }
 
-  // Admin hoặc Staff: redirect đến Dashboard
-  if (user?.role === "admin" || user?.role === "staff") {
+  // Admin, Staff hoặc Instructor: redirect đến Dashboard
+  if (
+    user?.role === "admin" ||
+    user?.role === "staff" ||
+    user?.role === "instructor"
+  ) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // User thường hoặc Instructor: hiển thị trang chủ
+  // User thường: hiển thị trang chủ
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

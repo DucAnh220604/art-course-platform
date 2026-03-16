@@ -99,7 +99,8 @@ export function Dashboard() {
   const navigationItems = getNavigationByRole(userRole);
   const { title, subtitle } = getRoleTitle(userRole);
 
-  const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+  const isAdminOrStaff =
+    userRole === "admin" || userRole === "staff " || userRole === "instructor";
 
   const handleButtonClick = () => {
     if (isAdminOrStaff) {

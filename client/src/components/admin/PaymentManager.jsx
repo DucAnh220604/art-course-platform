@@ -263,7 +263,6 @@ export default function PaymentManager() {
               <option value="paid">Đã thanh toán</option>
               <option value="pending">Đang chờ</option>
               <option value="failed">Thất bại</option>
-              <option value="cancelled">Đã hủy</option>
             </select>
           </div>
 
