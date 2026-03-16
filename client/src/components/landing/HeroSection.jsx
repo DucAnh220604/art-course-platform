@@ -1,99 +1,141 @@
-import { PlayCircle, Award } from "lucide-react";
 import { motion } from "framer-motion";
-import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
-export function HeroSection() {
+export function HeroSection({ 
+  title, 
+  description, 
+  primaryBtnText = "Dùng thử miễn phí",
+  secondaryBtnText = "Xem khóa học",
+  showStats = true,
+  imageSrc,
+  mascotMode = false,
+  badgeText = "🎨 Cùng Bé Sáng Tạo!"
+}) {
   const navigate = useNavigate();
+
+  // Nội dung mặc định (từ LandingPage gốc)
+  const defaultTitle = (
+    <>
+      Khơi Dậy <br />
+      <span className="text-primary italic relative">
+        Sáng Tạo Cùng Bé
+        <svg className="absolute -bottom-2 left-0 w-full h-3 text-primary/20 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+          <path d="M0 5 Q 25 0, 50 5 T 100 5" fill="none" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+        </svg>
+      </span>
+    </>
+  );
+
+  const defaultDescription = "Hàng nghìn họa sĩ nhí đang học vẽ, tô màu và sáng tạo những tác phẩm tuyệt vời cùng các giảng viên chuyên nghiệp!";
+  const defaultImage = "https://images.unsplash.com/photo-1621360841013-c7683c659ec6?q=80&w=800&auto=format&fit=crop";
+
   return (
-    <section className="py-12 lg:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="space-y-6 text-center md:text-left order-2 md:order-1"
-          >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              <span className="bg-gradient-to-r from-sky-600 via-cyan-500 to-teal-500 bg-clip-text text-transparent">
-                Khơi Dậy Sáng Tạo Cùng Bé
-              </span>
-            </h1>
-            <p className="text-lg text-gray-600">
-              Hàng nghìn họa sĩ nhí đang học vẽ, tô màu và sáng tạo những tác
-              phẩm tuyệt vời cùng các giảng viên chuyên nghiệp!
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <Button
-                size="lg"
-                className="rounded-full bg-slate-900 hover:bg-slate-800 px-8 h-12"
-              >
-                Dùng thử miễn phí
-                <PlayCircle className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => navigate("/courses")}
-                className="rounded-full border-slate-300 text-slate-700 hover:bg-slate-50 px-8 h-12"
-              >
-                Xem khóa học
-              </Button>
-            </div>
-            <div className="flex gap-8 pt-6 justify-center md:justify-start">
-              {[
-                { number: "10k+", label: "Học viên", color: "text-sky-600" },
-                { number: "500+", label: "Khóa học", color: "text-orange-500" },
-                { number: "4.9★", label: "Đánh giá", color: "text-green-500" },
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 + index * 0.1 }}
-                  className="text-center md:text-left"
-                >
-                  <div className={`text-3xl font-bold ${stat.color}`}>
-                    {stat.number}
-                  </div>
-                  <div className="text-sm text-gray-500">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative order-1 md:order-2"
-          >
-            <div className="rounded-3xl overflow-hidden shadow-2xl">
-              <img
-                src="https://images.unsplash.com/photo-1610274672835-65a79c852f58?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800"
-                alt="Happy kids drawing"
-                className="w-full h-auto object-cover"
-              />
-            </div>
-            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-amber-400 rounded-3xl -z-10" />
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-sky-400 rounded-full -z-10" />
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-4 -left-4 bg-white rounded-2xl shadow-xl p-4 transform rotate-3"
+    <section className="relative pt-12 pb-24 px-6 overflow-hidden bg-surface font-body">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+        {/* Left Column: Content */}
+        <motion.div 
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="relative z-10"
+        >
+          <div className="inline-block bg-tertiary-container/30 text-on-tertiary-container px-5 py-2 rounded-full font-black text-[10px] uppercase tracking-[0.2em] mb-8 backdrop-blur-sm border border-tertiary-container/10">
+            {badgeText}
+          </div>
+          
+          <h1 className="font-headline font-black text-5xl lg:text-7xl leading-[1.1] text-on-surface tracking-tighter mb-8">
+            {title || defaultTitle}
+          </h1>
+          
+          <p className="text-xl text-on-surface-variant max-w-lg mb-12 leading-relaxed font-medium">
+            {description || defaultDescription}
+          </p>
+          
+          <div className="flex flex-wrap gap-6">
+            <button 
+              onClick={() => navigate("/courses")}
+              className="gummy-button bg-primary text-on-primary font-headline font-black text-lg px-10 py-5 rounded-2xl flex items-center gap-3 shadow-xl"
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Award className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold">Chứng chỉ</div>
-                  <div className="text-xs text-gray-500">Khi hoàn thành</div>
-                </div>
+              {primaryBtnText}
+              <span className="material-symbols-outlined font-black">brush</span>
+            </button>
+            <button 
+              onClick={() => navigate("/courses")}
+              className="px-8 py-5 rounded-2xl border-2 border-outline-variant/10 text-on-surface font-black text-sm uppercase tracking-widest hover:bg-surface-container transition-all"
+            >
+              {secondaryBtnText}
+            </button>
+          </div>
+
+          {showStats && (
+            <div className="mt-12 flex items-center gap-12">
+              <div className="flex flex-col">
+                <span className="text-3xl font-black text-primary tracking-tighter">10k+</span>
+                <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Học viên</span>
               </div>
+              <div className="flex flex-col border-l-2 border-dashed border-outline-variant/10 pl-8">
+                <span className="text-3xl font-black text-secondary tracking-tighter">500+</span>
+                <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Khóa học</span>
+              </div>
+              <div className="flex flex-col border-l-2 border-dashed border-outline-variant/10 pl-8">
+                <span className="text-3xl font-black text-primary tracking-tighter">4.9★</span>
+                <span className="text-[10px] font-black text-on-surface-variant/40 uppercase tracking-widest">Đánh giá</span>
+              </div>
+            </div>
+          )}
+        </motion.div>
+        
+        {/* Right Column: Visuals */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1 }}
+          className="relative"
+        >
+          {/* Main Visual Container */}
+          <div className={cn(
+            "relative z-10 scrapbook-blob w-full aspect-square flex items-center justify-center p-4 overflow-hidden shadow-premium group transition-all duration-700",
+            mascotMode ? "bg-surface-container-highest" : "bg-white p-6"
+          )}>
+            <motion.div 
+              className="w-full h-full rounded-[3rem] overflow-hidden"
+              whileHover={{ scale: 1.02 }}
+            >
+              <img 
+                src={imageSrc || defaultImage} 
+                alt="ArtKids" 
+                className="w-full h-full object-cover rounded-[2rem] transition-transform duration-700 group-hover:scale-110" 
+              />
             </motion.div>
+          </div>
+          
+          {/* Decorative Back Elements */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/5 rounded-full blur-[100px] -z-10"></div>
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-secondary/10 rounded-full blur-3xl animate-pulse"></div>
+          
+          {/* Floating Sticker / Badge */}
+          <motion.div 
+            animate={{ rotate: [-2, 2, -2], y: [0, -15, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -bottom-8 right-0 lg:-right-8 z-20 bg-white/90 backdrop-blur-md p-6 rounded-[2rem] border-2 border-primary/20 shadow-premium max-w-xs rotate-3"
+          >
+            <div className="flex items-center gap-3 mb-2">
+               <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
+                  <span className="material-symbols-outlined text-sm">workspace_premium</span>
+               </div>
+               <h3 className="font-headline font-black text-on-surface uppercase text-[10px] tracking-widest">Chứng chỉ ArtKids</h3>
+            </div>
+            <p className="text-on-surface-variant leading-relaxed font-bold italic text-sm">
+                Nhận chứng chỉ họa sĩ nhí sau khi hoàn thành khóa học nha!
+            </p>
           </motion.div>
-        </div>
+
+          {/* Additional decorative sticker */}
+          <div className="absolute -top-6 -left-6 z-20 bg-amber-400 text-white p-5 rounded-[2rem] shadow-xl rotate-[-15deg] hidden xl:flex items-center justify-center">
+            <span className="material-symbols-outlined text-4xl fill-1">star</span>
+          </div>
+        </motion.div>
       </div>
     </section>
   );
