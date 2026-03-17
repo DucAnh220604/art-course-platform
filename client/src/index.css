@@ -38,6 +38,9 @@
     --color-error                     : #b02500;
     --color-on-error                  : #ffefec;
     
+    --color-destructive               : #b02500;
+    --color-destructive-foreground    : #ffefec;
+    
     --color-surface-container-lowest  : #ffffff;
     --color-surface-container-low     : #ffeee1;
     --color-surface-container         : #ffe3cc;

@@ -20,6 +20,14 @@ import {
 } from "@/components/ui/form";
 import { Header, Footer } from "@/components/landing";
 import { InstructorRequestForm } from "@/components/instructor/InstructorRequestForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 import userApi from "@/api/userApi";
 import { Card } from "@/components/ui/card";
@@ -34,6 +42,15 @@ const profileSchema = z.object({
   parentPhone: z.string().optional(),
 });
 
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
+  newPassword: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Mật khẩu xác nhận không khớp",
+  path: ["confirmPassword"],
+});
+
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { user, loading, refreshUser } = useAuth();
@@ -42,6 +59,8 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [instructorRequestStatus, setInstructorRequestStatus] = useState(null);
   const [showInstructorForm, setShowInstructorForm] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
@@ -58,6 +77,15 @@ export default function ProfilePage() {
       address: user?.address || "",
       parentName: user?.parentName || "",
       parentPhone: user?.parentPhone || "",
+    },
+  });
+
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -157,6 +185,23 @@ export default function ProfilePage() {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const onPasswordSubmit = async (data) => {
+    setIsChangingPassword(true);
+    try {
+      await userApi.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      toast.success("Thành công!", { description: "Đổi mật khẩu thành công." });
+      setShowPasswordDialog(false);
+      passwordForm.reset();
+    } catch (error) {
+      toast.error("Lỗi!", { description: error.response?.data?.message || "Không thể đổi mật khẩu" });
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
@@ -375,12 +420,20 @@ export default function ProfilePage() {
                   </div>
 
                   {!isEditing && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="gummy-button bg-primary px-8 py-3 rounded-xl text-on-primary text-sm font-black shadow-lg"
-                    >
-                      CHỈNH SỬA
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => setShowPasswordDialog(true)}
+                        className="gummy-button bg-secondary px-8 py-3 rounded-xl text-on-secondary text-sm font-black shadow-lg"
+                      >
+                        ĐỔI MẬT KHẨU
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="gummy-button bg-primary px-8 py-3 rounded-xl text-on-primary text-sm font-black shadow-lg"
+                      >
+                        CHỈNH SỬA
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -584,6 +637,93 @@ export default function ProfilePage() {
           email: user?.email || "",
         }}
       />
+
+      {/* Change Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="max-w-md bg-white rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="font-headline font-bold text-2xl mb-2">Đổi mật khẩu</DialogTitle>
+            <DialogDescription className="text-on-surface-variant/80 font-medium">
+              Bạn hãy nhập mật khẩu cũ và mới để thay đổi nhé.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 pt-4">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Mật khẩu hiện tại</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-2 border-outline-variant/10 focus:border-secondary/40 font-bold"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Mật khẩu mới</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-2 border-outline-variant/10 focus:border-secondary/40 font-bold"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Xác nhận mật khẩu mới</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-2 border-outline-variant/10 focus:border-secondary/40 font-bold"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter className="pt-6">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="rounded-xl h-12 px-6"
+                  onClick={() => setShowPasswordDialog(false)}
+                >
+                  Hủy
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isChangingPassword}
+                  className="rounded-xl h-12 px-6 bg-secondary text-on-secondary font-bold shadow-lg"
+                >
+                  {isChangingPassword ? "Đang lưu..." : "Xác nhận"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

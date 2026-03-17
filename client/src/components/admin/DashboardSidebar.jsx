@@ -15,16 +15,13 @@ export function DashboardSidebar({
   const navigate = useNavigate();
   const { logout } = useAuth();
 
-  const isAdminOrStaff =
-    userRole === "admin" || userRole === "staff" || userRole === "instructor";
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
-  const handleButtonClick = () => {
-    if (isAdminOrStaff) {
-      logout();
-      navigate("/login");
-    } else {
-      navigate("/");
-    }
+  const handleGoHome = () => {
+    navigate("/");
   };
 
   const getRoleLabel = () => {
@@ -72,23 +69,25 @@ export function DashboardSidebar({
         </nav>
 
         <div className="mt-8 pt-8 border-t">
-          <Button
-            variant={isAdminOrStaff ? "destructive" : "outline"}
-            className="w-full rounded-lg"
-            onClick={handleButtonClick}
-          >
-            {isAdminOrStaff ? (
-              <>
-                <LogOut className="w-4 h-4 mr-2" />
-                Đăng xuất
-              </>
-            ) : (
-              <>
-                <Home className="w-4 h-4 mr-2" />
-                Về trang chủ
-              </>
-            )}
-          </Button>
+          {(userRole === "admin" || userRole === "staff") ? (
+            <Button
+              variant="destructive"
+              className="w-full rounded-lg"
+              onClick={handleLogout}
+            >
+              <LogOut className="w-4 h-4 mr-2" />
+              Đăng xuất
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              className="w-full rounded-lg"
+              onClick={handleGoHome}
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Về trang chủ
+            </Button>
+          )}
         </div>
       </div>
     </aside>

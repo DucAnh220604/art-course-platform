@@ -7,6 +7,7 @@ const uploadLocal = require("../middleware/uploadLocal");
 const router = express.Router();
 
 router.patch("/profile", protect, userController.updateProfile);
+router.patch("/change-password", protect, userController.changePassword);
 
 router.post(
   "/avatar",

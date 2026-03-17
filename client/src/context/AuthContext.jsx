@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const performLogout = useCallback(() => {
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
     setUser(null);
     setIsAuthenticated(false);
   }, []);
@@ -67,15 +68,29 @@ export const AuthProvider = ({ children }) => {
     const checkLogin = async () => {
       const token = localStorage.getItem("accessToken");
       if (token) {
+        // Optimistic UI: Lấy user từ localStorage nếu có
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+           try {
+              setUser(JSON.parse(storedUser));
+              setIsAuthenticated(true);
+           } catch (e) {
+              console.log("Failed to parse stored user", e);
+           }
+        }
+        
         try {
           const response = await authApi.getMe();
           if (response.data?.success) {
-            setUser(response.data.data.user);
+            const userData = response.data.data.user;
+            setUser(userData);
+            localStorage.setItem("user", JSON.stringify(userData));
             setIsAuthenticated(true);
           }
         } catch (error) {
           console.log("Token invalid:", error);
           localStorage.removeItem("accessToken");
+          localStorage.removeItem("user");
           setIsAuthenticated(false);
           setUser(null);
         }
@@ -100,7 +115,7 @@ export const AuthProvider = ({ children }) => {
         console.log("Token không còn trong localStorage");
         performLogout();
       }
-    }, 30000);
+    }, 1000);
 
     return () => clearInterval(checkTokenInterval);
   }, [isAuthenticated, performLogout]);
@@ -108,15 +123,17 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const response = await authApi.login({ email, password });
     if (response.data?.success) {
+      const userData = response.data.data.user;
       localStorage.setItem("accessToken", response.data.token);
-      setUser(response.data.data.user);
+      localStorage.setItem("user", JSON.stringify(userData));
+      setUser(userData);
       setIsAuthenticated(true);
 
       if (channelRef.current) {
         channelRef.current.postMessage({ type: "LOGIN" });
       }
 
-      return { success: true };
+      return { success: true, user: userData };
     }
     throw new Error("Đăng nhập thất bại");
   };
@@ -125,7 +142,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authApi.getMe();
       if (response.data?.success) {
-        setUser(response.data.data.user);
+        const userData = response.data.data.user;
+        setUser(userData);
+        localStorage.setItem("user", JSON.stringify(userData));
       }
     } catch (error) {
       console.log("Refresh user failed:", error);

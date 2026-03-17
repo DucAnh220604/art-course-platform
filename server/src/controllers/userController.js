@@ -1,10 +1,41 @@
 const userService = require("../services/userService");
+const authService = require("../services/authService");
 const User = require("../models/User");
 const Course = require("../models/Course");
 const Combo = require("../models/Combo");
 const Payment = require("../models/Payment");
 const Section = require("../models/Section");
 const LessonProgress = require("../models/LessonProgress");
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới." });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Người dùng không tồn tại." });
+    }
+
+    const isMatch = await user.correctPassword(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Mật khẩu hiện tại không chính xác." });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Đổi mật khẩu thành công!",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 exports.updateProfile = async (req, res) => {
   try {

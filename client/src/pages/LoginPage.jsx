@@ -41,13 +41,22 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await login(data.email, data.password);
+      const result = await login(data.email, data.password);
       toast.success("🎨 Chào mừng bé quay lại!", {
         description: "Đăng nhập thành công. Cùng vẽ tranh nào!",
         duration: 2000,
       });
 
-      navigate("/");
+      const r = String(result.user?.role || "").toLowerCase().trim();
+      if (
+        r === "admin" ||
+        r === "staff" ||
+        r === "instructor"
+      ) {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       const serverMessage = error.response?.data?.message;
       let friendlyMessage = "Có lỗi xảy ra, bé thử lại nhé!";
