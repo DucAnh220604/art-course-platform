@@ -126,7 +126,7 @@ export default function ReportsPanel({ role }) {
               bg: "bg-indigo-100",
             },
             {
-              label: "Tổng instructor",
+              label: "Tổng giảng viên",
               value: stats.roleCount?.instructor || 0,
               icon: UserCheck,
               color: "text-amber-600",

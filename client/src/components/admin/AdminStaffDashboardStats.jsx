@@ -51,7 +51,7 @@ export default function AdminStaffDashboardStats({ role }) {
 
   const adminCards = [
     {
-      label: "Tổng Users",
+      label: "Tổng người dùng",
       value: stats.dashboard?.admin?.totalUsers ?? stats.totalUsers ?? 0,
       icon: Users,
       color: "blue",
@@ -78,13 +78,13 @@ export default function AdminStaffDashboardStats({ role }) {
 
   const staffCards = [
     {
-      label: "Users hoạt động",
+      label: "Người dùng đang hoạt động",
       value: stats.dashboard?.staff?.activeUsers ?? stats.activeUsers ?? 0,
       icon: Users,
       color: "blue",
     },
     {
-      label: "Yêu cầu Instructor",
+      label: "Yêu cầu giảng viên",
       value: stats.dashboard?.staff?.pendingInstructorRequests ?? 0,
       icon: Clock,
       color: "orange",

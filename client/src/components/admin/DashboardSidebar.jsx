@@ -10,7 +10,7 @@ export function DashboardSidebar({
   navigationItems,
   icons,
   userRole,
-  title = "Dashboard",
+  title = "Tổng quan",
 }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -27,18 +27,18 @@ export function DashboardSidebar({
   const getRoleLabel = () => {
     switch (userRole) {
       case "admin":
-        return "Administrator";
+        return "Quản trị viên";
       case "staff":
-        return "Staff Panel";
+        return "Nhân viên";
       case "instructor":
-        return "Instructor Panel";
+        return "Giảng viên";
       default:
-        return "Dashboard";
+        return "Tổng quan";
     }
   };
 
   return (
-    <aside className="w-64 bg-white border-r min-h-screen sticky top-0 hidden md:block">
+    <aside className="w-72 bg-white border-r min-h-screen sticky top-0 hidden md:block">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
           <ArtKidsLogo className="w-10 h-10" />
@@ -62,14 +62,16 @@ export function DashboardSidebar({
                 }`}
               >
                 {Icon && <Icon className="w-5 h-5" />}
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium whitespace-nowrap">
+                  {item.label}
+                </span>
               </button>
             );
           })}
         </nav>
 
         <div className="mt-8 pt-8 border-t">
-          {(userRole === "admin" || userRole === "staff") ? (
+          {userRole === "admin" || userRole === "staff" ? (
             <Button
               variant="destructive"
               className="w-full rounded-lg"

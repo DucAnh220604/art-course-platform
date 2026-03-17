@@ -180,27 +180,27 @@ export function InstructorRequests() {
     switch (status) {
       case "pending":
         return (
-          <Badge variant="secondary">
+          <Badge className="bg-amber-500 text-white">
             <Clock className="w-3 h-3 mr-1" />
             Đang chờ
           </Badge>
         );
       case "approved":
         return (
-          <Badge className="bg-green-500">
+          <Badge className="bg-green-500 text-white">
             <CheckCircle className="w-3 h-3 mr-1" />
             Đã duyệt
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="destructive">
+          <Badge className="bg-red-500 text-white">
             <XCircle className="w-3 h-3 mr-1" />
             Từ chối
           </Badge>
         );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <Badge className="bg-slate-500 text-white">{status}</Badge>;
     }
   };
 
@@ -239,9 +239,9 @@ export function InstructorRequests() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Yêu cầu Instructor</h1>
+        <h1 className="text-3xl font-bold mb-2">Yêu cầu giảng viên</h1>
         <p className="text-gray-600">
-          Duyệt các yêu cầu đăng ký làm Instructor từ người dùng
+          Duyệt các yêu cầu đăng ký làm giảng viên từ người dùng
         </p>
       </div>
 

@@ -54,126 +54,114 @@ export function ContactPage() {
       icon: Mail,
       label: "Email",
       value: "hello@artkids.vn",
-      color: "sky",
+      iconClass: "text-primary",
+      bgClass: "bg-primary-container",
     },
     {
       icon: Phone,
       label: "Điện thoại",
       value: "0909 123 456",
-      color: "emerald",
+      iconClass: "text-secondary",
+      bgClass: "bg-secondary-container",
     },
     {
       icon: MapPin,
       label: "Địa chỉ",
       value: "123 Nguyễn Huệ, Q.1, TP.HCM",
-      color: "amber",
+      iconClass: "text-tertiary",
+      bgClass: "bg-tertiary-container",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Header onNavigate={navigate} />
-      </div>
+    <div className="bg-surface font-body text-on-surface min-h-screen overflow-x-hidden">
+      <Header onNavigate={navigate} />
 
-      <main className="overflow-x-hidden">
-        {/* Hero Section */}
-        <section className="py-20 lg:py-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main>
+        <section className="relative px-6 pt-16 pb-20 overflow-hidden">
+          <div className="absolute -top-20 -left-10 w-72 h-72 bg-primary-container/30 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-20 -right-10 w-80 h-80 bg-secondary-container/30 rounded-full blur-3xl"></div>
+
+          <div className="max-w-7xl mx-auto relative z-10">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center max-w-2xl mx-auto mb-16"
+              transition={{ duration: 0.5 }}
+              className="mb-14 text-center"
             >
-              <span className="inline-block px-4 py-2 bg-sky-100 text-sky-600 rounded-full text-sm font-medium mb-6">
-                Liên hệ
+              <span className="inline-block text-[10px] font-black uppercase tracking-[0.22em] text-primary bg-primary-container px-5 py-2 rounded-full mb-6">
+                Liên hệ ArtKids
               </span>
-              <h1 className="text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
-                Hãy kết nối với chúng tôi
+              <h1 className="font-headline text-5xl md:text-7xl font-black leading-tight text-on-surface mb-5">
+                Chúng Mình Lắng Nghe
+                <span className="block italic text-primary">
+                  Mọi Điều Từ Bé
+                </span>
               </h1>
-              <p className="text-lg text-slate-500">
-                Bạn có câu hỏi hoặc cần hỗ trợ? Chúng tôi luôn sẵn sàng lắng
-                nghe.
+              <p className="text-on-surface-variant text-lg max-w-2xl mx-auto font-medium">
+                Có thắc mắc về khóa học, đơn hàng hay tài khoản? Gửi lời nhắn
+                cho ArtKids, đội ngũ sẽ phản hồi sớm nhất có thể.
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 lg:gap-16">
-              {/* Contact Info */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
               <motion.div
-                initial={{ opacity: 0, x: -30 }}
+                initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="lg:col-span-2 space-y-8"
+                transition={{ duration: 0.45, delay: 0.1 }}
+                className="lg:col-span-2 space-y-5"
               >
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-6">
-                    Thông tin liên hệ
-                  </h2>
-                  <p className="text-slate-500 mb-8">
-                    Hãy liên hệ với chúng tôi qua các kênh dưới đây hoặc gửi tin
-                    nhắn trực tiếp.
-                  </p>
-                </div>
-
-                <div className="space-y-6">
-                  {contactItems.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: 0.3 + index * 0.1 }}
-                      className="flex items-start gap-4"
-                    >
+                {contactItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="bg-surface-container-lowest rounded-3xl p-6 border border-outline-variant/10 shadow-sm scrapbook-card"
+                  >
+                    <div className="flex items-start gap-4">
                       <div
-                        className={`w-12 h-12 rounded-2xl bg-${item.color}-50 flex items-center justify-center shrink-0`}
+                        className={`w-12 h-12 rounded-2xl ${item.bgClass} flex items-center justify-center shrink-0`}
                       >
-                        <item.icon
-                          className={`w-5 h-5 text-${item.color}-500`}
-                        />
+                        <item.icon className={`w-5 h-5 ${item.iconClass}`} />
                       </div>
                       <div>
-                        <p className="text-sm text-slate-400 mb-1">
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant/50 mb-1">
                           {item.label}
                         </p>
-                        <p className="font-medium text-slate-900">
+                        <p className="font-headline text-lg font-bold text-on-surface">
                           {item.value}
                         </p>
                       </div>
-                    </motion.div>
-                  ))}
-                </div>
+                    </div>
+                  </div>
+                ))}
 
-                {/* Decorative Image */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  className="hidden lg:block pt-8"
-                >
+                <div className="rounded-3xl overflow-hidden border border-outline-variant/10 shadow-sm">
                   <img
-                    src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600&h=400&fit=crop"
-                    alt="Contact"
-                    className="rounded-3xl w-full h-48 object-cover"
+                    src="https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&h=500&fit=crop"
+                    alt="ArtKids contact"
+                    className="w-full h-56 object-cover"
                   />
-                </motion.div>
+                </div>
               </motion.div>
 
-              {/* Contact Form */}
               <motion.div
-                initial={{ opacity: 0, x: 30 }}
+                initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
+                transition={{ duration: 0.45, delay: 0.15 }}
                 className="lg:col-span-3"
               >
-                <div className="bg-slate-50 rounded-3xl p-8 lg:p-10">
-                  <h2 className="text-2xl font-bold text-slate-900 mb-6">
-                    Gửi tin nhắn
+                <div className="bg-surface-container-low rounded-[2rem] p-8 md:p-10 border-2 border-dashed border-outline-variant/20 shadow-premium">
+                  <h2 className="font-headline text-3xl md:text-4xl font-black text-on-surface mb-2">
+                    Gửi tin nhắn cho ArtKids
                   </h2>
-                  <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <p className="text-on-surface-variant font-medium mb-8">
+                    Điền thông tin bên dưới, chúng mình sẽ phản hồi trong vòng
+                    24 giờ làm việc.
+                  </p>
+
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant/60 mb-2 pl-1">
                           Họ và tên
                         </label>
                         <Input
@@ -181,11 +169,11 @@ export function ContactPage() {
                           value={formData.name}
                           onChange={handleChange}
                           placeholder="Nhập họ tên"
-                          className="h-12 rounded-xl border-slate-200 bg-white focus:border-sky-500 focus:ring-sky-500"
+                          className="h-12 rounded-2xl border-2 border-outline-variant/10 bg-white font-bold"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant/60 mb-2 pl-1">
                           Email
                         </label>
                         <Input
@@ -194,36 +182,32 @@ export function ContactPage() {
                           value={formData.email}
                           onChange={handleChange}
                           placeholder="email@example.com"
-                          className="h-12 rounded-xl border-slate-200 bg-white focus:border-sky-500 focus:ring-sky-500"
+                          className="h-12 rounded-2xl border-2 border-outline-variant/10 bg-white font-bold"
                         />
                       </div>
                     </div>
+
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <label className="block text-[10px] font-black uppercase tracking-[0.18em] text-on-surface-variant/60 mb-2 pl-1">
                         Nội dung tin nhắn
                       </label>
                       <Textarea
                         name="message"
                         value={formData.message}
                         onChange={handleChange}
-                        placeholder="Bạn muốn hỏi điều gì?"
+                        placeholder="Bạn muốn ArtKids hỗ trợ điều gì?"
                         rows={6}
-                        className="rounded-xl border-slate-200 bg-white resize-none focus:border-sky-500 focus:ring-sky-500"
+                        className="rounded-2xl border-2 border-outline-variant/10 bg-white resize-none font-medium"
                       />
                     </div>
+
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full h-14 rounded-xl bg-slate-900 hover:bg-slate-800 text-base font-medium"
+                      className="w-full h-14 rounded-2xl gummy-button bg-primary text-on-primary font-headline font-black text-base"
                     >
-                      {isSubmitting ? (
-                        "Đang gửi..."
-                      ) : (
-                        <>
-                          Gửi tin nhắn
-                          <Send className="w-4 h-4 ml-2" />
-                        </>
-                      )}
+                      {isSubmitting ? "ĐANG GỬI..." : "GỬI TIN NHẮN"}
+                      <Send className="w-4 h-4 ml-2" />
                     </Button>
                   </form>
                 </div>
@@ -232,30 +216,22 @@ export function ContactPage() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-16 bg-gradient-to-r from-sky-400 via-cyan-400 to-teal-400">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
+        <section className="px-6 pb-20">
+          <div className="max-w-5xl mx-auto bg-primary-container/40 rounded-[2.5rem] p-8 md:p-12 border border-outline-variant/10 text-center">
+            <h3 className="font-headline text-3xl md:text-4xl font-black text-on-surface mb-3">
+              Sẵn sàng cho buổi học tiếp theo?
+            </h3>
+            <p className="text-on-surface-variant font-medium mb-8">
+              Khám phá thêm các khóa học vẽ vui nhộn dành cho bé.
+            </p>
+            <Button
+              size="lg"
+              className="rounded-full bg-white text-primary hover:bg-surface px-8 h-12 font-black"
+              onClick={() => navigate("/courses")}
             >
-              <h2 className="text-2xl lg:text-3xl font-bold text-white mb-4">
-                Sẵn sàng bắt đầu học vẽ?
-              </h2>
-              <p className="text-white/90 mb-8">
-                Khám phá hàng trăm khóa học thú vị dành cho bé
-              </p>
-              <Button
-                size="lg"
-                className="rounded-full bg-white text-cyan-600 hover:bg-slate-100 px-8 h-12 font-semibold"
-                onClick={() => navigate("/courses")}
-              >
-                Xem khóa học
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </motion.div>
+              Xem khóa học
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
           </div>
         </section>
       </main>

@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Users,
   BookOpen,
-  FileText,
   CreditCard,
   BarChart3,
   UserCheck,
@@ -37,38 +36,36 @@ const getNavigationByRole = (role) => {
   switch (role) {
     case "admin":
       return [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { id: "users", label: "Quản lý Users", icon: Users },
+        { id: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
+        { id: "users", label: "Quản lý người dùng", icon: Users },
         {
           id: "instructor-requests",
-          label: "Yêu cầu Instructor",
+          label: "Yêu cầu giảng viên",
           icon: UserCheck,
         },
-        { id: "courses", label: "Quản lý Khóa học", icon: BookOpen },
-        { id: "combos", label: "Quản lý Combo", icon: Package },
+        { id: "courses", label: "Quản lý khóa học", icon: BookOpen },
+        { id: "combos", label: "Quản lý gói học", icon: Package },
         { id: "contact", label: "Tin nhắn liên hệ", icon: Mail },
-        { id: "posts", label: "Quản lý Bài viết", icon: FileText },
         { id: "payments", label: "Giao dịch", icon: CreditCard },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
       ];
     case "staff":
       return [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-        { id: "users", label: "Quản lý Tài khoản", icon: Users },
+        { id: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
+        { id: "users", label: "Quản lý tài khoản", icon: Users },
         {
           id: "instructor-requests",
-          label: "Yêu cầu Instructor",
+          label: "Yêu cầu giảng viên",
           icon: UserCheck,
         },
         { id: "contact", label: "Tin nhắn liên hệ", icon: Mail },
-        { id: "posts", label: "Quản lý Bài viết", icon: FileText },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
       ];
     case "instructor":
       return [
-        { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { id: "dashboard", label: "Tổng quan", icon: LayoutDashboard },
         { id: "my-courses", label: "Khóa học của tôi", icon: BookOpen },
-        { id: "my-combos", label: "Combo của tôi", icon: Package },
+        { id: "my-combos", label: "Gói học của tôi", icon: Package },
         { id: "orders", label: "Lịch sử đơn hàng", icon: ShoppingBag },
         { id: "reports", label: "Báo cáo", icon: BarChart3 },
       ];
@@ -80,13 +77,13 @@ const getNavigationByRole = (role) => {
 const getRoleTitle = (role) => {
   switch (role) {
     case "admin":
-      return { title: "Admin Panel", subtitle: "Quản trị viên" };
+      return { title: "Bảng quản trị", subtitle: "Quản trị viên" };
     case "staff":
-      return { title: "Staff Panel", subtitle: "Nhân viên" };
+      return { title: "Bảng quản trị", subtitle: "Nhân viên" };
     case "instructor":
-      return { title: "Instructor Panel", subtitle: "Giảng viên" };
+      return { title: "Bảng giảng viên", subtitle: "Giảng viên" };
     default:
-      return { title: "Dashboard", subtitle: "" };
+      return { title: "Tổng quan", subtitle: "" };
   }
 };
 
@@ -148,7 +145,7 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className="w-64 bg-white border-r min-h-screen sticky top-0 hidden md:block">
+      <aside className="w-72 bg-white border-r min-h-screen sticky top-0 hidden md:block">
         <div className="p-6">
           <div className="flex items-center gap-3 mb-8">
             <ArtKidsLogo className="w-10 h-10" />
@@ -170,13 +167,15 @@ export function Dashboard() {
                 }`}
               >
                 <item.icon className="w-5 h-5" />
-                <span className="font-medium">{item.label}</span>
+                <span className="font-medium whitespace-nowrap">
+                  {item.label}
+                </span>
               </button>
             ))}
           </nav>
 
           <div className="mt-8 pt-8 border-t">
-            {(userRole === "admin" || userRole === "staff") ? (
+            {userRole === "admin" || userRole === "staff" ? (
               <Button
                 variant="outline"
                 className="w-full rounded-lg bg-red-500 text-white hover:bg-red-600 hover:text-white border-transparent"
@@ -205,7 +204,7 @@ export function Dashboard() {
             <ArtKidsLogo className="w-8 h-8" />
             <span className="font-bold text-gray-900">{title}</span>
           </div>
-          {(userRole === "admin" || userRole === "staff") ? (
+          {userRole === "admin" || userRole === "staff" ? (
             <Button
               variant="outline"
               size="sm"

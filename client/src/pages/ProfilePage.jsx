@@ -42,14 +42,16 @@ const profileSchema = z.object({
   parentPhone: z.string().optional(),
 });
 
-const passwordSchema = z.object({
-  currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
-  newPassword: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
-  confirmPassword: z.string()
-}).refine((data) => data.newPassword === data.confirmPassword, {
-  message: "Mật khẩu xác nhận không khớp",
-  path: ["confirmPassword"],
-});
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
+    newPassword: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp",
+    path: ["confirmPassword"],
+  });
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -199,7 +201,9 @@ export default function ProfilePage() {
       setShowPasswordDialog(false);
       passwordForm.reset();
     } catch (error) {
-      toast.error("Lỗi!", { description: error.response?.data?.message || "Không thể đổi mật khẩu" });
+      toast.error("Lỗi!", {
+        description: error.response?.data?.message || "Không thể đổi mật khẩu",
+      });
     } finally {
       setIsChangingPassword(false);
     }
@@ -241,14 +245,17 @@ export default function ProfilePage() {
           >
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl bg-tertiary text-on-tertiary flex items-center justify-center flex-shrink-0 shadow-lg">
-                <span className="material-symbols-outlined text-3xl">schedule</span>
+                <span className="material-symbols-outlined text-3xl">
+                  schedule
+                </span>
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-headline font-bold text-on-tertiary-container mb-1">
                   ⏳ Đang chờ xét duyệt
                 </h3>
                 <p className="text-on-tertiary-container text-sm font-medium leading-relaxed">
-                  Yêu cầu trở thành giảng viên của bạn đang được xem xét. Artie sẽ thông báo kết quả cho bé sớm nha!
+                  Yêu cầu trở thành giảng viên của bạn đang được xem xét. Artie
+                  sẽ thông báo kết quả cho bé sớm nha!
                 </p>
               </div>
             </div>
@@ -263,14 +270,17 @@ export default function ProfilePage() {
           >
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl bg-primary text-on-primary flex items-center justify-center flex-shrink-0 shadow-lg">
-                <span className="material-symbols-outlined text-3xl">check_circle</span>
+                <span className="material-symbols-outlined text-3xl">
+                  check_circle
+                </span>
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-headline font-bold text-on-primary-container mb-1">
                   🎉 Yêu cầu đã được duyệt!
                 </h3>
                 <p className="text-on-primary-container text-sm font-medium leading-relaxed">
-                  Chúc mừng! Bạn đã trở thành giảng viên. Hãy bắt đầu chia sẻ những bài học vẽ tuyệt vời nhé!
+                  Chúc mừng! Bạn đã trở thành giảng viên. Hãy bắt đầu chia sẻ
+                  những bài học vẽ tuyệt vời nhé!
                 </p>
               </div>
             </div>
@@ -285,7 +295,9 @@ export default function ProfilePage() {
           >
             <div className="flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl bg-error text-on-error flex items-center justify-center flex-shrink-0 shadow-lg">
-                <span className="material-symbols-outlined text-3xl">error</span>
+                <span className="material-symbols-outlined text-3xl">
+                  error
+                </span>
               </div>
               <div className="flex-1">
                 <h3 className="text-xl font-headline font-bold text-error mb-1">
@@ -293,7 +305,9 @@ export default function ProfilePage() {
                 </h3>
                 {user?.instructorRequestData?.rejectionReason && (
                   <div className="bg-white/50 border border-error/10 rounded-xl p-3 mb-4">
-                    <p className="text-error text-xs font-black uppercase mb-1">Lý do từ chối:</p>
+                    <p className="text-error text-xs font-black uppercase mb-1">
+                      Lý do từ chối:
+                    </p>
                     <p className="text-on-surface text-sm font-medium italic">
                       "{user.instructorRequestData.rejectionReason}"
                     </p>
@@ -318,14 +332,17 @@ export default function ProfilePage() {
           >
             <div className="flex flex-col md:flex-row items-center gap-6">
               <div className="w-20 h-20 rounded-3xl bg-secondary text-on-secondary flex items-center justify-center flex-shrink-0 shadow-xl rotate-3">
-                <span className="material-symbols-outlined text-5xl">school</span>
+                <span className="material-symbols-outlined text-5xl">
+                  school
+                </span>
               </div>
               <div className="flex-1 text-center md:text-left">
                 <h3 className="text-2xl font-headline font-black text-on-secondary-container mb-2">
                   ✨ Bé muốn làm Giảng viên?
                 </h3>
                 <p className="text-on-secondary-container text-sm font-medium leading-relaxed max-w-md">
-                  Bạn có tài năng vẽ tuyệt đẹp? Hãy tham gia cùng gia đình ArtKids để truyền cảm hứng cho hàng ngàn bạn nhỏ khác nhé!
+                  Bạn có tài năng vẽ tuyệt đẹp? Hãy tham gia cùng gia đình
+                  ArtKids để truyền cảm hứng cho hàng ngàn bạn nhỏ khác nhé!
                 </p>
               </div>
               <button
@@ -351,7 +368,9 @@ export default function ProfilePage() {
           >
             <span className="material-symbols-outlined text-6xl">palette</span>
           </motion.div>
-          <p className="text-on-surface-variant font-bold text-xl font-headline animate-pulse">Artie đang chuẩn bị chút xíu...</p>
+          <p className="text-on-surface-variant font-bold text-xl font-headline animate-pulse">
+            Artie đang chuẩn bị chút xíu...
+          </p>
         </div>
       </div>
     );
@@ -370,17 +389,21 @@ export default function ProfilePage() {
           >
             {/* Decorative stickers */}
             <div className="absolute -top-10 -left-10 w-24 h-24 rotate-[-15deg] hidden lg:block select-none pointer-events-none">
-              <span className="material-symbols-outlined text-8xl text-primary/20">brush</span>
+              <span className="material-symbols-outlined text-8xl text-primary/20">
+                brush
+              </span>
             </div>
             <div className="absolute -bottom-10 -right-10 w-24 h-24 rotate-[20deg] hidden lg:block select-none pointer-events-none">
-              <span className="material-symbols-outlined text-8xl text-secondary/20">auto_awesome</span>
+              <span className="material-symbols-outlined text-8xl text-secondary/20">
+                auto_awesome
+              </span>
             </div>
 
             <Card className="overflow-hidden border-none shadow-premium bg-white rounded-[2.5rem] relative z-10 transition-all hover:shadow-2xl">
               {/* Profile Header Block */}
               <div className="bg-surface-container px-8 sm:px-12 pt-12 pb-10 border-b border-outline-variant/10 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-                
+
                 <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
                   <div className="relative group">
                     <div className="absolute inset-0 bg-primary-container rounded-[2rem] rotate-6 scale-105 group-hover:rotate-12 transition-transform"></div>
@@ -398,7 +421,9 @@ export default function ProfilePage() {
                       {isUploadingAvatar ? (
                         <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <span className="material-symbols-outlined text-xl">photo_camera</span>
+                        <span className="material-symbols-outlined text-xl">
+                          photo_camera
+                        </span>
                       )}
                     </button>
                   </div>
@@ -407,13 +432,17 @@ export default function ProfilePage() {
                     <h2 className="text-4xl sm:text-5xl font-headline font-black text-on-surface mb-2 tracking-tight">
                       {user?.fullname || user?.username}
                     </h2>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-on-surface-variant font-bold text-sm">
+                    <div className="flex flex-col gap-2 text-on-surface-variant font-bold text-sm">
                       <div className="flex items-center justify-center sm:justify-start gap-1">
-                        <span className="material-symbols-outlined text-sm text-primary">mail</span>
+                        <span className="material-symbols-outlined text-sm text-primary">
+                          mail
+                        </span>
                         {user?.email}
                       </div>
                       <div className="flex items-center justify-center sm:justify-start gap-1">
-                        <span className="material-symbols-outlined text-sm text-secondary">calendar_today</span>
+                        <span className="material-symbols-outlined text-sm text-secondary">
+                          calendar_today
+                        </span>
                         Gia nhập: {formatDate(user?.createdAt)}
                       </div>
                     </div>
@@ -449,16 +478,20 @@ export default function ProfilePage() {
                       <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-8">
                           <div className="h-8 w-1.5 bg-primary rounded-full"></div>
-                          <h3 className="text-2xl font-headline font-bold">Hồ sơ của bé</h3>
+                          <h3 className="text-2xl font-headline font-bold">
+                            Hồ sơ của bé
+                          </h3>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
                             name="fullname"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Họ và tên</FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                                  Họ và tên
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="Vẽ tên bé ở đây..."
@@ -475,7 +508,9 @@ export default function ProfilePage() {
                             name="phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Số điện thoại</FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                                  Số điện thoại
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="Điện thoại của bé..."
@@ -492,7 +527,9 @@ export default function ProfilePage() {
                             name="birthday"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Ngày sinh nhật</FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                                  Ngày sinh nhật
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     type="date"
@@ -509,7 +546,9 @@ export default function ProfilePage() {
                             name="address"
                             render={({ field }) => (
                               <FormItem className="sm:col-span-2">
-                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Nhà của bé ở...</FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                                  Nhà của bé ở...
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="Nhập địa chỉ nhà bé nha..."
@@ -527,16 +566,20 @@ export default function ProfilePage() {
                       <div className="space-y-6 pt-4">
                         <div className="flex items-center gap-3 mb-8">
                           <div className="h-8 w-1.5 bg-secondary rounded-full"></div>
-                          <h3 className="text-2xl font-headline font-bold text-secondary">Thông tin phụ huynh</h3>
+                          <h3 className="text-2xl font-headline font-bold text-secondary">
+                            Thông tin phụ huynh
+                          </h3>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
                             name="parentName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Tên Ba/Mẹ</FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                                  Tên Ba/Mẹ
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="Tên Ba/Mẹ bé đó..."
@@ -553,7 +596,9 @@ export default function ProfilePage() {
                             name="parentPhone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">SĐT liên lạc</FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                                  SĐT liên lạc
+                                </FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="Ba mẹ số mấy nè..."
@@ -591,31 +636,64 @@ export default function ProfilePage() {
                     <div className="space-y-8">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-1.5 bg-primary rounded-full"></div>
-                        <h3 className="text-2xl font-headline font-bold">Hồ sơ họa sĩ</h3>
+                        <h3 className="text-2xl font-headline font-bold">
+                          Hồ sơ họa sĩ
+                        </h3>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <InfoItemUI label="Họ và tên" value={user?.fullname} icon="person" />
-                        <InfoItemUI label="Email bé" value={user?.email} icon="mail" />
-                        <InfoItemUI label="Số điện thoại" value={user?.phone} icon="call" />
-                        <InfoItemUI label="Sinh nhật" value={formatDate(user?.birthday)} icon="cake" />
-                        <InfoItemUI label="Địa chỉ nhà" value={user?.address} icon="location_on" className="sm:col-span-2" />
+                        <InfoItemUI
+                          label="Họ và tên"
+                          value={user?.fullname}
+                          icon="person"
+                        />
+                        <InfoItemUI
+                          label="Email bé"
+                          value={user?.email}
+                          icon="mail"
+                        />
+                        <InfoItemUI
+                          label="Số điện thoại"
+                          value={user?.phone}
+                          icon="call"
+                        />
+                        <InfoItemUI
+                          label="Sinh nhật"
+                          value={formatDate(user?.birthday)}
+                          icon="cake"
+                        />
+                        <InfoItemUI
+                          label="Địa chỉ nhà"
+                          value={user?.address}
+                          icon="location_on"
+                          className="sm:col-span-2"
+                        />
                       </div>
                     </div>
 
                     <div className="space-y-8">
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-1.5 bg-secondary rounded-full"></div>
-                        <h3 className="text-2xl font-headline font-bold text-secondary">Ba Mẹ yêu thương</h3>
+                        <h3 className="text-2xl font-headline font-bold text-secondary">
+                          Ba Mẹ yêu thương
+                        </h3>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <InfoItemUI label="Tên Ba/Mẹ" value={user?.parentName} icon="family_history" color="secondary" />
-                        <InfoItemUI label="SĐT Ba/Mẹ" value={user?.parentPhone} icon="contact_phone" color="secondary" />
+                        <InfoItemUI
+                          label="Tên Ba/Mẹ"
+                          value={user?.parentName}
+                          icon="family_history"
+                          color="secondary"
+                        />
+                        <InfoItemUI
+                          label="SĐT Ba/Mẹ"
+                          value={user?.parentPhone}
+                          icon="contact_phone"
+                          color="secondary"
+                        />
                       </div>
                     </div>
 
-                    <div className="pt-6">
-                      {getInstructorRequestUI()}
-                    </div>
+                    <div className="pt-6">{getInstructorRequestUI()}</div>
                   </div>
                 )}
               </div>
@@ -642,19 +720,26 @@ export default function ProfilePage() {
       <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
         <DialogContent className="max-w-md bg-white rounded-3xl p-6">
           <DialogHeader>
-            <DialogTitle className="font-headline font-bold text-2xl mb-2">Đổi mật khẩu</DialogTitle>
+            <DialogTitle className="font-headline font-bold text-2xl mb-2">
+              Đổi mật khẩu
+            </DialogTitle>
             <DialogDescription className="text-on-surface-variant/80 font-medium">
               Bạn hãy nhập mật khẩu cũ và mới để thay đổi nhé.
             </DialogDescription>
           </DialogHeader>
           <Form {...passwordForm}>
-            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 pt-4">
+            <form
+              onSubmit={passwordForm.handleSubmit(onPasswordSubmit)}
+              className="space-y-4 pt-4"
+            >
               <FormField
                 control={passwordForm.control}
                 name="currentPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Mật khẩu hiện tại</FormLabel>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                      Mật khẩu hiện tại
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -672,7 +757,9 @@ export default function ProfilePage() {
                 name="newPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Mật khẩu mới</FormLabel>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                      Mật khẩu mới
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -690,7 +777,9 @@ export default function ProfilePage() {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Xác nhận mật khẩu mới</FormLabel>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">
+                      Xác nhận mật khẩu mới
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="password"
@@ -704,16 +793,16 @@ export default function ProfilePage() {
                 )}
               />
               <DialogFooter className="pt-6">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="rounded-xl h-12 px-6"
                   onClick={() => setShowPasswordDialog(false)}
                 >
                   Hủy
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isChangingPassword}
                   className="rounded-xl h-12 px-6 bg-secondary text-on-secondary font-bold shadow-lg"
                 >
@@ -729,21 +818,37 @@ export default function ProfilePage() {
 }
 
 function InfoItemUI({ label, value, icon, className = "", color = "primary" }) {
-  const colorClass = color === "primary" ? "bg-primary-container text-primary" : "bg-secondary-container text-secondary";
-  
+  const colorClass =
+    color === "primary"
+      ? "bg-primary-container text-primary"
+      : "bg-secondary-container text-secondary";
+
   return (
-    <div className={cn(
-      "relative bg-white p-6 rounded-[1.5rem] border border-outline-variant/10 shadow-sm transition-all hover:shadow-md hover:translate-y-[-2px]",
-      className
-    )}>
+    <div
+      className={cn(
+        "relative bg-white p-6 rounded-[1.5rem] border border-outline-variant/10 shadow-sm transition-all hover:shadow-md hover:translate-y-[-2px]",
+        className,
+      )}
+    >
       <div className="flex items-start gap-4">
-        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm", colorClass)}>
+        <div
+          className={cn(
+            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
+            colorClass,
+          )}
+        >
           <span className="material-symbols-outlined text-xl">{icon}</span>
         </div>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-on-surface-variant/40 mb-1 leading-none">{label}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-on-surface-variant/40 mb-1 leading-none">
+            {label}
+          </p>
           <p className="font-headline font-bold text-lg text-on-surface leading-snug">
-            {value || <span className="text-on-surface-variant/20 italic font-normal">Chưa cập nhật</span>}
+            {value || (
+              <span className="text-on-surface-variant/20 italic font-normal">
+                Chưa cập nhật
+              </span>
+            )}
           </p>
         </div>
       </div>
