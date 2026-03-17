@@ -361,7 +361,7 @@ export function CartPage() {
                 <button
                   onClick={handleCheckout}
                   disabled={checkingOut}
-                  className="crayon-button w-full py-6 flex items-center justify-center group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="crayon-button w-full py-6 flex items-center justify-center group rounded-2xl border-2 border-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="text-on-primary-fixed font-headline font-black text-xl mr-8">
                     {checkingOut ? "Đang xử lý..." : "Thanh Toán Ngay"}

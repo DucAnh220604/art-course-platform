@@ -41,6 +41,30 @@ const getDaysDiff = (date) => {
   return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 };
 
+const getItemTypeLabel = (itemType) => {
+  switch (itemType) {
+    case "course":
+      return "Khóa học";
+    case "combo":
+      return "Gói học";
+    default:
+      return "Giỏ hàng";
+  }
+};
+
+const getContactStatusLabel = (status) => {
+  switch (status) {
+    case "pending":
+      return "Chờ xử lý";
+    case "replied":
+      return "Đã phản hồi";
+    case "closed":
+      return "Đã đóng";
+    default:
+      return status;
+  }
+};
+
 // Framer motion variants
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -87,14 +111,14 @@ export default function RoleDashboardInsights({ role }) {
             id: `payment-${payment._id}`,
             icon: ShoppingCart,
             title: `${payment.user?.fullname || payment.user?.username || "Khách hàng"} mua ${payment.item?.title || "sản phẩm"}`,
-            description: `${formatCurrency(payment.amount)} • ${payment.itemType === "course" ? "Khóa học" : payment.itemType === "combo" ? "Combo" : "Giỏ hàng"}`,
+            description: `${formatCurrency(payment.amount)} • ${getItemTypeLabel(payment.itemType)}`,
             time: payment.paidAt || payment.createdAt,
           }));
 
           setActivities(paymentActivities);
           setQuickStats([
             {
-              label: "Tổng instructor",
+              label: "Tổng giảng viên",
               value: stats.roleCount?.instructor || 0,
               icon: UserCheck,
             },
@@ -140,29 +164,29 @@ export default function RoleDashboardInsights({ role }) {
             id: `contact-${message._id}`,
             icon: Mail,
             title: `${message.name} gửi liên hệ mới`,
-            description: `Trạng thái: ${message.status}`,
+            description: `Trạng thái: ${getContactStatusLabel(message.status)}`,
             time: message.createdAt,
           }));
 
           setActivities(contactActivities);
           setQuickStats([
             {
-              label: "Users hoạt động",
+              label: "Người dùng đang hoạt động",
               value: stats.activeUsers || 0,
               icon: Activity,
             },
             {
-              label: "Yêu cầu instructor pending",
+              label: "Yêu cầu giảng viên chờ duyệt",
               value: pendingRequests,
               icon: UserCheck,
             },
             {
-              label: "Liên hệ pending",
+              label: "Liên hệ chờ xử lý",
               value: pendingContacts,
               icon: Mail,
             },
             {
-              label: "Tổng yêu cầu instructor",
+              label: "Tổng yêu cầu giảng viên",
               value: totalRequests,
               icon: Clock3,
             },
@@ -423,9 +447,7 @@ export default function RoleDashboardInsights({ role }) {
                                 </p>
                                 <p className="text-xs text-slate-500 mt-0.5">
                                   {item.itemType
-                                    ? (item.itemType === "course"
-                                        ? "Khóa học"
-                                        : "Combo") + " • "
+                                    ? getItemTypeLabel(item.itemType) + " • "
                                     : ""}
                                   {item.orderCount} đơn
                                 </p>

@@ -220,7 +220,7 @@ export function UserManagement() {
 
   const statsCards = [
     {
-      label: "Tổng Users",
+      label: "Tổng người dùng",
       value: stats.totalUsers,
       icon: Users,
       bgColor: "bg-blue-100",
@@ -234,7 +234,7 @@ export function UserManagement() {
       iconColor: "text-green-600",
     },
     {
-      label: "Instructors",
+      label: "Giảng viên",
       value: stats.roleCount?.instructor || 0,
       icon: BookOpen,
       bgColor: "bg-purple-100",
@@ -259,6 +259,26 @@ export function UserManagement() {
         return "secondary";
       default:
         return "outline";
+    }
+  };
+
+  const getRoleBadgeClass = (role) => {
+    if (role === "instructor" || role === "staff") return "text-white";
+    return "";
+  };
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case "admin":
+        return "Quản trị viên";
+      case "instructor":
+        return "Giảng viên";
+      case "staff":
+        return "Nhân viên";
+      case "customer":
+        return "Khách hàng";
+      default:
+        return role;
     }
   };
 
@@ -312,10 +332,10 @@ export function UserManagement() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả vai trò</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
-                <SelectItem value="instructor">Instructor</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-                <SelectItem value="customer">Customer</SelectItem>
+
+                <SelectItem value="instructor">Giảng viên</SelectItem>
+                <SelectItem value="staff">Nhân viên</SelectItem>
+                <SelectItem value="customer">Khách hàng</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -389,8 +409,11 @@ export function UserManagement() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role}
+                      <Badge
+                        variant={getRoleBadgeVariant(user.role)}
+                        className={getRoleBadgeClass(user.role)}
+                      >
+                        {getRoleLabel(user.role)}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -402,7 +425,7 @@ export function UserManagement() {
                             : "text-red-600 border-red-200 bg-red-50"
                         }
                       >
-                        {user.isActive ? "Active" : "Inactive"}
+                        {user.isActive ? "Đang hoạt động" : "Ngừng hoạt động"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-gray-500 text-sm">
@@ -555,8 +578,11 @@ export function UserManagement() {
                 <div>
                   <span className="text-gray-500">Vai trò:</span>
                   <p>
-                    <Badge variant={getRoleBadgeVariant(viewingUser.role)}>
-                      {viewingUser.role}
+                    <Badge
+                      variant={getRoleBadgeVariant(viewingUser.role)}
+                      className={getRoleBadgeClass(viewingUser.role)}
+                    >
+                      {getRoleLabel(viewingUser.role)}
                     </Badge>
                   </p>
                 </div>
@@ -569,7 +595,9 @@ export function UserManagement() {
                         viewingUser.isActive ? "text-green-600" : "text-red-600"
                       }
                     >
-                      {viewingUser.isActive ? "Active" : "Inactive"}
+                      {viewingUser.isActive
+                        ? "Đang hoạt động"
+                        : "Ngừng hoạt động"}
                     </Badge>
                   </p>
                 </div>
@@ -638,9 +666,9 @@ export function UserManagement() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="customer">Customer</SelectItem>
-                    <SelectItem value="instructor">Instructor</SelectItem>
-                    <SelectItem value="staff">Staff</SelectItem>
+                    <SelectItem value="customer">Khách hàng</SelectItem>
+                    <SelectItem value="instructor">Giảng viên</SelectItem>
+                    <SelectItem value="staff">Nhân viên</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
