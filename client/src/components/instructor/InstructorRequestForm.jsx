@@ -326,7 +326,7 @@ export function InstructorRequestForm({
                       <FormControl>
                         <Textarea
                           placeholder="Hãy giới thiệu về bản thân, kinh nghiệm và lý do bạn muốn trở thành giảng viên..."
-                          className="min-h-[100px] rounded-xl resize-none"
+                          className="min-h-[120px] rounded-xl resize-none px-4 py-3 leading-relaxed align-top"
                           {...field}
                         />
                       </FormControl>
