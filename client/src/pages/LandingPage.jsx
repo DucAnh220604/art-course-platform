@@ -7,7 +7,6 @@ import {
   FeaturedCourses,
   FeaturedCombos,
   CourseBundles,
-  WhyChooseUs,
   Testimonials,
   Footer,
 } from "../components/landing";
@@ -43,12 +42,12 @@ export function LandingPage() {
     return <AboutPage />;
   }
 
-  // Admin hoặc Staff: redirect đến Dashboard
+  // Admin hoặc Staff: redirect đến Dashboard (không cho xem trang chủ)
   if (user?.role === "admin" || user?.role === "staff") {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // User thường hoặc Instructor: hiển thị trang chủ
+  // User thường: hiển thị trang chủ
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -65,8 +64,6 @@ export function LandingPage() {
         <FeaturedCourses onCourseClick={handleCourseClick} />
 
         <FeaturedCombos onComboClick={handleComboClick} />
-
-        <WhyChooseUs />
 
         <Testimonials />
       </main>

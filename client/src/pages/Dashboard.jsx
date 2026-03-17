@@ -31,6 +31,7 @@ import { CourseManagement } from "@/components/instructor/CourseManagement";
 import { ComboManagement } from "@/components/instructor/ComboManagement";
 import OrderHistory from "@/components/instructor/OrderHistory";
 import PaymentManager from "@/components/admin/PaymentManager";
+import ReportsPanel from "@/components/admin/ReportsPanel";
 
 const getNavigationByRole = (role) => {
   switch (role) {
@@ -94,19 +95,18 @@ export function Dashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
 
-  const userRole = user?.role || "customer";
+  const rawRole = user?.role || "customer";
+  const userRole = String(rawRole).toLowerCase().trim();
   const navigationItems = getNavigationByRole(userRole);
   const { title, subtitle } = getRoleTitle(userRole);
 
-  const isAdminOrStaff = userRole === "admin" || userRole === "staff";
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
-  const handleButtonClick = () => {
-    if (isAdminOrStaff) {
-      logout();
-      navigate("/login");
-    } else {
-      navigate("/");
-    }
+  const handleGoHome = () => {
+    navigate("/");
   };
 
   const renderContent = () => {
@@ -140,13 +140,7 @@ export function Dashboard() {
       case "orders":
         return <OrderHistory />;
       case "reports":
-        return (
-          <PlaceholderTab
-            title="Báo cáo & Thống kê"
-            description="Xem các báo cáo và thống kê"
-            message="Chức năng báo cáo đang được phát triển..."
-          />
-        );
+        return <ReportsPanel role={userRole} />;
       default:
         return <DashboardOverview />;
     }
@@ -182,23 +176,25 @@ export function Dashboard() {
           </nav>
 
           <div className="mt-8 pt-8 border-t">
-            <Button
-              variant={isAdminOrStaff ? "destructive" : "outline"}
-              className="w-full rounded-lg"
-              onClick={handleButtonClick}
-            >
-              {isAdminOrStaff ? (
-                <>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Đăng xuất
-                </>
-              ) : (
-                <>
-                  <Home className="w-4 h-4 mr-2" />
-                  Về trang chủ
-                </>
-              )}
-            </Button>
+            {(userRole === "admin" || userRole === "staff") ? (
+              <Button
+                variant="outline"
+                className="w-full rounded-lg bg-red-500 text-white hover:bg-red-600 hover:text-white border-transparent"
+                onClick={handleLogout}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Đăng xuất
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full rounded-lg"
+                onClick={handleGoHome}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Về trang chủ
+              </Button>
+            )}
           </div>
         </div>
       </aside>
@@ -209,17 +205,27 @@ export function Dashboard() {
             <ArtKidsLogo className="w-8 h-8" />
             <span className="font-bold text-gray-900">{title}</span>
           </div>
-          <Button
-            variant={isAdminOrStaff ? "destructive" : "ghost"}
-            size="sm"
-            onClick={handleButtonClick}
-          >
-            {isAdminOrStaff ? (
+          {(userRole === "admin" || userRole === "staff") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-500 text-white hover:bg-red-600 hover:text-white border-transparent"
+            >
               <LogOut className="w-4 h-4" />
-            ) : (
+              <span className="hidden sm:inline">Đăng xuất</span>
+            </Button>
+          ) : (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleGoHome}
+              className="flex items-center gap-2"
+            >
               <Home className="w-4 h-4" />
-            )}
-          </Button>
+              <span className="hidden sm:inline">Về trang chủ</span>
+            </Button>
+          )}
         </div>
         <div className="flex gap-2 mt-3 overflow-x-auto pb-2">
           {navigationItems.map((item) => (

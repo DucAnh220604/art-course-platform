@@ -4,11 +4,14 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.use(protect);
-
-router.get("/", cartController.getCart);
-router.post("/add", cartController.addToCart);
-router.post("/remove", cartController.removeFromCart);
-router.delete("/clear", cartController.clearCart);
+router.get("/", protect, cartController.getCart);
+router.post("/add", protect, cartController.addToCart);
+router.post("/remove", protect, cartController.removeFromCart);
+router.post("/clear", protect, cartController.clearCart);
+router.get(
+  "/check-course/:courseId",
+  protect,
+  cartController.checkCourseInCart,
+);
 
 module.exports = router;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Star, Edit, Trash2, Eye, Send } from "lucide-react";
+import { Plus, Star, Edit, Trash2, Eye, Send, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -34,6 +34,11 @@ export function CourseManagement() {
   const [loading, setLoading] = useState(true);
   const [viewingCourse, setViewingCourse] = useState(null);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
   // State quản lý Tab hiển thị
   const [activeTab, setActiveTab] = useState("all");
 
@@ -46,16 +51,18 @@ export function CourseManagement() {
   const [courseToDelete, setCourseToDelete] = useState(null);
 
   const fetchCourses = async () => {
+    if (!user?._id) return;
     try {
       setLoading(true);
-      const response = await courseApi.getAllCourses();
-      const allCourses = response.data.courses || [];
-
-      // 1. CHỈ LỌC RA KHÓA HỌC CỦA INSTRUCTOR NÀY
-      const myCourses = allCourses.filter(
-        (c) => c.instructor?._id === user?._id || c.instructor === user?._id,
-      );
-      setCourses(myCourses);
+      const response = await courseApi.getAllCourses({ 
+        forManagement: true,
+        instructor: user._id,
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        status: activeTab !== "all" ? activeTab : undefined
+      });
+      setCourses(response.data.courses || []);
+      setTotalPages(response.data.totalPages || 1);
     } catch (error) {
       toast.error("Không thể tải danh sách khóa học");
     } finally {
@@ -67,7 +74,18 @@ export function CourseManagement() {
     if (user) {
       fetchCourses();
     }
-  }, [user]);
+  }, [user, currentPage, activeTab]);
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const handleViewDetail = async (slug) => {
     try {
@@ -92,9 +110,10 @@ export function CourseManagement() {
     if (!courseToDelete) return;
 
     // Guard thêm ở FE (phòng trường hợp dữ liệu thay đổi)
-    if (courseToDelete.totalStudents > 0) {
+    const enrolled = courseToDelete.enrolledCount ?? courseToDelete.totalStudents ?? 0;
+    if (enrolled > 0) {
       toast.error("Không thể xóa!", {
-        description: `Khóa học đã có ${courseToDelete.totalStudents} học viên đăng ký.`,
+        description: `Khóa học đã có ${enrolled} học viên đăng ký.`,
       });
       setIsDeleteDialogOpen(false);
       return;
@@ -124,7 +143,9 @@ export function CourseManagement() {
           fetchCourses(); // Tải lại danh sách để cập nhật UI
           return "Đã gửi phê duyệt thành công! Vui lòng chờ admin duyệt nhé. 🚀";
         },
-        error: "Không thể gửi yêu cầu, bé thử lại sau nha! ❌",
+        error: (err) => {
+          return err.response?.data?.message || "Không thể gửi yêu cầu, bé thử lại sau nha! ❌";
+        },
       },
     );
   };
@@ -184,7 +205,20 @@ export function CourseManagement() {
               <Badge variant="outline">
                 Giá: {viewingCourse.price?.toLocaleString()}đ
               </Badge>
+              <Badge className="bg-amber-50 text-amber-700 border-amber-200 border">
+                <Star className="w-3 h-3 fill-amber-400 text-amber-400 mr-1" />
+                {viewingCourse.averageRating ?? 0} / 5 ({viewingCourse.numOfReviews ?? 0} đánh giá)
+              </Badge>
+              <Badge className="bg-indigo-50 text-indigo-700 border-indigo-200 border">
+                {viewingCourse.totalStudents ?? 0} học viên
+              </Badge>
             </div>
+            {viewingCourse.status === "rejected" && viewingCourse.rejectedReason && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-2xl text-sm text-red-700">
+                <span className="font-bold">Lý do từ chối: </span>
+                {viewingCourse.rejectedReason}
+              </div>
+            )}
           </div>
         </div>
 
@@ -196,10 +230,8 @@ export function CourseManagement() {
     );
   }
 
-  // Lọc khóa học theo Tab đang chọn
-  const displayedCourses = courses.filter(
-    (c) => activeTab === "all" || c.status === activeTab,
-  );
+  // Lọc khóa học theo Tab đã được thực hiện ở Server Side
+  const displayedCourses = courses;
 
   return (
     <div className="space-y-8">
@@ -322,6 +354,12 @@ export function CourseManagement() {
                             "vi-VN",
                           )}
                         </div>
+                        {course.status === "rejected" && course.rejectedReason && (
+                          <div className="text-xs text-red-500 mt-1 line-clamp-2" title={course.rejectedReason}>
+                            <span className="font-semibold">Lý do: </span>
+                            {course.rejectedReason}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </TableCell>
@@ -335,7 +373,7 @@ export function CourseManagement() {
                       {course.averageRating}
                     </div>
                     <div className="text-xs text-slate-500 mt-0.5">
-                      {course.totalStudents} học viên
+                      {course.enrolledCount ?? course.totalStudents ?? 0} học viên
                     </div>
                   </TableCell>
                   <TableCell className="text-right pr-6">
@@ -376,12 +414,12 @@ export function CourseManagement() {
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        disabled={course.totalStudents > 0}
+                        disabled={(course.enrolledCount ?? course.totalStudents ?? 0) > 0}
                         className="rounded-full hover:bg-red-50 text-red-500 disabled:opacity-40 disabled:cursor-not-allowed"
                         onClick={() => confirmDeleteCourse(course)}
                         title={
-                          course.totalStudents > 0
-                            ? `Không thể xóa — đã có ${course.totalStudents} học viên đăng ký`
+                          (course.enrolledCount ?? course.totalStudents ?? 0) > 0
+                            ? `Không thể xóa — đã có ${course.enrolledCount ?? course.totalStudents ?? 0} học viên đăng ký`
                             : "Xóa khóa học"
                         }
                       >
@@ -394,6 +432,60 @@ export function CourseManagement() {
             )}
           </TableBody>
         </Table>
+
+        {/* PHÂN TRANG */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 py-6 border-t border-slate-50">
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(
+                (page) =>
+                  page === 1 ||
+                  page === totalPages ||
+                  Math.abs(page - currentPage) <= 1,
+              )
+              .map((page, idx, arr) => {
+                const showEllipsisBefore =
+                  idx > 0 && page - arr[idx - 1] > 1;
+                return (
+                  <React.Fragment key={page}>
+                    {showEllipsisBefore && (
+                      <span className="px-2 text-slate-400">...</span>
+                    )}
+                    <Button
+                      variant={
+                        currentPage === page ? "default" : "outline"
+                      }
+                      size="icon"
+                      className={`rounded-full w-10 h-10 ${currentPage === page ? "bg-sky-500 hover:bg-sky-600 text-white" : ""}`}
+                      onClick={() => handlePageChange(page)}
+                    >
+                      {page}
+                    </Button>
+                  </React.Fragment>
+                );
+              })}
+
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full w-10 h-10"
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </Card>
 
       {/* MODAL XÁC NHẬN XÓA KHÓA HỌC */}
@@ -415,10 +507,10 @@ export function CourseManagement() {
                 "{courseToDelete?.title}"
               </span>{" "}
               sẽ biến mất và không thể lấy lại được đâu nhé! 🎨
-              {courseToDelete?.totalStudents > 0 && (
+              {(courseToDelete?.enrolledCount ?? courseToDelete?.totalStudents ?? 0) > 0 && (
                 <span className="block mt-2 text-red-500 font-semibold">
                   ⚠️ Không thể xóa — khóa học đã có{" "}
-                  {courseToDelete.totalStudents} học viên đăng ký.
+                  {courseToDelete.enrolledCount ?? courseToDelete.totalStudents ?? 0} học viên đăng ký.
                 </span>
               )}
             </AlertDialogDescription>

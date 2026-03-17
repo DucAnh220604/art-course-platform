@@ -197,23 +197,15 @@ const requestInstructor = async (userId, requestData, cvImage) => {
   }
 
   // Validate required fields
-  const {
-    fullName,
-    phone,
-    email,
-    experience,
-    specialization,
-    introduction,
-    cvFileType,
-    cvFileName,
-  } = requestData;
+  const { fullName, phone, email, experience, specialization, introduction } =
+    requestData;
 
   if (!fullName || !phone || !email || !experience || !specialization) {
     throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc.");
   }
 
   if (!cvImage) {
-    throw new Error("Vui lòng tải lên CV của bạn.");
+    throw new Error("Vui lòng tải lên ảnh chứng chỉ/hồ sơ của bạn.");
   }
 
   user.instructorRequestStatus = "pending";
@@ -225,8 +217,6 @@ const requestInstructor = async (userId, requestData, cvImage) => {
     specialization,
     introduction: introduction || "",
     cvImage,
-    cvFileType: cvFileType || "image",
-    cvFileName: cvFileName || "CV",
     requestedAt: new Date(),
   };
 

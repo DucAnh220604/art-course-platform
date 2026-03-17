@@ -1,5 +1,7 @@
 const Combo = require("../models/Combo");
 const Course = require("../models/Course");
+const User = require("../models/User");
+const mongoose = require("mongoose");
 
 const comboController = {
   // Lấy tất cả combos (có filter, search, pagination)
@@ -8,9 +10,11 @@ const comboController = {
       const {
         search,
         category,
+        level, // Đã bổ sung biến level từ query
         page = 1,
         limit = 10,
         status,
+        instructor,
         sort = "createdAt",
         order = "desc",
       } = req.query;
@@ -18,13 +22,25 @@ const comboController = {
 
       // Filter theo status (admin/instructor muốn xem draft/pending)
       if (status) query.status = status;
+      if (instructor) query.instructor = instructor;
 
       // Search theo text
-      if (search) query.$text = { $search: search };
+      if (search) {
+        const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        query.$or = [
+          { title: { $regex: escapedSearch, $options: "i" } },
+          { description: { $regex: escapedSearch, $options: "i" } },
+        ];
+      }
 
-      // Filter theo category: chỉ lấy combo có ít nhất 1 khóa học đúng danh mục
-      if (category) {
-        const matchingCourseIds = await Course.distinct("_id", { category });
+      // Filter theo category và level: chỉ lấy combo có ít nhất 1 khóa học đúng điều kiện
+      if (category || level) {
+        const courseFilter = {};
+        if (category) courseFilter.category = category;
+        if (level) courseFilter.level = level;
+
+        const matchingCourseIds = await Course.distinct("_id", courseFilter);
+
         if (matchingCourseIds.length === 0) {
           return res.json({
             success: true,
@@ -34,6 +50,7 @@ const comboController = {
             total: 0,
           });
         }
+
         query.courses = { $in: matchingCourseIds };
       }
 
@@ -43,16 +60,34 @@ const comboController = {
 
       const combos = await Combo.find(query)
         .populate("instructor", "fullname username avatar")
-        .populate("courses", "title thumbnail price category")
+        .populate("courses", "title thumbnail price category level _id") // Thêm level vào để frontend có thể dùng nếu cần
         .skip((page - 1) * limit)
         .limit(parseInt(limit))
         .sort(sortOptions);
+
+      // Nếu có param forManagement=true, thêm số người đăng ký
+      let combosWithEnrollment = combos;
+      if (req.query.forManagement === "true") {
+        combosWithEnrollment = await Promise.all(
+          combos.map(async (combo) => {
+            const courseIds = combo.courses.map((c) => c._id);
+            // Đếm số user đã đăng ký bất kỳ khóa học nào trong combo
+            const enrolledCount = await User.countDocuments({
+              "enrolledCourses.course": { $in: courseIds },
+            });
+            return {
+              ...combo.toObject(),
+              enrolledCount, // Tổng số người đã đăng ký combo/courses trong combo
+            };
+          }),
+        );
+      }
 
       const total = await Combo.countDocuments(query);
 
       res.json({
         success: true,
-        combos,
+        combos: combosWithEnrollment,
         totalPages: Math.ceil(total / limit),
         currentPage: parseInt(page),
         total,
@@ -84,7 +119,29 @@ const comboController = {
           .json({ success: false, message: "Không tìm thấy combo!" });
       }
 
-      res.json({ success: true, data: combo });
+      // Tính toán giá nâng cấp nếu người dùng đã đăng nhập
+      let upgradeInfo = null;
+      if (req.user) {
+        const user = await mongoose.model("User").findById(req.user._id);
+        const userEnrolledCourseIds = user.enrolledCourses.map((ec) =>
+          ec.course.toString(),
+        );
+
+        // Kiểm tra xem người dùng có sở hữu ít nhất 1 khóa học trong combo không
+        const hasAnyCourse = combo.courses.some((course) =>
+          userEnrolledCourseIds.includes(course._id.toString()),
+        );
+
+        if (hasAnyCourse) {
+          upgradeInfo = calculateUpgradePrice(combo, userEnrolledCourseIds);
+        }
+      }
+
+      res.json({
+        success: true,
+        data: combo,
+        upgradeInfo, // Thêm thông tin nâng cấp
+      });
     } catch (error) {
       res.status(500).json({ success: false, message: error.message });
     }
@@ -282,6 +339,87 @@ const comboController = {
       res.status(500).json({ success: false, message: error.message });
     }
   },
+
+  // Lấy combos chứa một khóa học cụ thể
+  getCombosContainingCourse: async (req, res) => {
+    try {
+      const { courseId } = req.params;
+
+      // Tìm tất cả combo chứa khóa học này và đã published
+      const combos = await Combo.find({
+        courses: courseId,
+        status: "published",
+      })
+        .populate("instructor", "fullname username avatar")
+        .populate("courses", "title thumbnail price category _id slug");
+
+      // Nếu người dùng đã đăng nhập, tính giá nâng cấp cho từng combo
+      let combosWithUpgradeInfo = combos;
+      if (req.user) {
+        const user = await mongoose.model("User").findById(req.user._id);
+        const userEnrolledCourseIds = user.enrolledCourses.map((ec) =>
+          ec.course.toString(),
+        );
+
+        combosWithUpgradeInfo = combos.map((combo) => {
+          const comboObj = combo.toObject();
+          const upgradeInfo = calculateUpgradePrice(
+            combo,
+            userEnrolledCourseIds,
+          );
+          return {
+            ...comboObj,
+            upgradeInfo,
+          };
+        });
+      }
+
+      res.json({
+        success: true,
+        data: combosWithUpgradeInfo,
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, message: error.message });
+    }
+  },
+};
+
+// Hàm helper để tính giá nâng cấp
+const calculateUpgradePrice = (combo, userEnrolledCourseIds) => {
+  // Lọc các khóa học chưa sở hữu
+  const unownedCourses = combo.courses.filter(
+    (course) => !userEnrolledCourseIds.includes(course._id.toString()),
+  );
+
+  // Nếu đã sở hữu tất cả khóa học
+  if (unownedCourses.length === 0) {
+    return {
+      upgradePrice: 0,
+      unownedCourses: [],
+      ownedCourses: combo.courses,
+      isFullyOwned: true,
+    };
+  }
+
+  // Tính tổng giá gốc các khóa chưa sở hữu
+  const unownedOriginalPrice = unownedCourses.reduce(
+    (sum, course) => sum + course.price,
+    0,
+  );
+
+  // Áp dụng % giảm giá của combo
+  const upgradePrice =
+    unownedOriginalPrice * (1 - combo.discountPercentage / 100);
+
+  return {
+    upgradePrice: Math.round(upgradePrice),
+    unownedCourses,
+    ownedCourses: combo.courses.filter((course) =>
+      userEnrolledCourseIds.includes(course._id.toString()),
+    ),
+    unownedOriginalPrice,
+    isFullyOwned: false,
+  };
 };
 
 module.exports = comboController;

@@ -7,6 +7,7 @@ const uploadLocal = require("../middleware/uploadLocal");
 const router = express.Router();
 
 router.patch("/profile", protect, userController.updateProfile);
+router.patch("/change-password", protect, userController.changePassword);
 
 router.post(
   "/avatar",
@@ -41,6 +42,13 @@ router.get(
 );
 
 router.get("/enrolled-courses", protect, userController.getEnrolledCourses);
+
+router.get(
+  "/instructor-dashboard",
+  protect,
+  restrictTo("instructor"),
+  userController.getInstructorDashboardStats,
+);
 
 router.use(protect, restrictTo("admin", "staff"));
 

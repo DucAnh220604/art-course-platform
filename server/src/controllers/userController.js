@@ -1,7 +1,41 @@
 const userService = require("../services/userService");
+const authService = require("../services/authService");
 const User = require("../models/User");
 const Course = require("../models/Course");
 const Combo = require("../models/Combo");
+const Payment = require("../models/Payment");
+const Section = require("../models/Section");
+const LessonProgress = require("../models/LessonProgress");
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: "Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới." });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Người dùng không tồn tại." });
+    }
+
+    const isMatch = await user.correctPassword(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Mật khẩu hiện tại không chính xác." });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Đổi mật khẩu thành công!",
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 exports.updateProfile = async (req, res) => {
   try {
@@ -116,7 +150,78 @@ exports.deleteUser = async (req, res) => {
 
 exports.getUserStats = async (req, res) => {
   try {
-    const stats = await userService.getUserStats();
+    const baseStats = await userService.getUserStats();
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const dayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+    const nextDayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    );
+
+    const [
+      totalCourses,
+      pendingInstructorRequests,
+      monthlyRevenueAgg,
+      totalPosts,
+      processedToday,
+    ] = await Promise.all([
+      Course.countDocuments(),
+      User.countDocuments({ instructorRequestStatus: "pending" }),
+      Payment.aggregate([
+        {
+          $match: {
+            status: "paid",
+            paidAt: { $gte: monthStart, $lt: nextMonthStart },
+          },
+        },
+        { $group: { _id: null, totalAmount: { $sum: "$amount" } } },
+      ]),
+      Course.countDocuments({ status: "published" }),
+      User.countDocuments({
+        instructorRequestStatus: { $in: ["approved", "rejected"] },
+        "instructorRequestData.reviewedAt": {
+          $gte: dayStart,
+          $lt: nextDayStart,
+        },
+      }),
+    ]);
+
+    const monthlyRevenue = monthlyRevenueAgg[0]?.totalAmount || 0;
+
+    const stats = {
+      ...baseStats,
+      dashboard: {
+        admin: {
+          totalUsers: baseStats.totalUsers,
+          totalCourses,
+          monthlyRevenue,
+          pendingInstructorRequests,
+        },
+        staff: {
+          activeUsers: baseStats.activeUsers,
+          pendingInstructorRequests,
+          totalPosts,
+          processedToday,
+        },
+      },
+    };
 
     res.status(200).json({
       success: true,
@@ -130,18 +235,86 @@ exports.getUserStats = async (req, res) => {
   }
 };
 
+exports.getInstructorDashboardStats = async (req, res) => {
+  try {
+    const instructorId = req.user._id;
+
+    const myCourses = await Course.find({ instructor: instructorId }).select(
+      "_id averageRating numOfReviews",
+    );
+    const myCombos = await Combo.find({ instructor: instructorId }).select(
+      "_id",
+    );
+
+    const courseIds = myCourses.map((course) => course._id);
+    const comboIds = myCombos.map((combo) => combo._id);
+
+    const totalCourses = myCourses.length;
+
+    const distinctStudentIds = courseIds.length
+      ? await User.distinct("_id", {
+          "enrolledCourses.course": { $in: courseIds },
+        })
+      : [];
+    const totalStudents = distinctStudentIds.length;
+
+    const totalReviews = myCourses.reduce(
+      (sum, course) => sum + (course.numOfReviews || 0),
+      0,
+    );
+    const weightedRatingSum = myCourses.reduce(
+      (sum, course) =>
+        sum + (course.averageRating || 0) * (course.numOfReviews || 0),
+      0,
+    );
+    const averageRating =
+      totalReviews > 0
+        ? Math.round((weightedRatingSum / totalReviews) * 10) / 10
+        : 0;
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const paidPaymentsThisMonth = await Payment.find({
+      status: "paid",
+      paidAt: { $gte: monthStart, $lt: nextMonthStart },
+      $or: [
+        { itemType: "course", itemId: { $in: courseIds } },
+        { itemType: "combo", itemId: { $in: comboIds } },
+      ],
+    }).select("amount");
+
+    const monthlyRevenue = paidPaymentsThisMonth.reduce(
+      (sum, payment) => sum + (payment.amount || 0),
+      0,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stats: {
+          totalCourses,
+          totalStudents,
+          monthlyRevenue,
+          averageRating,
+        },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 exports.requestInstructor = async (req, res) => {
   try {
-    // For local uploads, create URL path
     let cvImage = null;
     if (req.file) {
-      // Create URL path that will be served by the server
       cvImage = `/uploads/cv/${req.file.filename}`;
     }
-
-    const cvFileType =
-      req.file?.mimetype === "application/pdf" ? "pdf" : "image";
-    const cvFileName = req.file?.originalname || "CV";
 
     const requestData = {
       fullName: req.body.fullName,
@@ -150,8 +323,6 @@ exports.requestInstructor = async (req, res) => {
       experience: req.body.experience,
       specialization: req.body.specialization,
       introduction: req.body.introduction,
-      cvFileType,
-      cvFileName,
     };
 
     const user = await userService.requestInstructor(
@@ -403,10 +574,70 @@ exports.getEnrolledCourses = async (req, res) => {
       populate: { path: "instructor", select: "fullname avatar" },
     });
 
+    const courseIds = user.enrolledCourses
+      .map((item) => item.course?._id)
+      .filter(Boolean);
+
+    const [completedByCourse, totalLessonsByCourse] = await Promise.all([
+      LessonProgress.aggregate([
+        {
+          $match: {
+            user: req.user._id,
+            course: { $in: courseIds },
+          },
+        },
+        {
+          $group: {
+            _id: "$course",
+            completedLessons: { $sum: 1 },
+          },
+        },
+      ]),
+      Section.aggregate([
+        {
+          $match: {
+            courseId: { $in: courseIds },
+          },
+        },
+        {
+          $project: {
+            courseId: 1,
+            lessonCount: { $size: { $ifNull: ["$lessonsId", []] } },
+          },
+        },
+        {
+          $group: {
+            _id: "$courseId",
+            totalLessons: { $sum: "$lessonCount" },
+          },
+        },
+      ]),
+    ]);
+
+    const completedMap = new Map(
+      completedByCourse.map((item) => [
+        item._id.toString(),
+        item.completedLessons || 0,
+      ]),
+    );
+
+    const totalLessonsMap = new Map(
+      totalLessonsByCourse.map((item) => [item._id.toString(), item.totalLessons || 0]),
+    );
+
     const enrolledCourses = user.enrolledCourses.map((item) => ({
       course: item.course,
       enrolledAt: item.enrolledAt,
-      progress: item.progress,
+      progress: (() => {
+        const courseId = item.course?._id?.toString();
+        if (!courseId) return 0;
+
+        const completedLessons = completedMap.get(courseId) || 0;
+        const totalLessons = totalLessonsMap.get(courseId) || 0;
+        if (totalLessons <= 0) return 0;
+
+        return Math.round((completedLessons / totalLessons) * 100);
+      })(),
     }));
 
     res.status(200).json({

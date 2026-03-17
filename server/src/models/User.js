@@ -46,9 +46,7 @@ const userSchema = new mongoose.Schema(
       experience: String, // Kinh nghiệm giảng dạy
       specialization: String, // Chuyên môn
       introduction: String, // Giới thiệu bản thân
-      cvImage: String, // Link ảnh/file CV
-      cvFileType: String, // 'image' hoặc 'pdf'
-      cvFileName: String, // Tên file gốc
+      cvImage: String, // Link ảnh chứng chỉ/hồ sơ
       requestedAt: Date,
       reviewedAt: Date,
       reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

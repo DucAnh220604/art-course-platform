@@ -10,9 +10,7 @@ import {
   Phone,
   Mail,
   Briefcase,
-  BookOpen,
   FileText,
-  File,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -78,7 +76,6 @@ export function InstructorRequestForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cvImage, setCvImage] = useState(null);
   const [cvPreview, setCvPreview] = useState(null);
-  const [cvFileType, setCvFileType] = useState(null); // 'image' or 'pdf'
   const fileInputRef = useRef(null);
 
   const form = useForm({
@@ -96,40 +93,28 @@ export function InstructorRequestForm({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Check file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("File quá lớn", {
-          description: "Vui lòng chọn file dưới 5MB",
+        toast.error("Ảnh quá lớn", {
+          description: "Vui lòng chọn ảnh dưới 5MB",
         });
         return;
       }
 
-      // Check file type - accept images and PDFs
-      const isImage = file.type.startsWith("image/");
-      const isPdf = file.type === "application/pdf";
-
-      if (!isImage && !isPdf) {
+      if (!file.type.startsWith("image/")) {
         toast.error("File không hợp lệ", {
-          description: "Vui lòng chọn file ảnh (JPG, PNG) hoặc PDF",
+          description: "Vui lòng chọn file ảnh (JPG, PNG)",
         });
         return;
       }
 
       setCvImage(file);
-      setCvFileType(isPdf ? "pdf" : "image");
-
-      if (isImage) {
-        setCvPreview(URL.createObjectURL(file));
-      } else {
-        setCvPreview(null); // PDF doesn't have image preview
-      }
+      setCvPreview(URL.createObjectURL(file));
     }
   };
 
   const handleRemoveCv = () => {
     setCvImage(null);
     setCvPreview(null);
-    setCvFileType(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -137,8 +122,8 @@ export function InstructorRequestForm({
 
   const onSubmit = async (data) => {
     if (!cvImage) {
-      toast.error("Thiếu CV", {
-        description: "Vui lòng tải lên CV của bạn (ảnh hoặc PDF)",
+      toast.error("Thiếu ảnh hồ sơ", {
+        description: "Vui lòng tải lên ảnh bằng cấp/chứng chỉ của bạn",
       });
       return;
     }
@@ -176,7 +161,8 @@ export function InstructorRequestForm({
             Đăng ký trở thành Giảng viên
           </DialogTitle>
           <DialogDescription className="text-slate-500">
-            Vui lòng điền đầy đủ thông tin và tải lên CV của bạn (ảnh hoặc PDF)
+            Vui lòng điền đầy đủ thông tin và tải lên ảnh bằng cấp/chứng chỉ hồ
+            sơ
           </DialogDescription>
         </DialogHeader>
 
@@ -351,11 +337,11 @@ export function InstructorRequestForm({
               </div>
             </div>
 
-            {/* CV Upload */}
+            {/* Image Upload */}
             <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-5">
               <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-amber-500" />
-                CV / Hồ sơ <span className="text-red-500">*</span>
+                Ảnh chứng chỉ / Hồ sơ <span className="text-red-500">*</span>
               </h3>
 
               {!cvImage ? (
@@ -365,30 +351,20 @@ export function InstructorRequestForm({
                 >
                   <Upload className="w-12 h-12 text-amber-400 mx-auto mb-3" />
                   <p className="text-slate-600 font-medium">
-                    Nhấn để tải lên CV
+                    Nhấn để tải lên ảnh bằng cấp
                   </p>
                   <p className="text-slate-400 text-sm mt-1">
-                    Hỗ trợ: JPG, PNG, PDF (tối đa 5MB)
+                    Hỗ trợ: JPG, PNG (tối đa 5MB)
                   </p>
                 </div>
               ) : (
                 <div className="relative">
-                  {cvFileType === "image" && cvPreview ? (
+                  {cvPreview && (
                     <img
                       src={cvPreview}
-                      alt="CV Preview"
+                      alt="Preview"
                       className="w-full max-h-[300px] object-contain rounded-xl border border-amber-200"
                     />
-                  ) : (
-                    <div className="flex items-center justify-center p-8 bg-amber-100/50 rounded-xl border border-amber-200">
-                      <div className="text-center">
-                        <File className="w-16 h-16 text-red-500 mx-auto mb-3" />
-                        <p className="text-slate-700 font-medium">File PDF</p>
-                        <p className="text-slate-500 text-sm">
-                          {cvImage?.name}
-                        </p>
-                      </div>
-                    </div>
                   )}
                   <button
                     type="button"
@@ -397,19 +373,17 @@ export function InstructorRequestForm({
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  {cvFileType === "image" && (
-                    <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-                      <FileImage className="w-4 h-4" />
-                      <span>{cvImage?.name}</span>
-                    </div>
-                  )}
+                  <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+                    <FileImage className="w-4 h-4" />
+                    <span>{cvImage?.name}</span>
+                  </div>
                 </div>
               )}
 
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*,.pdf,application/pdf"
+                accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
               />

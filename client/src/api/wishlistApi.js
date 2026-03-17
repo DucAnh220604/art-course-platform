@@ -1,7 +1,7 @@
 import axiosClient from "./axiosClient";
 
 const wishlistApi = {
-  getWishlist: () => axiosClient.get("/wishlist"),
+  getWishlist: (params) => axiosClient.get("/wishlist", { params }),
   addToWishlist: (productId, productModel) =>
     axiosClient.post("/wishlist/add", { productId, productModel }),
   removeFromWishlist: (productId, productModel) =>

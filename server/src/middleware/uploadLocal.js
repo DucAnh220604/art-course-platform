@@ -2,11 +2,12 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Ensure upload directory exists
+// Ensure upload directory exists - Use absolute path relative to this file
 const uploadDir = path.join(__dirname, "../../uploads/cv");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
+console.log("Multer saving files to:", uploadDir);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -24,18 +25,13 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  // Accept images and PDFs
-  const allowedMimes = [
-    "image/jpeg",
-    "image/jpg",
-    "image/png",
-    "application/pdf",
-  ];
+  // Only accept images
+  const allowedMimes = ["image/jpeg", "image/jpg", "image/png"];
 
   if (allowedMimes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error("Chỉ hỗ trợ file ảnh (JPG, PNG) hoặc PDF"), false);
+    cb(new Error("Chỉ hỗ trợ file ảnh (JPG, PNG)"), false);
   }
 };
 

@@ -4,25 +4,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import {
-  Camera,
-  Save,
-  X,
-  Pencil,
-  GraduationCap,
-  Clock,
-  CheckCircle,
-  XCircle,
-  User,
-  Phone,
-  Mail,
-  MapPin,
-  Calendar,
-  Users,
-  Sparkles,
-  Palette,
-  Star,
-} from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/context/AuthContext";
@@ -39,9 +20,18 @@ import {
 } from "@/components/ui/form";
 import { Header, Footer } from "@/components/landing";
 import { InstructorRequestForm } from "@/components/instructor/InstructorRequestForm";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 import userApi from "@/api/userApi";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 const profileSchema = z.object({
   fullname: z.string().min(2, "Tên phải có ít nhất 2 ký tự"),
@@ -52,16 +42,14 @@ const profileSchema = z.object({
   parentPhone: z.string().optional(),
 });
 
-// Floating decoration components for kid-friendly vibe
-function FloatingShape({ className, delay = 0 }) {
-  return (
-    <motion.div
-      className={`absolute pointer-events-none ${className}`}
-      animate={{ y: [0, -12, 0], rotate: [0, 5, -5, 0] }}
-      transition={{ duration: 4, repeat: Infinity, delay, ease: "easeInOut" }}
-    />
-  );
-}
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Vui lòng nhập mật khẩu hiện tại"),
+  newPassword: z.string().min(6, "Mật khẩu mới phải có ít nhất 6 ký tự"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Mật khẩu xác nhận không khớp",
+  path: ["confirmPassword"],
+});
 
 export default function ProfilePage() {
   const navigate = useNavigate();
@@ -69,9 +57,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
-  const [isRequestingInstructor, setIsRequestingInstructor] = useState(false);
   const [instructorRequestStatus, setInstructorRequestStatus] = useState(null);
   const [showInstructorForm, setShowInstructorForm] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const formatDateForInput = (dateString) => {
     if (!dateString) return "";
@@ -88,6 +77,15 @@ export default function ProfilePage() {
       address: user?.address || "",
       parentName: user?.parentName || "",
       parentPhone: user?.parentPhone || "",
+    },
+  });
+
+  const passwordForm = useForm({
+    resolver: zodResolver(passwordSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
     },
   });
 
@@ -190,6 +188,23 @@ export default function ProfilePage() {
     }
   };
 
+  const onPasswordSubmit = async (data) => {
+    setIsChangingPassword(true);
+    try {
+      await userApi.changePassword({
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      });
+      toast.success("Thành công!", { description: "Đổi mật khẩu thành công." });
+      setShowPasswordDialog(false);
+      passwordForm.reset();
+    } catch (error) {
+      toast.error("Lỗi!", { description: error.response?.data?.message || "Không thể đổi mật khẩu" });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const handleCancel = () => {
     form.reset({
       fullname: user?.fullname || "",
@@ -220,21 +235,20 @@ export default function ProfilePage() {
       case "pending":
         return (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 border-dashed rounded-3xl p-6"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-tertiary-container/20 border-2 border-tertiary/20 rounded-3xl p-6 rotate-1 scrapbook-card"
           >
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-400 flex items-center justify-center flex-shrink-0 shadow-lg shadow-amber-400/30">
-                <Clock className="w-7 h-7 text-white" />
+              <div className="w-14 h-14 rounded-2xl bg-tertiary text-on-tertiary flex items-center justify-center flex-shrink-0 shadow-lg">
+                <span className="material-symbols-outlined text-3xl">schedule</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-amber-800 mb-1">
+                <h3 className="text-xl font-headline font-bold text-on-tertiary-container mb-1">
                   ⏳ Đang chờ xét duyệt
                 </h3>
-                <p className="text-amber-700 text-sm leading-relaxed">
-                  Yêu cầu trở thành giảng viên của bạn đang được xem xét. Chúng
-                  tôi sẽ thông báo kết quả trong thời gian sớm nhất.
+                <p className="text-on-tertiary-container text-sm font-medium leading-relaxed">
+                  Yêu cầu trở thành giảng viên của bạn đang được xem xét. Artie sẽ thông báo kết quả cho bé sớm nha!
                 </p>
               </div>
             </div>
@@ -243,21 +257,20 @@ export default function ProfilePage() {
       case "approved":
         return (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-emerald-50 to-green-50 border-2 border-emerald-200 border-dashed rounded-3xl p-6"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-primary-container/20 border-2 border-primary/20 rounded-3xl p-6 -rotate-1 scrapbook-card"
           >
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-400 to-green-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-400/30">
-                <CheckCircle className="w-7 h-7 text-white" />
+              <div className="w-14 h-14 rounded-2xl bg-primary text-on-primary flex items-center justify-center flex-shrink-0 shadow-lg">
+                <span className="material-symbols-outlined text-3xl">check_circle</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-emerald-800 mb-1">
+                <h3 className="text-xl font-headline font-bold text-on-primary-container mb-1">
                   🎉 Yêu cầu đã được duyệt!
                 </h3>
-                <p className="text-emerald-700 text-sm leading-relaxed">
-                  Chúc mừng! Bạn đã trở thành giảng viên. Vui lòng đăng nhập lại
-                  để sử dụng các tính năng mới.
+                <p className="text-on-primary-container text-sm font-medium leading-relaxed">
+                  Chúc mừng! Bạn đã trở thành giảng viên. Hãy bắt đầu chia sẻ những bài học vẽ tuyệt vời nhé!
                 </p>
               </div>
             </div>
@@ -266,37 +279,32 @@ export default function ProfilePage() {
       case "rejected":
         return (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-200 border-dashed rounded-3xl p-6"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-error/5 border-2 border-error/20 rounded-3xl p-6 rotate-1 scrapbook-card"
           >
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center flex-shrink-0 shadow-lg shadow-red-400/30">
-                <XCircle className="w-7 h-7 text-white" />
+              <div className="w-14 h-14 rounded-2xl bg-error text-on-error flex items-center justify-center flex-shrink-0 shadow-lg">
+                <span className="material-symbols-outlined text-3xl">error</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-bold text-red-800 mb-1">
+                <h3 className="text-xl font-headline font-bold text-error mb-1">
                   Yêu cầu bị từ chối
                 </h3>
-                <p className="text-red-700 text-sm mb-2">
-                  Rất tiếc, yêu cầu trở thành giảng viên của bạn đã bị từ chối.
-                </p>
                 {user?.instructorRequestData?.rejectionReason && (
-                  <div className="bg-red-100/50 border border-red-200 rounded-xl p-3 mb-3">
-                    <p className="text-red-800 text-sm font-medium mb-1">
-                      Lý do từ chối:
-                    </p>
-                    <p className="text-red-700 text-sm">
-                      {user.instructorRequestData.rejectionReason}
+                  <div className="bg-white/50 border border-error/10 rounded-xl p-3 mb-4">
+                    <p className="text-error text-xs font-black uppercase mb-1">Lý do từ chối:</p>
+                    <p className="text-on-surface text-sm font-medium italic">
+                      "{user.instructorRequestData.rejectionReason}"
                     </p>
                   </div>
                 )}
-                <Button
+                <button
                   onClick={handleRequestInstructor}
-                  className="bg-red-600 hover:bg-red-700 text-white rounded-full px-6"
+                  className="gummy-button bg-error px-6 py-2 rounded-full text-white font-bold text-xs"
                 >
-                  Gửi lại yêu cầu
-                </Button>
+                  GỬI LẠI YÊU CẦU
+                </button>
               </div>
             </div>
           </motion.div>
@@ -306,29 +314,26 @@ export default function ProfilePage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative overflow-hidden bg-gradient-to-r from-violet-50 via-purple-50 to-fuchsia-50 border-2 border-purple-200 border-dashed rounded-3xl p-6"
+            className="bg-secondary-container/20 border-2 border-secondary/20 border-dashed rounded-3xl p-8 scrapbook-card"
           >
-            <div className="absolute top-2 right-4 text-4xl opacity-20">🎨</div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-purple-500/30">
-                <GraduationCap className="w-7 h-7 text-white" />
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="w-20 h-20 rounded-3xl bg-secondary text-on-secondary flex items-center justify-center flex-shrink-0 shadow-xl rotate-3">
+                <span className="material-symbols-outlined text-5xl">school</span>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-purple-800 mb-1">
-                  ✨ Trở thành Giảng viên
+              <div className="flex-1 text-center md:text-left">
+                <h3 className="text-2xl font-headline font-black text-on-secondary-container mb-2">
+                  ✨ Bé muốn làm Giảng viên?
                 </h3>
-                <p className="text-purple-700 text-sm leading-relaxed">
-                  Bạn muốn chia sẻ kiến thức? Hãy đăng ký trở thành giảng viên
-                  và tạo các khóa học của riêng bạn.
+                <p className="text-on-secondary-container text-sm font-medium leading-relaxed max-w-md">
+                  Bạn có tài năng vẽ tuyệt đẹp? Hãy tham gia cùng gia đình ArtKids để truyền cảm hứng cho hàng ngàn bạn nhỏ khác nhé!
                 </p>
               </div>
-              <Button
+              <button
                 onClick={handleRequestInstructor}
-                className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6 shadow-lg shadow-purple-500/25 w-full sm:w-auto"
+                className="gummy-button bg-secondary px-8 py-3 rounded-xl text-on-secondary font-black text-sm shadow-lg whitespace-nowrap"
               >
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Đăng ký ngay
-              </Button>
+                ĐĂNG KÝ NGAY
+              </button>
             </div>
           </motion.div>
         );
@@ -337,109 +342,127 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-sky-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-surface scrapbook-bg">
         <div className="text-center">
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 mx-auto mb-4"
+            className="w-16 h-16 mx-auto mb-6 text-primary"
           >
-            <Palette className="w-16 h-16 text-sky-400" />
+            <span className="material-symbols-outlined text-6xl">palette</span>
           </motion.div>
-          <p className="text-slate-500 font-medium">Đang tải...</p>
+          <p className="text-on-surface-variant font-bold text-xl font-headline animate-pulse">Artie đang chuẩn bị chút xíu...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-b from-sky-50/80 via-slate-50 to-white">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
-        <Header onNavigate={navigate} />
-      </div>
+    <div className="min-h-screen flex flex-col bg-surface scrapbook-bg font-body text-on-surface">
+      <Header onNavigate={navigate} />
 
-      <main className="flex-1 py-8 lg:py-12">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 py-12 lg:py-20 flex items-center justify-center">
+        <div className="max-w-4xl w-full px-6">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            className="relative"
           >
-            <Card className="overflow-hidden border-none shadow-xl bg-white rounded-3xl">
-              <div className="px-6 sm:px-8 pt-8 pb-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                  <div className="relative">
-                    <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-sky-100 shadow-lg">
+            {/* Decorative stickers */}
+            <div className="absolute -top-10 -left-10 w-24 h-24 rotate-[-15deg] hidden lg:block select-none pointer-events-none">
+              <span className="material-symbols-outlined text-8xl text-primary/20">brush</span>
+            </div>
+            <div className="absolute -bottom-10 -right-10 w-24 h-24 rotate-[20deg] hidden lg:block select-none pointer-events-none">
+              <span className="material-symbols-outlined text-8xl text-secondary/20">auto_awesome</span>
+            </div>
+
+            <Card className="overflow-hidden border-none shadow-premium bg-white rounded-[2.5rem] relative z-10 transition-all hover:shadow-2xl">
+              {/* Profile Header Block */}
+              <div className="bg-surface-container px-8 sm:px-12 pt-12 pb-10 border-b border-outline-variant/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-8 relative z-10">
+                  <div className="relative group">
+                    <div className="absolute inset-0 bg-primary-container rounded-[2rem] rotate-6 scale-105 group-hover:rotate-12 transition-transform"></div>
+                    <Avatar className="w-32 h-32 sm:w-40 sm:h-40 border-4 border-white shadow-xl relative z-10 rounded-[2rem]">
                       <AvatarImage src={user?.avatar} alt={user?.fullname} />
-                      <AvatarFallback className="bg-gradient-to-br from-sky-400 to-cyan-400 text-white text-3xl sm:text-4xl font-bold">
+                      <AvatarFallback className="bg-primary text-on-primary text-4xl font-black">
                         {getInitials(user?.fullname || user?.username)}
                       </AvatarFallback>
                     </Avatar>
                     <button
                       onClick={handleAvatarClick}
                       disabled={isUploadingAvatar}
-                      className="absolute bottom-1 right-1 p-2 rounded-full bg-white shadow-md border border-slate-200 text-sky-600 hover:bg-sky-50 hover:scale-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="absolute -bottom-2 -right-2 p-3 rounded-full bg-white shadow-2xl border border-outline-variant/20 text-primary hover:scale-110 active:scale-95 transition-all z-20 disabled:opacity-50"
                     >
                       {isUploadingAvatar ? (
-                        <div className="w-4 h-4 border-2 border-sky-600 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       ) : (
-                        <Camera className="w-4 h-4" />
+                        <span className="material-symbols-outlined text-xl">photo_camera</span>
                       )}
                     </button>
                   </div>
 
-                  <div className="flex-1">
-                    <h2
-                      className="text-2xl sm:text-3xl font-bold text-slate-800"
-                      style={{ fontFamily: "'Quicksand', sans-serif" }}
-                    >
+                  <div className="flex-1 text-center sm:text-left">
+                    <h2 className="text-4xl sm:text-5xl font-headline font-black text-on-surface mb-2 tracking-tight">
                       {user?.fullname || user?.username}
                     </h2>
-                    <p className="text-slate-500">{user?.email}</p>
-                    <p className="text-sm text-slate-400 mt-1">
-                      Tham gia từ {formatDate(user?.createdAt)}
-                    </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 text-on-surface-variant font-bold text-sm">
+                      <div className="flex items-center justify-center sm:justify-start gap-1">
+                        <span className="material-symbols-outlined text-sm text-primary">mail</span>
+                        {user?.email}
+                      </div>
+                      <div className="flex items-center justify-center sm:justify-start gap-1">
+                        <span className="material-symbols-outlined text-sm text-secondary">calendar_today</span>
+                        Gia nhập: {formatDate(user?.createdAt)}
+                      </div>
+                    </div>
                   </div>
 
                   {!isEditing && (
-                    <Button
-                      onClick={() => setIsEditing(true)}
-                      className="rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium px-6 h-11 shadow-lg shadow-sky-500/25 sm:ml-auto"
-                    >
-                      <Pencil className="w-4 h-4 mr-2" />
-                      Chỉnh sửa
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => setShowPasswordDialog(true)}
+                        className="gummy-button bg-secondary px-8 py-3 rounded-xl text-on-secondary text-sm font-black shadow-lg"
+                      >
+                        ĐỔI MẬT KHẨU
+                      </button>
+                      <button
+                        onClick={() => setIsEditing(true)}
+                        className="gummy-button bg-primary px-8 py-3 rounded-xl text-on-primary text-sm font-black shadow-lg"
+                      >
+                        CHỈNH SỬA
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
 
-              <div className="px-6 sm:px-8 pb-8">
+              {/* Profile Details Block */}
+              <div className="px-8 sm:px-12 py-12">
                 {isEditing ? (
                   <Form {...form}>
                     <form
                       onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-6"
+                      className="space-y-10"
                     >
-                      <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                          <span className="w-8 h-8 rounded-full bg-sky-100 flex items-center justify-center text-sky-600 text-sm">
-                            👤
-                          </span>
-                          Thông tin cá nhân
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-6">
+                        <div className="flex items-center gap-3 mb-8">
+                          <div className="h-8 w-1.5 bg-primary rounded-full"></div>
+                          <h3 className="text-2xl font-headline font-bold">Hồ sơ của bé</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
                             name="fullname"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-600 font-medium">
-                                  Họ và tên
-                                </FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Họ và tên</FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Nhập họ và tên"
-                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    placeholder="Vẽ tên bé ở đây..."
+                                    className="h-14 rounded-xl border-2 border-outline-variant/10 bg-surface focus:border-primary/30 font-bold px-6 outline-none transition-all shadow-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -452,13 +475,11 @@ export default function ProfilePage() {
                             name="phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-600 font-medium">
-                                  Số điện thoại
-                                </FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Số điện thoại</FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="0123 456 789"
-                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    placeholder="Điện thoại của bé..."
+                                    className="h-14 rounded-xl border-2 border-outline-variant/10 bg-surface focus:border-primary/30 font-bold px-6 shadow-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -471,13 +492,11 @@ export default function ProfilePage() {
                             name="birthday"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-600 font-medium">
-                                  Ngày sinh
-                                </FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Ngày sinh nhật</FormLabel>
                                 <FormControl>
                                   <Input
                                     type="date"
-                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    className="h-14 rounded-xl border-2 border-outline-variant/10 bg-surface focus:border-primary/30 font-bold px-6 shadow-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -490,13 +509,11 @@ export default function ProfilePage() {
                             name="address"
                             render={({ field }) => (
                               <FormItem className="sm:col-span-2">
-                                <FormLabel className="text-slate-600 font-medium">
-                                  Địa chỉ
-                                </FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Nhà của bé ở...</FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Nhập địa chỉ"
-                                    className="h-12 rounded-xl border-sky-200 focus:border-sky-400 bg-white"
+                                    placeholder="Nhập địa chỉ nhà bé nha..."
+                                    className="h-14 rounded-xl border-2 border-outline-variant/10 bg-surface focus:border-primary/30 font-bold px-6 shadow-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -507,26 +524,23 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
-                        <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                          <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-sm">
-                            👨‍👩‍👧
-                          </span>
-                          Thông tin phụ huynh
-                        </h3>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-6 pt-4">
+                        <div className="flex items-center gap-3 mb-8">
+                          <div className="h-8 w-1.5 bg-secondary rounded-full"></div>
+                          <h3 className="text-2xl font-headline font-bold text-secondary">Thông tin phụ huynh</h3>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                           <FormField
                             control={form.control}
                             name="parentName"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-600 font-medium">
-                                  Tên phụ huynh
-                                </FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Tên Ba/Mẹ</FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="Nhập tên phụ huynh"
-                                    className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
+                                    placeholder="Tên Ba/Mẹ bé đó..."
+                                    className="h-14 rounded-xl border-2 border-outline-variant/10 bg-surface focus:border-secondary/30 font-bold px-6 shadow-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -539,13 +553,11 @@ export default function ProfilePage() {
                             name="parentPhone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel className="text-slate-600 font-medium">
-                                  SĐT phụ huynh
-                                </FormLabel>
+                                <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">SĐT liên lạc</FormLabel>
                                 <FormControl>
                                   <Input
-                                    placeholder="0123 456 789"
-                                    className="h-12 rounded-xl border-amber-200 focus:border-amber-400 bg-white"
+                                    placeholder="Ba mẹ số mấy nè..."
+                                    className="h-14 rounded-xl border-2 border-outline-variant/10 bg-surface focus:border-secondary/30 font-bold px-6 shadow-sm"
                                     {...field}
                                   />
                                 </FormControl>
@@ -556,66 +568,54 @@ export default function ProfilePage() {
                         </div>
                       </div>
 
-                      <div className="flex gap-3 pt-2">
-                        <Button
+                      <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                        <button
                           type="button"
-                          variant="outline"
                           onClick={handleCancel}
-                          className="flex-1 h-12 rounded-full font-medium border-slate-200 hover:bg-slate-50"
+                          className="flex-1 h-16 rounded-2xl font-headline font-black text-on-surface-variant bg-surface-container hover:bg-surface-container-high transition-colors uppercase tracking-widest"
                         >
-                          <X className="w-4 h-4 mr-2" />
-                          Hủy bỏ
-                        </Button>
-                        <Button
+                          HỦY BỎ
+                        </button>
+                        <button
                           type="submit"
                           disabled={isSaving}
-                          className="flex-1 h-12 rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium shadow-lg shadow-sky-500/25"
+                          className="flex-1 h-16 rounded-2xl gummy-button bg-primary text-on-primary font-headline font-black uppercase tracking-widest disabled:opacity-50"
                         >
-                          <Save className="w-4 h-4 mr-2" />
-                          {isSaving ? "Đang lưu..." : "Lưu thay đổi"}
-                        </Button>
+                          {isSaving ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
+                        </button>
                       </div>
                     </form>
                   </Form>
                 ) : (
-                  <div className="space-y-6">
-                    <div className="bg-sky-50/50 border border-sky-100 rounded-3xl p-5 sm:p-6">
-                      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        Thông tin cá nhân
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InfoItem label="Họ và tên" value={user?.fullname} />
-                        <InfoItem label="Email" value={user?.email} />
-                        <InfoItem label="Số điện thoại" value={user?.phone} />
-                        <InfoItem
-                          label="Ngày sinh"
-                          value={formatDate(user?.birthday)}
-                        />
-                        <InfoItem
-                          label="Địa chỉ"
-                          value={user?.address}
-                          className="sm:col-span-2"
-                        />
+                  <div className="space-y-12">
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-1.5 bg-primary rounded-full"></div>
+                        <h3 className="text-2xl font-headline font-bold">Hồ sơ họa sĩ</h3>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <InfoItemUI label="Họ và tên" value={user?.fullname} icon="person" />
+                        <InfoItemUI label="Email bé" value={user?.email} icon="mail" />
+                        <InfoItemUI label="Số điện thoại" value={user?.phone} icon="call" />
+                        <InfoItemUI label="Sinh nhật" value={formatDate(user?.birthday)} icon="cake" />
+                        <InfoItemUI label="Địa chỉ nhà" value={user?.address} icon="location_on" className="sm:col-span-2" />
                       </div>
                     </div>
 
-                    <div className="bg-amber-50/50 border border-amber-100 rounded-3xl p-5 sm:p-6">
-                      <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        Thông tin phụ huynh
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <InfoItem
-                          label="Tên phụ huynh"
-                          value={user?.parentName}
-                        />
-                        <InfoItem
-                          label="SĐT phụ huynh"
-                          value={user?.parentPhone}
-                        />
+                    <div className="space-y-8">
+                      <div className="flex items-center gap-3">
+                        <div className="h-8 w-1.5 bg-secondary rounded-full"></div>
+                        <h3 className="text-2xl font-headline font-bold text-secondary">Ba Mẹ yêu thương</h3>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <InfoItemUI label="Tên Ba/Mẹ" value={user?.parentName} icon="family_history" color="secondary" />
+                        <InfoItemUI label="SĐT Ba/Mẹ" value={user?.parentPhone} icon="contact_phone" color="secondary" />
                       </div>
                     </div>
 
-                    {getInstructorRequestUI()}
+                    <div className="pt-6">
+                      {getInstructorRequestUI()}
+                    </div>
                   </div>
                 )}
               </div>
@@ -637,56 +637,116 @@ export default function ProfilePage() {
           email: user?.email || "",
         }}
       />
+
+      {/* Change Password Dialog */}
+      <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
+        <DialogContent className="max-w-md bg-white rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="font-headline font-bold text-2xl mb-2">Đổi mật khẩu</DialogTitle>
+            <DialogDescription className="text-on-surface-variant/80 font-medium">
+              Bạn hãy nhập mật khẩu cũ và mới để thay đổi nhé.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...passwordForm}>
+            <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4 pt-4">
+              <FormField
+                control={passwordForm.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Mật khẩu hiện tại</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-2 border-outline-variant/10 focus:border-secondary/40 font-bold"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Mật khẩu mới</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-2 border-outline-variant/10 focus:border-secondary/40 font-bold"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={passwordForm.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-on-surface font-black text-xs uppercase tracking-widest pl-1">Xác nhận mật khẩu mới</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="••••••••"
+                        className="h-12 rounded-xl border-2 border-outline-variant/10 focus:border-secondary/40 font-bold"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter className="pt-6">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="rounded-xl h-12 px-6"
+                  onClick={() => setShowPasswordDialog(false)}
+                >
+                  Hủy
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isChangingPassword}
+                  className="rounded-xl h-12 px-6 bg-secondary text-on-secondary font-bold shadow-lg"
+                >
+                  {isChangingPassword ? "Đang lưu..." : "Xác nhận"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-const colorMap = {
-  sky: {
-    bg: "bg-sky-50",
-    icon: "text-sky-500",
-    border: "border-sky-100",
-  },
-  amber: {
-    bg: "bg-amber-50",
-    icon: "text-amber-500",
-    border: "border-amber-100",
-  },
-};
-
-function InfoCard({ icon, label, value, color = "sky" }) {
-  const colors = colorMap[color] || colorMap.sky;
+function InfoItemUI({ label, value, icon, className = "", color = "primary" }) {
+  const colorClass = color === "primary" ? "bg-primary-container text-primary" : "bg-secondary-container text-secondary";
+  
   return (
-    <div
-      className={`flex items-start gap-3.5 ${colors.bg} rounded-2xl p-4 border ${colors.border} hover:shadow-md transition-shadow`}
-    >
-      <div
-        className={`w-9 h-9 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0 ${colors.icon}`}
-      >
-        {icon}
+    <div className={cn(
+      "relative bg-white p-6 rounded-[1.5rem] border border-outline-variant/10 shadow-sm transition-all hover:shadow-md hover:translate-y-[-2px]",
+      className
+    )}>
+      <div className="flex items-start gap-4">
+        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm", colorClass)}>
+          <span className="material-symbols-outlined text-xl">{icon}</span>
+        </div>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.1em] text-on-surface-variant/40 mb-1 leading-none">{label}</p>
+          <p className="font-headline font-bold text-lg text-on-surface leading-snug">
+            {value || <span className="text-on-surface-variant/20 italic font-normal">Chưa cập nhật</span>}
+          </p>
+        </div>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
-          {label}
-        </p>
-        <p className="font-semibold text-slate-700 truncate">
-          {value || (
-            <span className="text-slate-300 italic font-normal">
-              Chưa cập nhật
-            </span>
-          )}
-        </p>
-      </div>
-    </div>
-  );
-}
-function InfoItem({ label, value, className = "" }) {
-  return (
-    <div className={`bg-white rounded-xl p-4 ${className}`}>
-      <p className="text-sm text-slate-500 mb-1">{label}</p>
-      <p className="font-medium text-slate-800">
-        {value || <span className="text-slate-400 italic">Chưa cập nhật</span>}
-      </p>
     </div>
   );
 }

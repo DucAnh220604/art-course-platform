@@ -1,29 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Heart,
-  Trash2,
-  ShoppingCart,
-  Package,
-  BookOpen,
-  ArrowRight,
-  Star,
-  Users,
-} from "lucide-react";
 import { Header, Footer } from "@/components/landing";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/AuthContext";
 import wishlistApi from "@/api/wishlistApi";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { useCart } from "@/context/CartContext";
 
 export function WishlistPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { refreshWishlist, refreshCart } = useCart();
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const ITEMS_PER_PAGE = 9;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -31,33 +29,51 @@ export function WishlistPage() {
       return;
     }
     fetchWishlist();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentPage]);
 
   const fetchWishlist = async () => {
     try {
       setLoading(true);
-      const res = await wishlistApi.getWishlist();
-      setWishlistItems(res.data.data || []);
-    } catch {
+      const res = await wishlistApi.getWishlist({ 
+        page: currentPage, 
+        limit: ITEMS_PER_PAGE 
+      });
+      
+      const payload = res.data || {};
+      const wishlistData = payload.wishlist || payload.data || [];
+      
+      const pagination = payload.pagination || {};
+      const totalP = pagination.totalPages || payload.totalPages || 1;
+      const totalI = pagination.total || payload.totalItems || 0;
+
+      setWishlistItems(wishlistData);
+      setTotalPages(totalP);
+      setTotalItems(totalI);
+    } catch (error) {
+      console.error("Fetch Wishlist Error:", error);
       toast.error("Không tải được danh sách yêu thích.");
     } finally {
       setLoading(false);
     }
   };
 
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   const handleRemove = async (productId, productModel) => {
     try {
       await wishlistApi.removeFromWishlist(productId, productModel);
-      setWishlistItems((prev) =>
-        prev.filter(
-          (item) =>
-            !(
-              item.product._id === productId &&
-              item.productModel === productModel
-            ),
-        ),
-      );
+      await refreshWishlist();
       toast.success("Đã xóa khỏi danh sách yêu thích.");
+      if (wishlistItems.length === 1 && currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+      } else {
+        fetchWishlist();
+      }
     } catch {
       toast.error("Không xóa được.");
     }
@@ -66,16 +82,13 @@ export function WishlistPage() {
   const handleMoveToCart = async (productId, productModel) => {
     try {
       await wishlistApi.moveToCart(productId, productModel);
-      setWishlistItems((prev) =>
-        prev.filter(
-          (item) =>
-            !(
-              item.product._id === productId &&
-              item.productModel === productModel
-            ),
-        ),
-      );
+      await Promise.all([refreshWishlist(), refreshCart()]);
       toast.success("Đã chuyển sang giỏ hàng!");
+      if (wishlistItems.length === 1 && currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+      } else {
+        fetchWishlist();
+      }
     } catch (error) {
       toast.error(
         error?.response?.data?.message || "Không chuyển được sang giỏ hàng.",
@@ -85,15 +98,12 @@ export function WishlistPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-50">
-        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
-          <Header onNavigate={navigate} />
-        </div>
-        <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-12 animate-pulse">
-          <div className="h-10 bg-slate-200 rounded-full w-1/3 mb-8" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-80 bg-slate-200 rounded-[32px]" />
+      <div className="min-h-screen flex flex-col bg-surface scrapbook-bg">
+        <Header onNavigate={navigate} />
+        <div className="flex-1 max-w-7xl mx-auto w-full px-6 py-20">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-[450px] bg-white/50 rounded-[2.5rem] animate-pulse border-2 border-outline-variant/5" />
             ))}
           </div>
         </div>
@@ -102,210 +112,223 @@ export function WishlistPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/50">
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
-        <Header onNavigate={navigate} />
-      </div>
+    <div className="min-h-screen flex flex-col bg-surface scrapbook-bg font-body">
+      <Header onNavigate={navigate} />
 
-      <main className="flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-10">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center">
-              <Heart className="w-6 h-6 text-rose-500 fill-rose-500" />
+      <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-12 lg:py-20">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
+          <div className="relative">
+            <div className="absolute -top-10 -left-6 text-primary/10 select-none pointer-events-none">
+              <span className="material-symbols-outlined text-8xl">favorite</span>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">
-                Yêu thích của tôi
-              </h1>
-              <p className="text-sm text-slate-400 mt-0.5">
-                {wishlistItems.length} khóa học đã lưu
-              </p>
-            </div>
+            <h1 className="text-5xl lg:text-6xl font-headline font-black text-on-surface tracking-tight relative z-10">
+              Góc <span className="text-primary italic">Yêu Thích</span>
+            </h1>
+            <p className="text-on-surface-variant font-bold text-lg mt-2 flex items-center gap-2">
+              <span className="w-8 h-1 bg-primary rounded-full"></span>
+              Bé đã lưu {totalItems} điều tuyệt vời ở đây
+            </p>
           </div>
         </div>
 
         {wishlistItems.length === 0 ? (
-          <div className="text-center py-24">
-            <div className="w-28 h-28 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-8">
-              <Heart className="w-14 h-14 text-rose-200" />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-32 bg-white/40 backdrop-blur-sm rounded-[3rem] border-4 border-dashed border-outline-variant/20"
+          >
+            <div className="w-32 h-32 rounded-full bg-primary-container/30 flex items-center justify-center mx-auto mb-8 rotate-12">
+              <span className="material-symbols-outlined text-7xl text-primary/50">heart_broken</span>
             </div>
-            <h3 className="text-2xl font-bold text-slate-600 mb-3">
-              Chưa có khóa học yêu thích
+            <h3 className="text-3xl font-headline font-black text-on-surface mb-4">
+              Hộp yêu thích đang trống trơn...
             </h3>
-            <p className="text-slate-400 mb-8 max-w-md mx-auto">
-              Nhấn vào biểu tượng trái tim ở các khóa học để lưu vào danh sách
-              yêu thích nhé!
+            <p className="text-on-surface-variant font-medium text-lg mb-10 max-w-md mx-auto leading-relaxed">
+              Bạn Artie chưa thấy bé thả tim khóa học nào hết! Hãy cùng khám phá những bài học vẽ siêu vui nhé!
             </p>
-            <Button
-              className="rounded-full bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-600 hover:to-cyan-600 px-8 h-12 text-base font-bold shadow-lg"
+            <button
+              className="gummy-button bg-primary text-on-primary px-10 py-4 rounded-2xl font-black text-lg shadow-xl inline-flex items-center gap-2"
               onClick={() => navigate("/courses")}
             >
-              Khám phá khóa học <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </div>
+              ĐI XEM KHÓA HỌC THÔI
+              <span className="material-symbols-outlined">rocket_launch</span>
+            </button>
+          </motion.div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {wishlistItems.map((item) => {
-              const p = item.product;
-              if (!p) return null;
-              const isCombo = item.productModel === "Combo";
-              const slug = p.slug;
-              const oldPrice = isCombo ? p.originalPrice : p.oldPrice;
-              const hasDiscount = oldPrice && oldPrice > p.price;
-              const rating = p.averageRating || 0;
-              const instructorName =
-                p.instructor?.fullname || "Giảng viên ArtKids";
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <AnimatePresence mode="popLayout">
+                {wishlistItems.map((item, idx) => {
+                  const p = item.product;
+                  if (!p) return null;
+                  const isCombo = item.productModel === "Combo";
+                  const slug = p.slug;
+                  const oldPrice = isCombo ? p.originalPrice : p.oldPrice;
+                  const hasDiscount = oldPrice && oldPrice > p.price;
+                  const instructorName = p.instructor?.fullname || "Họa sĩ ArtKids";
 
-              return (
-                <Card
-                  key={item._id}
-                  className="group rounded-[32px] border-none shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden bg-white flex flex-col h-full hover:-translate-y-1"
-                >
-                  {/* Thumbnail */}
-                  <div
-                    className="relative aspect-[16/10] overflow-hidden cursor-pointer"
-                    onClick={() =>
-                      navigate(isCombo ? `/combos/${slug}` : `/course/${slug}`)
-                    }
-                  >
-                    <img
-                      src={
-                        isCombo
-                          ? p.courses?.[0]?.thumbnail || p.thumbnail
-                          : p.thumbnail
-                      }
-                      alt={p.title}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                    <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors" />
-
-                    {/* Type Badge */}
-                    {isCombo ? (
-                      <Badge className="absolute top-4 left-4 bg-amber-400 text-amber-900 border-none px-3 py-1 rounded-full font-bold text-[10px] shadow-lg">
-                        <Package className="w-3 h-3 mr-1" /> COMBO
-                      </Badge>
-                    ) : (
-                      p.category && (
-                        <Badge className="absolute top-4 left-4 bg-sky-100/90 text-sky-700 border-none px-3 py-1 rounded-full font-bold text-[10px] shadow-sm backdrop-blur-sm">
-                          {p.category}
-                        </Badge>
-                      )
-                    )}
-
-                    {/* Discount ribbon */}
-                    {hasDiscount && (
-                      <div className="absolute top-0 right-0 overflow-hidden w-20 h-20 pointer-events-none">
-                        <div className="absolute top-[14px] right-[-24px] w-[100px] bg-rose-500 text-white text-[10px] font-black text-center py-1 rotate-45 shadow-md">
-                          -
-                          {isCombo
-                            ? p.discountPercentage
-                            : p.discountPercentage}
-                          %
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Remove button (top right, always visible on hover) */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemove(p._id, item.productModel);
-                      }}
-                      className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/90 hover:bg-rose-500 text-rose-400 hover:text-white flex items-center justify-center shadow-md transition-all opacity-0 group-hover:opacity-100 backdrop-blur-sm"
+                  return (
+                    <motion.div
+                      layout
+                      key={item._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="group"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
+                      <div className={cn(
+                        "relative bg-white rounded-[2.5rem] overflow-hidden shadow-premium hover:shadow-2xl transition-all duration-500 h-full flex flex-col scrapbook-card",
+                        idx % 3 === 0 ? "rotate-[-1deg]" : idx % 3 === 1 ? "rotate-[1deg]" : "rotate-[-0.5deg]"
+                      )}>
+                        {/* Thumbnail */}
+                        <div className="relative aspect-[16/11] overflow-hidden group/thumb">
+                          <img
+                            src={isCombo ? p.courses?.[0]?.thumbnail || p.thumbnail : p.thumbnail}
+                            alt={p.title}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            onClick={() => navigate(isCombo ? `/combos/${slug}` : `/course/${slug}`)}
+                          />
+                          <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                          
+                          {/* Badges */}
+                          <div className="absolute top-5 left-5 flex flex-col gap-2">
+                            {isCombo ? (
+                              <Badge className="bg-primary text-on-primary border-none px-4 py-1.5 rounded-full font-black text-[10px] shadow-lg tracking-widest uppercase">
+                                <span className="material-symbols-outlined text-xs mr-1">package</span> COMBO BỘ
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-secondary-container text-on-secondary-container border-none px-4 py-1.5 rounded-full font-black text-[10px] shadow-sm tracking-widest uppercase">
+                                {p.category || "HỌC VẼ"}
+                              </Badge>
+                            )}
+                          </div>
 
-                  {/* Content */}
-                  <div className="p-6 flex flex-col flex-1">
-                    {/* Instructor */}
-                    <div className="flex items-center gap-2.5 mb-3">
-                      <Avatar className="w-7 h-7 border-2 border-sky-100 shadow-sm">
-                        <AvatarImage src={p.instructor?.avatar} />
-                        <AvatarFallback className="bg-sky-50 text-sky-600 text-[10px] font-bold">
-                          {instructorName.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">
-                        {instructorName}
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <h3
-                      className="text-base font-bold text-slate-800 line-clamp-2 mb-3 hover:text-sky-500 transition-colors cursor-pointer leading-snug"
-                      onClick={() =>
-                        navigate(
-                          isCombo ? `/combos/${slug}` : `/course/${slug}`,
-                        )
-                      }
-                    >
-                      {p.title}
-                    </h3>
-
-                    {/* Stats */}
-                    <div className="flex items-center gap-4 text-xs text-slate-400 mb-4">
-                      {rating > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                          <span className="font-bold text-slate-600">
-                            {rating.toFixed ? rating.toFixed(1) : rating}
-                          </span>
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5" />
-                        {p.totalStudents || 0} học viên
-                      </span>
-                      {isCombo && (
-                        <span className="flex items-center gap-1">
-                          <BookOpen className="w-3.5 h-3.5" />
-                          {p.courses?.length || 0} khóa
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Price + Actions */}
-                    <div className="mt-auto pt-4 border-t border-slate-50">
-                      <div className="flex items-center justify-between mb-4">
-                        <div>
+                          {/* Discount % */}
                           {hasDiscount && (
-                            <p className="text-xs font-bold text-slate-400 line-through leading-none mb-0.5">
-                              {oldPrice?.toLocaleString()}đ
-                            </p>
+                            <div className="absolute top-0 right-0 p-3">
+                              <div className="bg-error text-white font-black text-xs w-12 h-12 rounded-full flex items-center justify-center shadow-lg rotate-12">
+                                -{p.discountPercentage}%
+                              </div>
+                            </div>
                           )}
-                          <p
-                            className={`text-xl font-black ${isCombo ? "text-amber-600" : "text-sky-600"}`}
-                          >
-                            {p.price === 0
-                              ? "MIỄN PHÍ"
-                              : `${p.price?.toLocaleString()}đ`}
-                          </p>
-                        </div>
-                        <Heart className="w-5 h-5 text-rose-400 fill-rose-400" />
-                      </div>
 
-                      <Button
-                        className={`w-full rounded-full font-bold h-11 shadow-md transition-all ${
-                          isCombo
-                            ? "bg-amber-500 hover:bg-amber-600"
-                            : "bg-sky-500 hover:bg-sky-600"
-                        } text-white`}
-                        onClick={() =>
-                          handleMoveToCart(p._id, item.productModel)
-                        }
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Thêm vào giỏ hàng
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+                          {/* Remove button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemove(p._id, item.productModel);
+                            }}
+                            className="absolute bottom-5 right-5 w-12 h-12 rounded-2xl bg-white/90 text-on-surface hover:bg-error hover:text-white flex items-center justify-center shadow-xl transition-all translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 backdrop-blur-md"
+                          >
+                            <span className="material-symbols-outlined">delete</span>
+                          </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-8 flex flex-col flex-1">
+                          <div className="flex items-center gap-3 mb-4">
+                            <Avatar className="w-8 h-8 ring-2 ring-primary/10">
+                              <AvatarImage src={p.instructor?.avatar} />
+                              <AvatarFallback className="bg-primary-container text-primary font-black text-[10px]">
+                                {instructorName.charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="text-[10px] font-black text-on-surface-variant uppercase tracking-[0.2em]">{instructorName}</span>
+                          </div>
+
+                          <h3 
+                            className="text-xl font-headline font-black text-on-surface line-clamp-2 mb-4 hover:text-primary transition-colors cursor-pointer leading-tight h-14"
+                            onClick={() => navigate(isCombo ? `/combos/${slug}` : `/course/${slug}`)}
+                          >
+                            {p.title}
+                          </h3>
+
+                          {/* Stats Row */}
+                          <div className="flex items-center gap-5 text-on-surface-variant/60 font-bold text-[11px] mb-8">
+                            <div className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-base text-primary/40">group</span>
+                              {p.totalStudents || 0} bạn học
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="material-symbols-outlined text-base text-secondary/40">video_library</span>
+                              {isCombo ? `${p.courses?.length || 0} khóa` : "Nhiều bài giảng"}
+                            </div>
+                          </div>
+
+                          {/* Price & Action */}
+                          <div className="mt-auto pt-6 border-t-2 border-dashed border-outline-variant/10">
+                            <div className="flex items-center justify-between mb-6">
+                              <div>
+                                {hasDiscount && (
+                                  <p className="text-[10px] font-black text-on-surface-variant/30 line-through leading-none mb-1 uppercase tracking-widest">
+                                    {oldPrice?.toLocaleString()}đ
+                                  </p>
+                                )}
+                                <p className="text-2xl font-black text-on-surface tracking-tighter">
+                                  {p.price === 0 ? "MIỄN PHÍ" : `${p.price?.toLocaleString()}đ`}
+                                </p>
+                              </div>
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                <span className="material-symbols-outlined text-primary fill-primary">favorite</span>
+                              </div>
+                            </div>
+
+                            <button
+                              className="w-full h-14 rounded-2xl gummy-button bg-primary text-on-primary font-headline font-black text-sm shadow-lg flex items-center justify-center gap-2 group-hover:scale-[1.02]"
+                              onClick={() => handleMoveToCart(p._id, item.productModel)}
+                            >
+                              <span className="material-symbols-outlined">shopping_cart</span>
+                              THÊM VÀO GIỎ HÀNG
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-20">
+                <button
+                  className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center text-on-surface disabled:opacity-30 disabled:shadow-none hover:bg-primary hover:text-white transition-all scrapbook-card"
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  <span className="material-symbols-outlined">chevron_left</span>
+                </button>
+
+                <div className="flex gap-2">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={cn(
+                        "w-12 h-12 rounded-2xl font-black transition-all scrapbook-card",
+                        currentPage === page 
+                          ? "bg-primary text-on-primary shadow-lg -rotate-2" 
+                          : "bg-white text-on-surface hover:bg-surface-container shadow-md"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  className="w-12 h-12 rounded-2xl bg-white shadow-md flex items-center justify-center text-on-surface disabled:opacity-30 disabled:shadow-none hover:bg-primary hover:text-white transition-all scrapbook-card"
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  <span className="material-symbols-outlined">chevron_right</span>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </main>
 

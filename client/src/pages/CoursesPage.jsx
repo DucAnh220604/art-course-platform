@@ -1,20 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Search,
-  Filter,
-  BookOpen,
-  Package,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
 import { Header, Footer } from "@/components/landing";
 import { CourseCard } from "@/components/courses/CourseCard";
 import { ComboCard } from "@/components/combos/ComboCard";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import courseApi from "@/api/courseApi";
+import comboApi from "@/api/comboApi";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
 import {
   Select,
   SelectContent,
@@ -22,9 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import courseApi from "@/api/courseApi";
-import comboApi from "@/api/comboApi";
-import { toast } from "sonner";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -37,65 +28,68 @@ export function CoursesPage() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination state
-  const [coursePage, setCoursePage] = useState(1);
-  const [comboPage, setComboPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page")) || 1,
+  );
   const [courseTotalPages, setCourseTotalPages] = useState(1);
   const [comboTotalPages, setComboTotalPages] = useState(1);
 
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [level, setLevel] = useState("all");
-  const [type, setType] = useState(searchParams.get("type") || "all"); // all, courses, combos
+  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [category, setCategory] = useState(
+    searchParams.get("category") || "all",
+  );
+  const [level, setLevel] = useState(searchParams.get("level") || "all");
+  const [type, setType] = useState(searchParams.get("type") || "all");
 
   useEffect(() => {
     courseApi
       .getCategories()
-      .then((res) => setCategories(res.data.categories || []))
+      .then((res) => {
+        const data = res.data || res || {};
+        setCategories(data.categories || []);
+      })
       .catch(() => {});
   }, []);
 
   const fetchData = async () => {
     try {
       setLoading(true);
+      
       const baseParams = {
         search: search || undefined,
         category: category !== "all" ? category : undefined,
         level: level !== "all" ? level : undefined,
         status: "published",
-        limit: ITEMS_PER_PAGE,
+        limit: type === "all" ? Math.ceil(ITEMS_PER_PAGE / 2) : ITEMS_PER_PAGE,
+        page: currentPage,
       };
 
-      // Fetch courses và combos song song
-      const [coursesResponse, combosResponse] = await Promise.all([
-        type !== "combos"
-          ? courseApi.getAllCourses({ ...baseParams, page: coursePage })
-          : Promise.resolve({ data: { courses: [], totalPages: 1 } }),
-        type !== "courses"
-          ? comboApi.getAllCombos({ ...baseParams, page: comboPage })
-          : Promise.resolve({ data: { combos: [], totalPages: 1 } }),
-      ]);
+      let coursesRes = { data: { courses: [], totalPages: 1 } };
+      let combosRes = { data: { combos: [], totalPages: 1 } };
 
-      const publishedCourses = coursesResponse.data.courses || [];
-      const publishedCombos = combosResponse.data.combos || [];
+      if (type === "all") {
+        [coursesRes, combosRes] = await Promise.all([
+          courseApi.getAllCourses({ ...baseParams, limit: 5 }),
+          comboApi.getAllCombos({ ...baseParams, limit: 4 })
+        ]);
+      } else if (type === "courses") {
+        coursesRes = await courseApi.getAllCourses(baseParams);
+      } else if (type === "combos") {
+        combosRes = await comboApi.getAllCombos(baseParams);
+      }
+
+      const publishedCourses = coursesRes?.data?.courses || coursesRes?.courses || [];
+      const publishedCombos = combosRes?.data?.combos || combosRes?.combos || [];
 
       setCourses(publishedCourses);
       setCombos(publishedCombos);
-      setCourseTotalPages(coursesResponse.data.totalPages || 1);
-      setComboTotalPages(combosResponse.data.totalPages || 1);
 
-      if (
-        search &&
-        (publishedCourses.length > 0 || publishedCombos.length > 0)
-      ) {
-        toast.info("Tìm thấy rồi nè!", {
-          description: `Có ${publishedCourses.length + publishedCombos.length} kết quả phù hợp với bé đó! ✨`,
-        });
-      }
+      setCourseTotalPages(coursesRes?.data?.totalPages || coursesRes?.totalPages || 1);
+      setComboTotalPages(combosRes?.data?.totalPages || combosRes?.totalPages || 1);
     } catch (error) {
+      console.error("Lỗi fetch data:", error);
       toast.error("Ối, có lỗi rồi!", {
-        description:
-          "Máy chủ đang bận một chút, bé đợi tẹo rồi tải lại trang nhé! 🛠️",
+        description: "Máy chủ đang bận một chút, bé đợi tẹo rồi tải lại trang nhé! 🛠️",
       });
     } finally {
       setLoading(false);
@@ -107,29 +101,28 @@ export function CoursesPage() {
       fetchData();
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [search, category, level, type, coursePage, comboPage]);
+  }, [search, category, level, type, currentPage]);
 
-  // Reset page khi filter thay đổi
+  const isFirstRender = useRef(true);
   useEffect(() => {
-    setCoursePage(1);
-    setComboPage(1);
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    setCurrentPage(1);
   }, [search, category, level, type]);
 
-  // Update URL params when type changes
   useEffect(() => {
-    if (type !== "all") {
-      setSearchParams({ type });
-    } else {
-      setSearchParams({});
-    }
-  }, [type, setSearchParams]);
+    const params = {};
+    if (type !== "all") params.type = type;
+    if (search) params.search = search;
+    if (category !== "all") params.category = category;
+    if (level !== "all") params.level = level;
+    if (currentPage > 1) params.page = currentPage.toString();
 
-  const handleTypeChange = (newType) => {
-    setType(newType);
-  };
+    setSearchParams(params, { replace: true });
+  }, [type, search, category, level, currentPage, setSearchParams]);
 
-  // Pagination helpers
-  const currentPage = type === "combos" ? comboPage : coursePage;
   const totalPages =
     type === "combos"
       ? comboTotalPages
@@ -138,277 +131,208 @@ export function CoursesPage() {
         : Math.max(courseTotalPages, comboTotalPages);
 
   const handlePageChange = (newPage) => {
-    if (type === "combos") {
-      setComboPage(newPage);
-    } else if (type === "courses") {
-      setCoursePage(newPage);
-    } else {
-      setCoursePage(newPage);
-      setComboPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const getDisplayItems = () => {
-    if (type === "courses") return courses;
-    if (type === "combos") return combos;
-    // "all" - gộp cả hai
-    return [...courses, ...combos];
-  };
-
-  const displayItems = getDisplayItems();
+  const displayItems =
+    type === "courses"
+      ? courses
+      : type === "combos"
+        ? combos
+        : [...courses, ...combos];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="min-h-screen bg-slate-50/50 overflow-x-hidden"
-    >
-      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 bg-white">
-        <Header onNavigate={navigate} />
-      </div>
+    <div className="bg-surface font-body text-on-surface antialiased overflow-x-hidden min-h-screen">
+      <Header onNavigate={navigate} />
+      
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Hero Section */}
+        <header className="mb-12 relative text-center md:text-left">
+          <div className="absolute -top-10 -left-10 w-40 h-40 bg-tertiary-container/30 rounded-full blur-3xl -z-10"></div>
+          <div className="max-w-3xl">
+            <h1 className="text-5xl md:text-7xl font-extrabold font-headline leading-tight mb-6">
+              Hôm nay bé sẽ <span className="relative inline-block">sáng tạo<span className="absolute -bottom-2 left-0 w-full h-4 bg-secondary-container/60 -z-10 -rotate-2"></span></span> gì nào?
+            </h1>
+            <p className="text-xl text-on-surface-variant leading-relaxed font-medium">
+              Chọn môn nghệ thuật, chọn trình độ phù hợp và để trí tưởng tượng của bé bay xa!
+            </p>
+          </div>
+        </header>
 
-      <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-12">
-        {/* Tiêu đề trang */}
-        <div className="mb-10 text-center md:text-left">
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-800 tracking-tight">
-            Khám phá thế giới <span className="text-sky-500">Nghệ thuật</span>{" "}
-            🎨
-          </h1>
-          <p className="text-slate-500 text-lg font-medium mt-2">
-            Tìm thấy cảm hứng sáng tạo qua các khóa học và combo ưu đãi dành cho
-            bé.
-          </p>
-        </div>
-
-        {/* Tabs để filter type */}
-        <div className="mb-8">
-          <Tabs
-            value={type}
-            onValueChange={handleTypeChange}
-            className="w-full"
-          >
-            <TabsList className="grid w-full max-w-md grid-cols-3 h-12">
-              <TabsTrigger value="all" className="flex items-center gap-2">
-                <Filter className="w-4 h-4" />
-                Tất cả
-              </TabsTrigger>
-              <TabsTrigger value="courses" className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4" />
-                Khóa học
-              </TabsTrigger>
-              <TabsTrigger value="combos" className="flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Combo
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {/* LAYOUT: CHIA CỘT 2.5 / 7.5 */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          {/* CỘT TRÁI (SIDEBAR) */}
-          <aside className="w-full lg:w-1/4 shrink-0 bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col gap-6 sticky top-24">
-            <div className="flex items-center gap-2 border-b border-slate-50 pb-4">
-              <Filter className="w-5 h-5 text-sky-500" />
-              <h3 className="font-bold text-lg text-slate-800">
-                Bộ lọc tìm kiếm
-              </h3>
-            </div>
-
-            {/* Ô tìm kiếm */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">
-                Tìm kiếm
-              </label>
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                <Input
-                  placeholder="Tên khóa học hoặc combo..."
-                  className="pl-10 rounded-2xl h-12 border-slate-200 bg-slate-50 focus-visible:ring-sky-500"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+        {/* Unified Filter Bar */}
+        <div className="bg-white/50 backdrop-blur-md p-8 rounded-3xl border-4 border-dashed border-primary/10 mb-16 shadow-premium">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Filter Group: Type */}
+            <div>
+              <label className="block text-[10px] font-black text-on-surface-variant/60 uppercase tracking-[0.2em] mb-4 pl-1">Bạn muốn tìm gì?</label>
+              <div className="flex gap-2">
+                {[
+                  { id: "all", label: "Tất cả", icon: "auto_awesome" },
+                  { id: "courses", label: "Khóa học", icon: "brush" },
+                  { id: "combos", label: "Combo", icon: "package" }
+                ].map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setType(t.id)}
+                    className={cn(
+                      "flex-1 py-3 px-4 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 transition-all border-2",
+                      type === t.id ? "bg-primary text-on-primary border-primary shadow-lg" : "bg-white border-outline-variant/10 text-on-surface hover:bg-surface-container"
+                    )}
+                  >
+                    <span className="material-symbols-outlined text-lg">{t.icon}</span>
+                    {t.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Lọc danh mục */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">
-                Danh mục
-              </label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="w-full rounded-2xl h-12 border-slate-200 bg-slate-50 font-medium text-slate-700">
-                  <SelectValue placeholder="Tất cả danh mục" />
+            {/* Filter Group: Category */}
+            <div>
+              <label className="block text-[10px] font-black text-on-surface-variant/60 uppercase tracking-[0.2em] mb-4 pl-1">Danh mục nghệ thuật</label>
+              <Select value={category} onValueChange={(val) => setCategory(val)}>
+                <SelectTrigger className="w-full bg-white border-2 border-outline-variant/10 rounded-2xl py-3 px-6 h-auto font-bold text-sm text-on-surface shadow-sm focus:border-primary/20 focus:ring-0">
+                  <SelectValue placeholder="Mọi danh mục 🎨" />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl border-none shadow-xl">
-                  <SelectItem value="all">Tất cả danh mục</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
+                <SelectContent className="rounded-2xl border-2 border-outline-variant/10 shadow-premium font-bold text-sm">
+                  <SelectItem value="all">Mọi danh mục 🎨</SelectItem>
+                  {categories.map(cat => (
+                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Lọc cấp độ */}
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700">Cấp độ</label>
-              <Select value={level} onValueChange={setLevel}>
-                <SelectTrigger className="w-full rounded-2xl h-12 border-slate-200 bg-slate-50 font-medium text-slate-700">
-                  <SelectValue placeholder="Mọi cấp độ" />
+            {/* Filter Group: Level */}
+            <div>
+              <label className="block text-[10px] font-black text-on-surface-variant/60 uppercase tracking-[0.2em] mb-4 pl-1">Trình độ của con</label>
+              <Select value={level} onValueChange={(val) => setLevel(val)}>
+                <SelectTrigger className="w-full bg-white border-2 border-outline-variant/10 rounded-2xl py-3 px-6 h-auto font-bold text-sm text-on-surface shadow-sm focus:border-primary/20 focus:ring-0">
+                  <SelectValue placeholder="Mọi trình độ ✨" />
                 </SelectTrigger>
-                <SelectContent className="rounded-2xl border-none shadow-xl">
-                  <SelectItem value="all">Mọi cấp độ</SelectItem>
-                  <SelectItem value="beginner">Cơ bản</SelectItem>
-                  <SelectItem value="intermediate">Trung cấp</SelectItem>
-                  <SelectItem value="advanced">Nâng cao</SelectItem>
+                <SelectContent className="rounded-2xl border-2 border-outline-variant/10 shadow-premium font-bold text-sm">
+                  <SelectItem value="all">Mọi trình độ ✨</SelectItem>
+                  <SelectItem value="beginner">Mới bắt đầu 🌱</SelectItem>
+                  <SelectItem value="intermediate">Khám phá 🚀</SelectItem>
+                  <SelectItem value="advanced">Tài năng 💎</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+          </div>
 
-            {/* Nút xóa bộ lọc */}
-            <Button
-              variant="outline"
-              className="w-full rounded-2xl mt-4 border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+          <div className="mt-8 pt-6 border-t border-dashed border-outline-variant/10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="relative w-full sm:max-w-md group text-left">
+              <span className="material-symbols-outlined absolute left-5 top-1/2 -translate-y-1/2 text-on-surface-variant/30 group-focus-within:text-primary transition-colors">search</span>
+              <input 
+                type="text"
+                placeholder="Tìm tên khóa học..."
+                className="w-full bg-surface-container-lowest border-2 border-outline-variant/5 rounded-2xl py-3 pl-14 pr-6 focus:border-primary/20 outline-none placeholder:text-on-surface-variant/30 font-bold text-sm shadow-sm transition-all"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            
+            <button 
               onClick={() => {
                 setSearch("");
                 setCategory("all");
                 setLevel("all");
                 setType("all");
               }}
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant/40 hover:text-primary transition-all flex items-center gap-2"
             >
-              Xóa bộ lọc
-            </Button>
-          </aside>
-
-          {/* CỘT PHẢI (MAIN CONTENT) */}
-          <div className="w-full lg:w-3/4">
-            {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <div
-                    key={i}
-                    className="h-[380px] bg-slate-200/50 animate-pulse rounded-[32px]"
-                  />
-                ))}
-              </div>
-            ) : displayItems.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {displayItems.map((item) => {
-                    // Kiểm tra xem item có phải là combo không (có field courses)
-                    const isCombo = item.courses && Array.isArray(item.courses);
-
-                    return isCombo ? (
-                      <ComboCard
-                        key={item._id}
-                        combo={item}
-                        onComboClick={(slug) => navigate(`/combos/${slug}`)}
-                      />
-                    ) : (
-                      <CourseCard
-                        key={item._id}
-                        course={item}
-                        onClick={() => navigate(`/course/${item.slug}`)}
-                      />
-                    );
-                  })}
-                </div>
-
-                {/* Pagination Controls */}
-                {totalPages > 1 && (
-                  <div className="flex items-center justify-center gap-2 mt-10">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full w-10 h-10"
-                      disabled={currentPage === 1}
-                      onClick={() => handlePageChange(currentPage - 1)}
-                    >
-                      <ChevronLeft className="w-4 h-4" />
-                    </Button>
-
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter((page) => {
-                        // Show first, last, current, and neighbors
-                        return (
-                          page === 1 ||
-                          page === totalPages ||
-                          Math.abs(page - currentPage) <= 1
-                        );
-                      })
-                      .map((page, idx, arr) => {
-                        // Add ellipsis
-                        const showEllipsisBefore =
-                          idx > 0 && page - arr[idx - 1] > 1;
-                        return (
-                          <React.Fragment key={page}>
-                            {showEllipsisBefore && (
-                              <span className="px-2 text-slate-400">...</span>
-                            )}
-                            <Button
-                              variant={
-                                currentPage === page ? "default" : "outline"
-                              }
-                              size="icon"
-                              className={`rounded-full w-10 h-10 ${
-                                currentPage === page
-                                  ? "bg-sky-500 hover:bg-sky-600"
-                                  : ""
-                              }`}
-                              onClick={() => handlePageChange(page)}
-                            >
-                              {page}
-                            </Button>
-                          </React.Fragment>
-                        );
-                      })}
-
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full w-10 h-10"
-                      disabled={currentPage === totalPages}
-                      onClick={() => handlePageChange(currentPage + 1)}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-24 bg-white rounded-[40px] shadow-sm border border-slate-100 flex flex-col items-center justify-center">
-                <div className="text-7xl mb-6 grayscale opacity-50">
-                  {type === "combos" ? "📦" : type === "courses" ? "📚" : "🎨"}
-                </div>
-                <h3 className="text-2xl font-bold text-slate-800">
-                  {type === "combos"
-                    ? "Không có combo nào"
-                    : type === "courses"
-                      ? "Không có khóa học nào"
-                      : "Không có kết quả"}
-                </h3>
-                <p className="text-slate-500 mt-2 text-base max-w-sm">
-                  Hiện tại không có{" "}
-                  {type === "combos"
-                    ? "combo"
-                    : type === "courses"
-                      ? "khóa học"
-                      : "kết quả"}{" "}
-                  nào đang được hiển thị. Bé hãy thử thay đổi bộ lọc bên trái
-                  xem sao nhé!
-                </p>
-              </div>
-            )}
+              <span className="material-symbols-outlined text-lg">restart_alt</span> Xóa tất cả lọc
+            </button>
           </div>
         </div>
+
+        {/* Combined Content Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 min-h-[400px]">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="aspect-[4/5] bg-surface-container-high animate-pulse rounded-xl scrapbook-card" />
+            ))
+          ) : displayItems.length > 0 ? (
+            displayItems.map((item, index) => {
+              const isCombo = item.courses && Array.isArray(item.courses);
+              return isCombo ? (
+                <ComboCard
+                  key={`combo-${item._id}`}
+                  combo={item}
+                  compact={true}
+                  onComboClick={(slug) => navigate(`/combos/${slug}`)}
+                />
+              ) : (
+                <CourseCard
+                  key={`course-${item._id}`}
+                  course={item}
+                  index={index}
+                  onClick={() => navigate(`/course/${item.slug}`)}
+                />
+              );
+            })
+          ) : (
+            <div className="col-span-full py-24 text-center">
+              <div className="w-32 h-32 bg-surface-container-high rounded-full flex items-center justify-center mx-auto mb-8 border-4 border-white shadow-xl rotate-6">
+                <span className="material-symbols-outlined text-5xl text-on-surface-variant/20">search_off</span>
+              </div>
+              <h3 className="text-3xl font-bold font-headline mb-4">Không tìm thấy rồi...</h3>
+              <p className="text-on-surface-variant font-medium">Bạn hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm xem sao nhé!</p>
+            </div>
+          )}
+        </section>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-24 flex justify-center gap-3">
+            <button 
+              disabled={currentPage === 1}
+              onClick={() => handlePageChange(currentPage - 1)}
+              className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-secondary hover:text-on-secondary disabled:opacity-30 transition-all font-bold"
+            >
+              <span className="material-symbols-outlined">chevron_left</span>
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button 
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={cn(
+                  "w-12 h-12 rounded-full font-black text-lg transition-all",
+                  currentPage === page ? "bg-primary-container text-on-primary-container scale-110 shadow-lg" : "bg-surface-container text-on-surface-variant hover:bg-surface-container-high"
+                )}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              disabled={currentPage === totalPages}
+              onClick={() => handlePageChange(currentPage + 1)}
+              className="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:bg-secondary hover:text-on-secondary disabled:opacity-30 transition-all font-bold"
+            >
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </div>
+        )}
       </main>
 
+      {/* Mascot Bubble */}
+      <div className="fixed bottom-24 right-8 z-40 max-w-xs hidden md:block">
+        <div className="bg-tertiary-container/90 backdrop-blur-md p-6 rounded-xl border-b-4 border-on-tertiary-container/20 relative scrapbook-card shadow-xl">
+          <p className="font-headline font-bold text-on-tertiary-container leading-tight">
+            "Suỵt! Nếu bé mua combo 3 khóa học, Artie sẽ gửi một bộ dụng cụ vẽ bí mật đến tận nhà đấy!"
+          </p>
+          <div className="absolute -bottom-4 right-10 w-8 h-8 bg-tertiary-container/90 rotate-45 border-r-4 border-b-4 border-on-tertiary-container/20"></div>
+        </div>
+        <div className="mt-4 flex justify-end pr-6">
+          <div className="w-20 h-20 bg-primary-container rounded-full border-4 border-surface overflow-hidden shadow-2xl">
+            <img alt="Artie Mascot" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACdCuB435ZjTtnysh1s4ZoPAcacQSM_Q-EcyudQTi5jLa-AfosgeF7Z9X_Trf8digai3G7Dkr3pQrpi5F0g1TxI3PClz26B8PzokiyRLt5B-B_YkploW66OmkP7X-h5Wg9w13Guup-V3HDEAijyoBX6wsVArmAeRRyGdxCDZwD9cJs6gssMcShDhvzoRaX5NeUiyOyr4Pu7e_YcI788OTzfZ2fpWFrBuNxKYvKTJClYjBWsFoMRVkvIg-mdrlMxuM9rwKQQLKjrxU" />
+          </div>
+        </div>
+      </div>
+
       <Footer />
-    </motion.div>
+    </div>
   );
 }

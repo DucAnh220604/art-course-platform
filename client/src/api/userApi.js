@@ -5,6 +5,10 @@ const userApi = {
     return axiosClient.patch("/users/profile", data);
   },
 
+  changePassword: (data) => {
+    return axiosClient.patch("/users/change-password", data);
+  },
+
   uploadAvatar: (file) => {
     const formData = new FormData();
     formData.append("avatar", file);
@@ -57,6 +61,10 @@ const userApi = {
 
   getEnrolledCourses: () => {
     return axiosClient.get("/users/enrolled-courses");
+  },
+
+  getInstructorDashboardStats: () => {
+    return axiosClient.get("/users/instructor-dashboard");
   },
 };
 
