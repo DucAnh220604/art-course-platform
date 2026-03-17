@@ -35,11 +35,11 @@ export function AboutPage() {
 
       <main className="relative">
         <HeroSection 
-          badgeText="🎨 Let's Get Creative!"
-          title={<>Paint Your <br /><span className="text-primary italic">Imagination</span></>}
-          description="Join Artie and a community of young creators. Discover online courses that turn every day into a colorful masterpiece!"
-          primaryBtnText="Start Painting"
-          secondaryBtnText="View Courses"
+          badgeText="🎨 Hãy cùng sáng tạo!"
+          title={<>Vẽ Lên <br /><span className="text-primary italic">Trí Tưởng Tượng</span> Của Bạn</>}
+          description="Tham gia cùng Artie và cộng đồng các nhà sáng tạo nhí. Khám phá các khóa học trực tuyến biến mỗi ngày thành một kiệt tác đầy màu sắc!"
+          primaryBtnText="Bắt Đầu Vẽ"
+          secondaryBtnText="Xem Khóa Học"
           imageSrc="https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80"
           mascotMode={true}
           showStats={false}
@@ -49,10 +49,10 @@ export function AboutPage() {
         <section className="py-24 bg-surface-container-low px-6">
           <div className="max-w-7xl mx-auto text-center">
              <h2 className="font-headline font-extrabold text-5xl text-on-background mb-4 relative inline-block">
-                Popular Courses
+                Khóa Học Phổ Biến
                 <div className="absolute -bottom-2 left-0 w-full h-4 bg-primary-container/30 -z-10 scrapbook-blob"></div>
               </h2>
-              <p className="text-on-surface-variant text-lg mb-16 font-medium">Pick a path and start your artistic journey today.</p>
+              <p className="text-on-surface-variant text-lg mb-16 font-medium">Chọn một con đường và bắt đầu hành trình nghệ thuật của bạn ngay hôm nay.</p>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {popularCourses.length > 0 ? (
@@ -106,15 +106,15 @@ export function AboutPage() {
         <section className="py-24 bg-surface px-6 overflow-hidden">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h2 className="font-headline font-extrabold text-5xl mb-4">Student Masterpieces</h2>
-              <p className="text-on-surface-variant text-lg font-medium">Check out the amazing art created by our young students!</p>
+              <h2 className="font-headline font-extrabold text-5xl mb-4">Kiệt Tác Của Học Viên</h2>
+              <p className="text-on-surface-variant text-lg font-medium">Hãy xem những tác phẩm nghệ thuật tuyệt vời được tạo ra bởi các học viên nhí của chúng tôi!</p>
             </div>
             <div className="columns-1 md:columns-2 lg:columns-4 gap-6 space-y-6">
                 {[
-                  { img: "https://images.unsplash.com/photo-1482160545775-568ad363fb7a?q=80&w=600&auto=format&fit=crop", name: "Leo, Age 7", rot: "rotate-2" },
-                  { img: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=600&auto=format&fit=crop", name: "Emma, Age 5", rot: "-rotate-3" },
-                  { img: "https://images.unsplash.com/photo-1560412431-7e8346e96906?q=80&w=600&auto=format&fit=crop", name: "Sophie, Age 10", rot: "rotate-1" },
-                  { img: "https://images.unsplash.com/photo-1564349683136-77e08bef1ef1?q=80&w=600&auto=format&fit=crop", name: "Noah, Age 8", rot: "-rotate-1" }
+                  { img: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=600&auto=format&fit=crop", name: "Leo, 7 Tuổi", rot: "rotate-2" },
+                  { img: "https://images.unsplash.com/photo-1602498456745-e9503b30470b?q=80&w=600&auto=format&fit=crop", name: "Emma, 5 Tuổi", rot: "-rotate-3" },
+                  { img: "https://images.unsplash.com/photo-1560421683-6856ea585c78?q=80&w=600&auto=format&fit=crop", name: "Sophie, 10 Tuổi", rot: "rotate-1" },
+                  { img: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?q=80&w=600&auto=format&fit=crop", name: "Noah, 8 Tuổi", rot: "-rotate-1" }
                 ].map((item, i) => (
                  <div key={i} className={`break-inside-avoid relative group rounded-xl overflow-hidden paper-stack ${item.rot}`}>
                   <img alt={item.name} className="w-full h-auto" src={item.img} />
